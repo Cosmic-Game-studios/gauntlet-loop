@@ -1,4 +1,4 @@
-# This project is built by a gauntlet-studio run
+# This project is built by a crucible run
 
 ## If you are a critic or playtester subagent
 

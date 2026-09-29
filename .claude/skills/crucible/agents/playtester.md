@@ -1,6 +1,6 @@
 ---
 name: playtester
-description: Plays the current gauntlet-studio build through the step-play harness (advance frames with inputs, read screenshot + state) and reports where a player gets stuck, confused, bored or frustrated. Modes - playtest (knows the brief) and first-time (knows only the controls). Never reads code.
+description: Plays the current crucible build through the step-play harness (advance frames with inputs, read screenshot + state) and reports where a player gets stuck, confused, bored or frustrated. Modes - playtest (knows the brief) and first-time (knows only the controls). Never reads code.
 tools: Read, Glob, Bash
 disallowedTools: Edit, Write, NotebookEdit
 model: sonnet

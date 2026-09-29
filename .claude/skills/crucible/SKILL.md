@@ -1,9 +1,9 @@
 ---
-name: gauntlet-studio
-description: Turns a game idea into a fully autonomous, multi-agent game studio run. Interviews the user briefly, writes a Game Brief they approve or edit, then launches a Game Director that breaks the concept into tickets, routes them to departments (design, code, 3D/Blender, tech art, animation, audio, level, UI, QA), runs every ticket through a builder / verifier / two-critic gauntlet (blind experience critic vs shipped games, code critic vs architecture and reference repos), adds what the genre needs on its own initiative, and drives milestones to a complete Release Candidate in Unreal, Unity, Godot or web. Then it hands the game to the human, waits for playtest feedback, and runs patch cycles on it until the human says it is done. Triggers on "/gauntlet-studio", "build a game", "make me a game", "game studio loop", "autonomous game dev".
+name: crucible
+description: Turns a game idea into a fully autonomous, multi-agent game studio run. Interviews the user briefly, writes a Game Brief they approve or edit, then launches a Game Director that breaks the concept into tickets, routes them to departments (design, code, 3D/Blender, tech art, animation, audio, level, UI, QA), runs every ticket through a builder / verifier / two-critic gauntlet (blind experience critic vs shipped games, code critic vs architecture and reference repos), adds what the genre needs on its own initiative, and drives milestones to a complete Release Candidate in Unreal, Unity, Godot or web. Then it hands the game to the human, waits for playtest feedback, and runs patch cycles on it until the human says it is done. Triggers on "/crucible", "build a game", "make me a game", "game studio loop", "autonomous game dev".
 ---
 
-# Gauntlet Studio
+# Crucible
 
 The gauntlet loop, scaled up to a whole game studio.
 

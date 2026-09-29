@@ -17,7 +17,7 @@ while true; do
   fi
 
   echo "--- heartbeat $(date -u +%FT%TZ) ---"
-  if claude -p "Use the gauntlet-studio skill. You are the Game Director. Run exactly one heartbeat from the studio files. This is headless mode: wait for every subagent you dispatch before you integrate and report, then stop." \
+  if claude -p "Use the crucible skill. You are the Game Director. Run exactly one heartbeat from the studio files. This is headless mode: wait for every subagent you dispatch before you integrate and report, then stop." \
        --model "$MODEL" --permission-mode auto --output-format text; then
     sleep "$PAUSE_BETWEEN"
   else

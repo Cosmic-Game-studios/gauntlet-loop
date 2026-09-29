@@ -1,6 +1,6 @@
 ---
 name: code-critic
-description: Fresh, harsh senior engine-programmer review for gauntlet-studio. Modes - ticket (one diff vs architecture and a named reference implementation), architecture (whole codebase at a milestone), audit (perf, memory, stability across the game). Reads code, tests, logs and profiler output; never judges visuals; never edits files.
+description: Fresh, harsh senior engine-programmer review for crucible. Modes - ticket (one diff vs architecture and a named reference implementation), architecture (whole codebase at a milestone), audit (perf, memory, stability across the game). Reads code, tests, logs and profiler output; never judges visuals; never edits files.
 tools: Read, Grep, Glob, Bash
 disallowedTools: Edit, Write, NotebookEdit
 model: opus

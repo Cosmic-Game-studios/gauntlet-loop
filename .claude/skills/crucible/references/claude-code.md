@@ -8,7 +8,7 @@ The Director installs the studio into the game project before any ticket:
 
 | Copy from the skill | To the game project | Why |
 |---|---|---|
-| the whole skill folder | `.claude/skills/gauntlet-studio/` (if it is not already there) | `drive.sh` starts every heartbeat with "use the gauntlet-studio skill"; a headless session only finds project or user skills. |
+| the whole skill folder | `.claude/skills/crucible/` (if it is not already there) | `drive.sh` starts every heartbeat with "use the crucible skill"; a headless session only finds project or user skills. |
 | `agents/*.md` | `.claude/agents/` | Subagent roles with their own model, tool allowlist and prompt. Skills cannot register subagents; they must live in `.claude/agents/`. |
 | `templates/CLAUDE.md` | `CLAUDE.md` (append if one exists) | Every subagent inherits `CLAUDE.md`, so the studio's core rules reach all of them without repeating them in every prompt. |
 | `templates/settings.json` | `.claude/settings.json` (merge the `hooks` key) | Hooks below. |

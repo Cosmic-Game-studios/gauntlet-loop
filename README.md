@@ -50,12 +50,12 @@ The critic is the part that matters. It is a separate agent with fresh context, 
 
 The loop exits when your work wins the blind comparison, or when you stop the run. Never after a fixed number of rounds.
 
-## Gauntlet Studio: a whole game, autonomously
+## Crucible: a whole game, autonomously
 
-`gauntlet-studio` scales the loop up to a full game studio.
+`crucible` scales the loop up to a full game studio.
 
 ```
-/gauntlet-studio a co-op roguelite about lighthouse keepers fighting sea monsters, Unreal 5, stylised like Sea of Thieves
+/crucible a co-op roguelite about lighthouse keepers fighting sea monsters, Unreal 5, stylised like Sea of Thieves
 ```
 
 1. **Intake.** It asks at most 5 questions (engine, scope, reference games, art direction, must-haves), only if the pitch leaves them open.
@@ -71,7 +71,7 @@ The loop exits when your work wins the blind comparison, or when you stop the ru
 11. **Everything headless.** Blender, Unreal, Unity, Godot and web are driven from scripts, with screenshots, turntables and video as the critic's evidence. All memory lives in a `studio/` folder so the run survives context resets, and a dashboard shows progress live.
 
 ```
-.claude/skills/gauntlet-studio/
+.claude/skills/crucible/
 ├── SKILL.md                     # intake flow, bar rules, entry point
 ├── agents/                      # subagents installed into the game project's .claude/agents/
 │   ├── studio-builder.md        # builds one ticket, own worktree
@@ -130,7 +130,7 @@ For any other agent, the skill swaps those two lines for plain instructions: kee
 - A vague bar. The critic invents a comparison and approves everything. By far the most common failure.
 - The builder judging its own work. The critic needs fresh context and no knowledge of how hard the builder tried.
 - A soft critic. Give it a binary job, not a score.
-- A fixed round count. The exit is winning, or you calling it. (For a single piece. At the scale of a whole game, `gauntlet-studio` caps rounds on purpose and moves the rest of the quality work to held-out judges and polish passes - see above.)
+- A fixed round count. The exit is winning, or you calling it. (For a single piece. At the scale of a whole game, `crucible` caps rounds on purpose and moves the rest of the quality work to held-out judges and polish passes - see above.)
 
 ## Credit
 

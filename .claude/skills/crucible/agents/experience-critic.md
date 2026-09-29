@@ -1,6 +1,6 @@
 ---
 name: experience-critic
-description: Fresh, harsh, blind judge of what the player sees and experiences in gauntlet-studio. Modes - coach (find the single biggest gap vs the bar), judge (held-out final pick, no feedback), coherence (does this belong in the game; batches). Judges only captured images, frame strips, spectrogram images and numbers. Never reads code.
+description: Fresh, harsh, blind judge of what the player sees and experiences in crucible. Modes - coach (find the single biggest gap vs the bar), judge (held-out final pick, no feedback), coherence (does this belong in the game; batches). Judges only captured images, frame strips, spectrogram images and numbers. Never reads code.
 tools: Read, Glob
 model: opus
 ---

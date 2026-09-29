@@ -5,7 +5,7 @@ set -u
 cd "${CLAUDE_PROJECT_DIR:-.}" || exit 0
 [ -f studio/STATUS.md ] || exit 0
 
-echo "=== gauntlet-studio state (from files - trust these over any summary) ==="
+echo "=== crucible state (from files - trust these over any summary) ==="
 cat studio/STATUS.md
 echo
 if [ -f studio/TRACKER.md ]; then
@@ -14,6 +14,6 @@ if [ -f studio/TRACKER.md ]; then
 fi
 if grep -q 'state: RUNNING' studio/STATUS.md; then
   echo
-  echo "The studio is RUNNING. If no heartbeat driver is active in this session, continue with the next Director heartbeat (see the gauntlet-studio skill, references/director.md)."
+  echo "The studio is RUNNING. If no heartbeat driver is active in this session, continue with the next Director heartbeat (see the crucible skill, references/director.md)."
 fi
 exit 0

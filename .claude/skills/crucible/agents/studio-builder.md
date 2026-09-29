@@ -1,6 +1,6 @@
 ---
 name: studio-builder
-description: Builds or revises exactly one gauntlet-studio ticket (code, Blender asset, shader, level, UI, audio script, design spec) from the context pack the Game Director gives it. Use for every ticket round; never for judging.
+description: Builds or revises exactly one crucible ticket (code, Blender asset, shader, level, UI, audio script, design spec) from the context pack the Game Director gives it. Use for every ticket round; never for judging.
 model: inherit
 isolation: worktree
 disallowedTools: Agent
