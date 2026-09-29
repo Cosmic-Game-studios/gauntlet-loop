@@ -46,13 +46,18 @@ Every sourced asset has its licence recorded in `studio/ASSETS.md`. No asset of 
 - **Bar:** the reference game's equivalent asset, same angle, same distance.
 - **Verify:** scale in metres, pivot, applied transforms, naming convention, polycount and texel density budget, clean export and import.
 - **Rule:** get the silhouette critic's WON on the blockout before spending on detail.
+- **Custom hero characters are allowed and expected** where the game's identity needs them - but only through the full quality gates below. A kit character that passes beats a custom one that does not.
+- **Character quality gates (verify, scripted):** quad-dominant topology with edge loops at every deforming joint (shoulders, elbows, hips, knees, mouth/eyes if animated); no non-manifold geometry; triangle budget per LOD; UV texel density within 10% across the body; mirrored symmetry check; normals and smoothing correct.
+- **Character evidence:** turntable, silhouette, wireframe close-ups of joints, and a **deformation test**: the rigged mesh rendered in 8 stress poses (arms up, arms forward, deep crouch, full twist, knee raise, lunge, head turn, fist) - the critic checks for collapsing volume, candy-wrapper twists and interpenetration.
 
 ## Animation
 
 - **Builds:** rigs, skinning, locomotion sets, attacks, reactions, retargeting, blend trees / state machines with Code.
 - **Evidence:** clip on the in-engine character, side view and game camera view, plus a slowed 0.25x version.
 - **Bar:** the reference game's equivalent move, frame-stepped.
-- **Verify:** loops, root motion, foot sliding threshold, correct skeleton, event markers (footsteps, hit frames) present.
+- **Verify:** loops, root motion, foot sliding threshold, correct skeleton, event markers (footsteps, hit frames) present, no joint beyond its rotation limits, no mesh interpenetration in any frame (scripted collision check on sampled frames).
+- **Animation quality evidence:** frame strips at game fps from side and game camera, plus **motion-arc overlays** (the path of hands, feet, head and weapon traced across frames onto one image) and **spacing charts** (per-frame distance of key bones). The critic judges the principles it can see in stills: clear key poses and silhouettes, arcs instead of straight lines, ease-in/out in the spacing, anticipation before and follow-through after big moves, weight shift and contact frames. It compares against the bar move frame-stepped at the same fps.
+- **Rule:** block the key poses first and get them judged as a pose strip before splining and polishing - a bad pose cannot be fixed by smoothing.
 
 ## Tech Art
 

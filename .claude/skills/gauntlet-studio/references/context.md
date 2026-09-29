@@ -20,7 +20,9 @@ Everything important lives in `studio/` (see `state.md`), written the moment it 
 | Captures and logs | `evidence/<ticket>/round-<n>/` | By the capture scripts |
 | Critic and playtester verdicts | `evidence/<ticket>/round-<n>/verdicts.md` | By the Director, from their returns (critics are read-only) |
 
-`STATUS.md` is the **first file any agent reads** and it must fit on one screen (max ~40 lines). It answers: milestone, gate progress, what is running, what is blocked, top risk, next 5 actions, budget used.
+`STATUS.md` and `TRACKER.md` belong to the **Director alone**. They are its overview of the whole studio; no builder, critic or playtester reads them, because the big picture would only distract them from their one job (and would break a critic's blindness). Everyone else gets a context pack (Rule 2).
+
+`STATUS.md` is the first file the Director reads and it must fit on one screen (max ~40 lines). It answers: milestone, gate progress, what is running, what is blocked, top risk, next 5 actions, budget used.
 
 `TRACKER.md` is the Director's checklist. Every ticket is one checkbox line, grouped by feature; details live under the ticket's heading, not in the list. See the format in `state.md`.
 
