@@ -1,6 +1,6 @@
 # The ticket gauntlet
 
-Every ticket, in every department, runs the same gauntlet. This is where quality comes from. The Director only merges tickets that come out as WON.
+Every ticket, in every department, runs the same gauntlet. This is where quality comes from. The Director only merges tickets that come out as WON. How much of it a ticket gets depends on its tier (hero / core / bulk, see `endurance.md`); the order and the rules never change.
 
 ```
                  +---------------------------------------------------------------+
@@ -24,6 +24,7 @@ Mixing them into one critic lets each concern excuse the other. Separate critics
 - A builder subagent with the ticket, the pillars, the style bible, `ARCHITECTURE.md` and the bar. Nothing else.
 - It produces the artifact **and the evidence**: the change, plus the captures the Experience critic will judge (see `engines.md`), plus the diff and test results the Code critic will judge.
 - It never self-approves and never writes "done" - it writes "ready for verify".
+- Its context pack is listed in the ticket (`context.md`). It reads those files and nothing else, and returns at most 5 lines; everything else goes to `evidence/<ticket>/round-<n>/`.
 
 ## 2. Verify (machine checks, no taste)
 
@@ -103,13 +104,14 @@ BLOCKERS: ranked, each with file:line and the fix as an instruction (empty if PA
 ## 4. Decide
 
 - A ticket is **WON** when every applicable track passes:
-  - Experience: two independent fresh critics pick ours, each with a re-randomised order.
+  - Experience: hero - two independent fresh critics pick ours, each with a re-randomised order; core - one; bulk - passes its Coherence batch.
+  - Numbers: every number in the ticket is met on the measurement, not on the critic's impression.
   - Code: one fresh Code critic returns `PASS` on the final diff (after any Experience-driven changes - never on an older diff).
 - Otherwise every open GAP and BLOCKER goes back to the builder together, Code blockers first. The builder fixes, verify runs again, and **both** critics re-judge from scratch - a visual fix can break code, a code fix can change feel.
 
 ## Stalls and escalation
 
-A ticket is **stalled** after 5 rounds with the same GAP or BLOCKER, or 8 rounds total.
+A ticket is **stalled** after 3 rounds with the same GAP or BLOCKER, or at its tier's round budget (hero 8, core 5, bulk 3). A GAP that repeats across tickets becomes a `LESSONS.md` rule.
 
 1. **Swap the builder** - new subagent, fresh context, told only the bar and the last GAP/BLOCKERS.
 2. **Split the ticket** - the GAP usually names a sub-problem that deserves its own ticket.

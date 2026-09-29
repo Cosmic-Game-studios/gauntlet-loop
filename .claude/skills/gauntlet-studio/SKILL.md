@@ -41,11 +41,13 @@ PITCH -> questions (max 5) -> BRIEF -> [human: OK / edit]
 
 On OK, read and follow, in this order:
 
-- `references/director.md` - the Game Director's loop, the board, milestones, scope control.
+- `references/context.md` - context engineering: files are memory, STATUS.md and the TRACKER.md checklist, context packs, 5-line return contracts, fresh context per heartbeat. Read this first; it governs how you read everything else.
+- `references/director.md` - the Game Director's heartbeat, decomposition, milestones, initiative, scope control.
 - `references/departments.md` - every department's builder, its bar, its verifier, its critic.
 - `references/gauntlet.md` - the per-ticket builder / verifier / Experience critic / Code critic protocol. This is the quality engine.
 - `references/engines.md` - how agents drive Unreal, Unity, Godot, Blender and the web headlessly, and how they capture evidence for critics.
 - `references/state.md` - the `studio/` folder that holds all memory, so the run survives context resets.
+- `references/endurance.md` - ticket tiers, cheap-first gates, model tiering, calibrated bars, stall economics, running for a week and surviving usage limits.
 - `references/feedback.md` - the Release Candidate handoff, waiting for the human, and turning their feedback into bars, tickets and patch cycles.
 
 Start with `/loop` (self-paced) on the Director heartbeat, and use multi-agent orchestration (Workflow / ultracode or parallel subagents) for department fan-out. On agents without those features: "Keep looping the Director heartbeat until the Release Candidate gate passes, then hand off and wait for the human. Run department builders and critics as parallel subagents with fresh context."
@@ -66,7 +68,10 @@ A bar is a **named shipped game**, narrowed to the exact thing being judged, tha
 - **Critics judging descriptions.** Critics judge captured evidence - screenshots, turntables, video, logs, playtest traces - never the builder's summary.
 - **Pieces that pass alone and fail together.** Integration is judged separately, every heartbeat, on a real build.
 - **Scope creep.** Everything outside the brief goes to `studio/PARKING.md`. The Director cuts before it adds.
-- **Lost memory.** Anything not written to `studio/` does not exist after a context reset.
+- **Lost memory.** Anything not written to `studio/` does not exist after a compaction or reset. Write-through: tick `TRACKER.md`, log errors and decisions the moment they happen.
+- **A Director that reads everything.** Its context fills with logs and transcripts and its judgement degrades. It reads `STATUS.md`, `TRACKER.md` and 5-line returns; everyone else gets a context pack.
+- **Same effort on every ticket.** A crate does not need two blind critics vs a AAA game. Tier the tickets; spend on what the player notices.
+- **Unbeatable bars.** Judge a narrow axis at matched scope, measure feel in numbers, and use the bar ladder - or the loop burns budget on production value it cannot reach.
 - **Asking the user mid-run.** After OK, decide, log the decision in `studio/DECISIONS.md`, and keep going. The user watches the dashboard; they are not a dependency until the Release Candidate.
 - **Building only what was asked.** A pitch never lists settings menus, rebinding, hit feedback or checkpoints. The Director's completeness pass adds what the genre needs.
 - **Handing over a half-finished game.** The human's time is the most expensive resource in the loop. They only get a build that passed the Release Candidate gate.

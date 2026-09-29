@@ -1,22 +1,24 @@
 # The Game Director
 
-The Director is the lead agent. It owns the brief, the board, the milestones and every cut. It never produces a ticket's output itself - it plans, routes, merges, integrates and decides.
+The Director is the lead agent. It owns the brief, the tracker, the milestones and every cut. It never produces a ticket's output itself - it plans, routes, merges, integrates and decides.
 
 ## The heartbeat
 
-The Director runs one heartbeat per `/loop` iteration. Each heartbeat is the same seven steps:
+The Director runs one heartbeat per `/loop` iteration. Each heartbeat starts from files, not from memory (`context.md`), and is the same seven steps:
 
 ```
-1. LOAD      Read studio/BRIEF.md, BOARD.md, MILESTONE.md, DECISIONS.md, last HEARTBEAT log.
-2. SENSE     Pull results from finished tickets. Read the latest build report and playtest.
+1. LOAD      Read studio/STATUS.md, TRACKER.md (open section), MILESTONE.md, last 10 DECISIONS. Nothing else.
+2. SENSE     Read the 5-line return of every finished ticket and the latest build/playtest summary. Tick TRACKER.md.
 3. JUDGE     Is the current milestone's exit gate met? (see Milestones) If the Release Candidate gate is met: hand off and stop (feedback.md).
-4. PLAN      Split, re-route, re-prioritise, cut. Write new tickets. Max 12 in flight.
+4. PLAN      Split, re-route, re-prioritise, cut. Write new tickets with tier + context pack. Record repeated gaps in LESSONS.md.
 5. DISPATCH  Fan out every READY ticket to its department gauntlet, in parallel.
 6. INTEGRATE Merge WON tickets into main, build, run smoke tests, capture evidence.
-7. REPORT    Append to studio/HEARTBEAT.md, regenerate studio/dashboard.html, commit.
+7. REPORT    Overwrite STATUS.md, append HEARTBEAT.md, regenerate dashboard.html, commit. Rotate files (context.md).
 ```
 
 Heartbeats are self-paced. A heartbeat ends when it has dispatched work and written its report. The next one starts when work returns.
+
+Write-through, not write-back: tick a checkbox, log an error, record a decision the moment it happens. If the session dies mid-heartbeat, the files are still right.
 
 ## Decomposition
 
@@ -28,7 +30,8 @@ Brief -> Pillars -> Features -> Tickets
 
 - A **feature** is something a player would name: "grappling hook", "boss 1", "main menu", "forest biome".
 - A **ticket** is the smallest piece one builder can finish and one critic can judge on its own evidence. Rule of thumb: one ticket = one asset, one mechanic, one screen, one sound set, one room.
-- Every ticket has: `id, feature, department, goal, bar, acceptance test, dependencies, budget, status`.
+- Every ticket has: `id, feature, department, tier, goal, bar, question, numbers, code bar, context pack, acceptance, dependencies, budget, status`.
+- Tier (hero / core / bulk) decides how much gauntlet it gets - see `endurance.md`.
 - Ticket format lives in `state.md`.
 
 Decompose just in time. Only the current milestone gets tickets. Later milestones stay at feature level.
@@ -90,7 +93,7 @@ Before the first content ticket, the Director has Code write `studio/ARCHITECTUR
 
 The Director's default move is to cut.
 
-- Anything outside the brief goes to `PARKING.md`, not the board.
+- Anything outside the brief goes to `PARKING.md`, not the tracker.
 - A feature that fails its gauntlet 3 heartbeats in a row triggers a **kill review**: simplify it, replace it with a cheaper version that serves the same pillar, or cut it.
 - "Not this" in the brief is binding.
 - Adding a feature requires cutting or shrinking one of equal cost.
@@ -116,7 +119,7 @@ Tickets pass alone and fail together, so every heartbeat that merged something r
 
 ## Parallelism
 
-- Up to 12 tickets in flight, only if their dependencies are WON and they touch different files/assets.
+- In-flight count scales with the milestone (4-6 early, 8-12 in content production - see `endurance.md`), only if dependencies are WON and tickets touch different files/assets.
 - One owner per file. Two tickets that need the same file are sequenced, not parallelised.
 - Every builder works on its own branch or worktree. The Director merges.
 
@@ -125,7 +128,7 @@ Tickets pass alone and fail together, so every heartbeat that merged something r
 `studio/dashboard.html` is regenerated every heartbeat, so the user can watch without interrupting:
 
 - Milestone, gate status, heartbeat count.
-- Board by department: READY / BUILDING / IN GAUNTLET / WON / CUT.
+- Tracker by department: READY / BUILDING / IN GAUNTLET / WON / CUT, plus open errors.
 - Latest build video and screenshots next to the bar, side by side.
 - Last 10 decisions.
 - Numbers: fps, load time, crash-free minutes, open bugs.
