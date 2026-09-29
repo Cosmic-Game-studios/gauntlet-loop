@@ -77,6 +77,16 @@ These scores were assessed by the benchmark author from the logs and artifacts. 
 | **Workflow** | 5: fast, self-tested, no outside review | 6: critic feedback clearly improved the look over 16 rounds, but the exit condition ("until the critic picks ours") was unreachable, blindness was not real, and edits collided in one file | 6: the code critic found 6 real blockers; module ownership kept the code clean; but the visual critic round was wasted, fixes merged without re-review, and it handed off 10 minutes early |
 | **Management and traceability** | 3: a log only | 5: a progress page | **9**: tracker, decisions, errors, `KNOWN_GAPS.md` and a handoff folder ([`crucible-studio-state/`](crucible-studio-state/)) |
 
+## 6. Optimization (measured afterwards with [`../run2/harness/perf.mjs`](../run2/harness/perf.mjs))
+
+WebGL-instrumented, same load for all three games (menu, idle, 12 enemies in combat), software rendering, 960x540.
+
+| | Solo | Gauntlet Loop | Crucible |
+|---|---|---|---|
+| Load time | 1.2 s | 4.3 s | **0.7 s** |
+| fps idle / combat | **11.7 / 11.1** | 5.2 / 5.0 | 7.8 / 6.3 |
+| Draw calls idle / combat | 109 / 345 | 270 / 630 | **17 / 296** |
+
 ## Verdict
 
 **In a 30-minute window there is no clear winner, and Crucible did not produce a clearly better game.**

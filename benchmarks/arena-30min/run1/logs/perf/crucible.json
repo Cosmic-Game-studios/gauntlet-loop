@@ -1,0 +1,24 @@
+{
+  "loadMs": 674,
+  "menu": {
+    "fps": 8.6,
+    "drawCallsPerFrame": 9,
+    "trianglesPerFrame": 3442,
+    "heapMB": 9.3,
+    "heapSawtoothMB": 4.2
+  },
+  "idle": {
+    "fps": 7.8,
+    "drawCallsPerFrame": 17,
+    "trianglesPerFrame": 3558,
+    "heapMB": 10.1,
+    "heapSawtoothMB": 0.7
+  },
+  "combat12": {
+    "fps": 6.3,
+    "drawCallsPerFrame": 296,
+    "trianglesPerFrame": 26912,
+    "heapMB": 12.1,
+    "heapSawtoothMB": 2.1
+  }
+}

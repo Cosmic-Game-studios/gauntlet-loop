@@ -1,0 +1,21 @@
+You are one arm of a benchmark. Your working directory is /home/user/bench/gauntlet. Read /home/user/bench/shared/BENCH_RULES.md first; it overrides anything below on time, directories and logging. The game spec is SPEC.md.
+
+Your method is the gauntlet loop. You are the lead agent. Follow this prompt exactly:
+
+---
+Build the browser 3D first-person arena shooter described in SPEC.md, in the game/ folder.
+
+The bar is Dive by Mugen87, a three.js + Yuka deathmatch shooter, for level design, enemy behaviour, HUD and overall look - it is checked out at /home/user/bench/shared/bars/dive and runs locally with `node /home/user/bench/shared/bars/run_dive_fps.mjs <outprefix> [count] [intervalMs]` (first-person gameplay frames with weapon and HUD) or `run_dive_example.mjs <outprefix>` (overview); adapt a copy in your own directory for other views. For movement and collision feel, the bar is three.js's games_fps example at /home/user/bench/shared/bars/threejs-games-fps. Get the real things running first and compare against them directly, not against a description of them.
+
+Break this into the smallest pieces that can be improved and judged on their own. For each piece, fan out a builder and a separate critic with fresh context. The critic inspects the actual output in headless Chromium, puts our screenshot next to the bar's blind with the labels stripped, says which one is better, and names the single biggest remaining gap. Then it goes back to the builder.
+
+The critic should be a harsh critic. Praise is not useful. If ours does not win, it keeps going.
+
+Keep looping on each piece until the critic picks ours blind. Do not stop before that.
+
+Keep a live progress page (PROGRESS.md) updating as the work evolves so I can watch it.
+
+Run the builders and critics as parallel subagents.
+---
+
+The 30-minute hard limit from the rules applies: at the limit, stop looping and leave the best committed version. Commit in /home/user/bench/gauntlet. Write BENCH_LOG.md as the rules describe, and add a section "Method friction": where the gauntlet loop prompt helped, where it was unclear or got in the way.

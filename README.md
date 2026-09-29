@@ -30,7 +30,7 @@
 **Crucible** is a Claude Code skill that runs a complete game studio of agents. You pitch a game and approve a one-page brief. From there a **Game Director** agent breaks the game into tickets, sends them to departments (design, code, 3D in Blender, animation, tech art, audio, levels, UI, QA), and drives it from a first tech spike to a release candidate. It does all of that without asking you anything. When the game is done, you play it and say what you think, and Crucible turns your feedback into the next build.
 
 > [!NOTE]
-> Crucible is an evolution of the **Gauntlet Loop**, a technique by [Matt Shumer](https://github.com/mshumer) in which a builder and a separate harsh critic loop against a real reference until the work wins. Crucible keeps that core. It adds what building a whole game needs: a management layer, departments, capped rounds with a held-out judge, context engineering for multi-day runs, and a human playtest loop. See [Credits](#credits).
+> Crucible is an evolution of the **Gauntlet Loop**, a technique by [Matt Shumer](https://github.com/mshumer) in which a builder and a separate harsh critic loop against a real reference until the work wins. Crucible keeps that core. It adds what building a whole game needs: a studio organisation with leads and departments, budgeted review rounds with a held-out judge, engine adapters, context engineering for multi-day runs, and a human playtest loop. See [Credits](#credits).
 
 ## Why Crucible
 
@@ -42,7 +42,8 @@ Crucible is built for exactly those failure modes:
 |---|---|
 | Nobody holds the whole game together | A **Game Director** owns the brief, the tracker, the milestones and every cut. It never builds anything itself. |
 | "Good enough" output | Every ticket faces a **Code critic** and a blind **Experience critic** that compares it with a real shipped game. |
-| Endless revision, optimising for the critic | Rounds are **capped** (hero 3, core 2, bulk 1). A **held-out judge** decides, and the builder never sees it. Work that falls short becomes debt for later polish passes. |
+| Too little iteration on what players see, or endless iteration that chases the critic | Hero pieces get **up to 6** review rounds with **plateau stop**, fresh critics and rotating captures; a **held-out judge** decides. Work that falls short becomes debt for later polish passes. |
+| Busy process, unchanged game | A **progress contract**: every heartbeat must raise playable quality, reduce a real risk or gain needed information. Progress reviews measure the game and cut process or **replace the approach** when it stops improving. |
 | Context loss on long runs | **Files are the memory.** A one-screen `STATUS.md` and a checkbox `TRACKER.md` belong to the Director. Every other agent gets a small context pack and returns at most 5 lines. |
 | The pitch never lists everything a game needs | A **completeness pass** adds what the genre expects: settings, rebinding, hit feedback, checkpoints, juice. |
 | Taste the model cannot judge | **You** play the release candidate. Fun, feel and sound are yours to judge, and every piece of feedback becomes a new bar and new tickets. |
@@ -88,7 +89,8 @@ flowchart LR
     P([Your pitch]) --> Q[Machine probe<br/>+ max 5 questions]
     Q --> B[/Game Brief/]
     B -->|you: OK| D{{Game Director}}
-    D -->|tickets| DEP[Departments<br/>Design · Code · 3D · Anim<br/>Tech Art · Audio · Level · UI · QA]
+    D --> L[Leads<br/>Art · Tech · Design]
+    L --> DEP[Departments<br/>Character · Environment · Level · Animation<br/>VFX · Tech Art · Gameplay · AI · UI · Audio · QA]
     DEP --> G[[Ticket gauntlet]]
     G -->|WON / PASSED| D
     D --> M[Milestones<br/>Tech Spike → Vertical Slice →<br/>Content Alpha → Beta → RC]
@@ -106,7 +108,7 @@ flowchart LR
     V -->|fail| BLD
     V --> C[Code critic<br/>vs reference repo]
     C --> X[Coach critic<br/>one gap vs the bar]
-    X -->|next round, max 3| BLD
+    X -->|next round, up to 6<br/>plateau stops early| BLD
     X --> CH[(Champion<br/>best so far)]
     CH --> J{Held-out judge<br/>blind · both orders}
     J -->|beats the bar| W[WON]
@@ -115,71 +117,84 @@ flowchart LR
 ```
 
 - **Two critics, never one.** The Experience critic sees only images and never reads code. The Code critic reads only code and never judges looks. If one critic did both, each concern would excuse the other.
-- **Capped rounds.** After two or three rounds, revising mostly optimises for the critic rather than the player. So rounds stop there, a fresh judge on held-out captures decides, and what falls short is picked up later in polish passes with fresh eyes.
+- **Budgeted rounds.** Visible quality needs iteration, so hero pieces get up to six rounds. Endless revision optimises for the critic instead of the player, so every round uses a fresh critic with rotating captures, two rounds without a new champion stop the ticket early, and a fresh judge on held-out captures decides.
 - **The best version wins, not the latest.** A revision that made things worse is thrown away.
 
 ## Benchmark
 
 > [!IMPORTANT]
-> **30-minute time window.** All three contenders build the same game from the same spec, on the same model, and each gets 30 minutes. Crucible is designed for runs of hours to days, so this is a deliberately hard setting for it.
+> **30-minute time window.** Three contenders build the same game from the same spec, on the same model (Claude Opus 5.5), each as its own headless Claude Code process with 30 minutes. Crucible is designed for runs of hours to days, so this is a deliberately hard setting for it.
 
 **Task:** *Arena*, a 3D first-person arena shooter in the browser (three.js). It has two weapons, two procedurally modelled enemy types with navigation, five waves, a HUD, menus, and synthesised audio. No external assets are allowed. The task is complex enough that a single agent cannot one-shot it well.
 
-**Contenders:**
+**Contenders:** a **solo agent** (one session, no loop, no subagents); the **Gauntlet Loop** (the original prompt: builder and harsh blind critic per piece, looping until it wins); and **Crucible**.
 
-| | Method |
-|---|---|
-| **Solo agent** | One Claude Code session, no loop, no subagents |
-| **Gauntlet Loop** | The original gauntlet loop prompt: builder and harsh blind critic per piece, looping until it wins |
-| **Crucible** | Game Director, departments, capped two-critic gauntlet, file-based context, one fresh session per heartbeat |
+**Evaluation** (all blind unless marked):
+- **Independent function harness:** movement, collision, shooting, reload, enemy AI, waves, pause, game over.
+- **WebGL performance probe:** draw calls, triangles, frame rate and load time under identical load.
+- **Two visual judges:** screenshots.
+- **Two code reviewers.**
+- **Two playtesters:** they actually play all three games through menus, keys and mouse.
+- **Measured cost and tokens.**
+- **Log-based assessment:** context, workflow and management. This part is not blind.
 
-**Evaluation:**
-- **Independent automated test harness:** movement, collision, shooting, reloading, enemy AI, waves, pause, game over, frame rate, runtime errors.
-- **Blind review by fresh critics:** screenshots and code, with the contender's identity hidden.
-- **Workflow, context and management:** measured from the runs.
+### Run 2 - Crucible v2 (studio, model routing, up to 6 rounds, craft rules)
 
-### The three games
+<p align="center"><img src="assets/benchmark/run2/studio.png" alt="Run 2 - Crucible v2, six scenes" width="100%"></p>
+<p align="center"><img src="assets/benchmark/run2/gauntlet.png" alt="Run 2 - Gauntlet Loop, six scenes" width="100%"></p>
+<p align="center"><img src="assets/benchmark/run2/solo.png" alt="Run 2 - Solo agent, six scenes" width="100%"></p>
 
-<p align="center"><img src="assets/benchmark/solo.png" alt="Solo agent - six scenes" width="100%"></p>
-<p align="center"><img src="assets/benchmark/gauntlet.png" alt="Gauntlet Loop - six scenes" width="100%"></p>
-<p align="center"><img src="assets/benchmark/studio.png" alt="Crucible - six scenes" width="100%"></p>
-
-### Results
-
-| | Solo agent | Gauntlet Loop | Crucible |
+| | Solo agent | Gauntlet Loop | Crucible v2 |
 |---|:---:|:---:|:---:|
-| **Look and UX** (2 blind judges, 1-10) | 4.5 | **6.5** 🏆 | 4.5 |
-| **Code quality** (2 blind judges, 1-10) | 6.5 | 5 | **8** 🏆 |
-| Correctness · architecture · performance | 6.5 · 6 · 7 | 5 · 3 · 3.5 | **8 · 7.5 · 8** |
-| All spec features working (independent harness) | ✅ | ✅ | ✅ |
+| **Look & UI** (blind screenshot judges, 1-10) | 4.5 | 5.5 | **6** 🏆 |
+| **Look while playing** (blind playtesters) | 5 | 6 | **8** 🏆 |
+| **Playability** (blind playtesters) | **6** 🏆 | 5 | 5 |
+| Controls · feedback · menus (playtesters) | **7** · 4 · **7.5** | 4.5 · **8** · 3.5 | 4 · 5.5 · 6 |
+| **Code quality** (blind reviewers) | 5 | **6.5** | **6.5** |
+| Architecture · performance discipline · correctness | 3 · 5 · **6.5** | 6 · 4 · 6 | **7 · 7** · 5.5 |
+| **Optimization:** draw calls in combat · triangles · load time | 331 · 23k · 1.1 s | 888 · 81k · 4.5 s | **109 · 8k · 0.8 s** 🏆 |
+| Function tests (independent harness) | **15/15** | 14/15 | **15/15** |
 | **Context handling**¹ | 5 | 4 | **9** |
-| **Workflow**¹ | 5 | 6 | 6 |
+| **Workflow**¹ | 5 | 6 | **8** |
 | **Management and traceability**¹ | 3 | 5 | **9** |
-| Time used of 30 min | 14 min | 21 min | 20 min |
-| Cost (list price) | **$2.63** | $7.89 | $5.88 |
-| Subagents | 0 | 18 | 9 (over 3 fresh heartbeats) |
+| Time used of 30 min | 15 min | 22 min | 25 min |
+| Cost (list price) | **$2.35** | $9.11 | $8.34 |
+| Subagents | 0 | 15 | 20 (13 Opus, 7 Sonnet) |
 
 <sub>¹ Assessed from the run logs by the benchmark author. Not blind.</sub>
 
-**Verdict.** In a 30-minute window, no contender clearly wins:
+**Verdict for run 2.** Crucible v2 made a clear jump from run 1. It now leads on:
+- look and UI;
+- look while playing;
+- optimization: by far the fewest draw calls and triangles, and the fastest load;
+- architecture and performance discipline;
+- context, workflow and traceability.
 
-- **Gauntlet Loop:** the best-looking game. 16 visual critic rounds pushed art, level and HUD.
-- **Crucible:** the best-engineered game. Both blind code reviews picked it, and it is the only run whose state survives a restart: each heartbeat was a fresh session with at most about 60k context. It also cost less than the Gauntlet Loop.
-- **Solo agent:** the best value.
+It also cost less than the Gauntlet Loop. It ties the Gauntlet Loop on overall code. It loses on playability at low frame rates and on weapon feedback: its muzzle flash plus bloom washes out the centre of the screen. Both weaknesses are now rules in the skill:
+- input and fire rate must stay correct at any frame rate, checked in the acceptance suite;
+- effects must never cover the target.
 
-Combined blind quality comes out at Crucible 6.25, Gauntlet 5.75, Solo 5.5. That gap is too small to call a win.
+The solo agent remains the cheapest and the most robust to play. The Gauntlet Loop has the best hit feedback.
 
-The Crucible run logged 14 points of friction, and all of them are fixed in the skill now:
+<details>
+<summary><b>Run 1 - Crucible v1 (for comparison)</b></summary>
 
-- compressed schedules that use the full time
-- a gate that requires comparable reference evidence before any blind critic
-- re-review of fixes before merge
-- deterministic stepping as the first tool
-- threat readability as a style rule
+<p align="center"><img src="assets/benchmark/studio.png" alt="Run 1 - Crucible v1, six scenes" width="100%"></p>
+<p align="center"><img src="assets/benchmark/gauntlet.png" alt="Run 1 - Gauntlet Loop, six scenes" width="100%"></p>
+<p align="center"><img src="assets/benchmark/solo.png" alt="Run 1 - Solo agent, six scenes" width="100%"></p>
 
-Crucible is built for runs of hours to days. This benchmark tested the opposite end.
+| | Solo agent | Gauntlet Loop | Crucible v1 |
+|---|:---:|:---:|:---:|
+| Look & UX (blind judges) | 4.5 | **6.5** | 4.5 |
+| Code quality (blind reviewers) | 6.5 | 5 | **8** |
+| Draw calls idle · combat | 109 · 345 | 270 · 630 | **17 · 296** |
+| Context · workflow · management¹ | 5 · 5 · 3 | 4 · 6 · 5 | **9** · 6 · **9** |
+| Cost (list price) | **$2.63** | $7.89 | $5.88 |
 
-→ Full report, raw data, all three games and Crucible's `studio/` memory: [`benchmarks/arena-30min/`](benchmarks/arena-30min/RESULTS.md)
+In run 1 the Gauntlet Loop had the best-looking game and Crucible v1 the best-engineered one, with no clear overall winner. The 14 friction points Crucible logged became v2.
+</details>
+
+→ Full reports, raw data, all games and Crucible's `studio/` memory: [run 2](benchmarks/arena-30min/run2/RESULTS.md) · [run 1](benchmarks/arena-30min/run1/RESULTS.md)
 
 ## Under the hood
 
@@ -212,8 +227,9 @@ Milestones only advance when their gate is met on a real build: **Tech Spike →
 | Role | Subagent | Model | Tools |
 |---|---|---|---|
 | Game Director | main session | Opus | all |
-| Builder | `studio-builder` (own git worktree) | Opus for hero, Sonnet for core and bulk | all except spawning agents |
-| Coach, judge, coherence | `experience-critic` | Opus | `Read, Glob` (read-only, images) |
+| Art Director (lead) | `art-director` | Opus | all except spawning agents |
+| Builder | `studio-builder` | Opus for visual, spatial and feel work; Sonnet for implementation | all except spawning agents |
+| Art, UX, coach, judge, coherence | `experience-critic` | Opus | `Read` only (blind pairs in isolated folders; keys behind a deny rule) |
 | Code, architecture, audit | `code-critic` | Opus | `Read, Grep, Glob, Bash` (no edits) |
 | Playtester | `playtester` | Sonnet | `Read, Glob, Bash` (no edits) |
 
@@ -223,16 +239,22 @@ Heartbeat drivers: `tools/drive.sh` (a fresh headless session per heartbeat, for
 </details>
 
 <details>
-<summary><b>Engines and tools</b></summary>
+<summary><b>Engines, adapters and tools</b></summary>
 
-Everything runs headless and by script, and every critic judges captured evidence, never a description:
+- **One adapter interface per engine:** `probe, build, test, capture, perf, step, package, logs`, proven on the real project in the Tech Spike.
+- **Unreal Engine** adapter (`crucible_ue.py`):
+  - build: `Build.bat`
+  - test: Automation and Functional Tests through `UnrealEditor-Cmd`
+  - capture: screenshot functional tests
+  - perf: the CSV profiler and Unreal Insights
+  - package: `BuildCookRun`
+  - multiplayer: dedicated-server smoke tests, and Gauntlet for larger multiplayer suites
 
-- **Blender** (`blender -b -P`): procedural modelling, validation, turntables, deformation tests for characters, export.
-- **Web** (three.js and Playwright), **Godot 4**, **Unity 6** and **Unreal 5**: headless builds, tests, fixed-camera captures, and a step-play harness so agents can play turn by turn.
-- **Content without generative models.** Art comes from SVG, procedural textures and Blender renders. Audio comes from synthesis code and MIDI with a soundfont. External generators are used only if the machine has them.
-- **Custom hero characters** go through hard gates: topology, 8-pose deformation tests, motion-arc and spacing checks for animation.
+  Builders are isolated, merged through an integration queue, and share engine resources through locks. **Web** (three.js) ships ready-made tools, including a kickoff script. Godot and Unity follow the same interface.
+- **Tools are not prescribed.** Builders use whatever gives the best result, including MCP servers connected to the session, for example an Unreal Editor or Blender MCP server, as well as DCC tools and generators. What is fixed is the engine named in the brief, evidence captured through the adapter, and the model's real limits.
+- **Craft built in:** 3D modelling in code, skeletal animation, VFX that never hide the target, comic and cel rendering, performance budgets and game feel. Measurable craft rules become acceptance checks.
 
-→ [`references/engines.md`](.claude/skills/crucible/references/engines.md) · [`references/departments.md`](.claude/skills/crucible/references/departments.md)
+→ [`references/adapters.md`](.claude/skills/crucible/references/adapters.md) · [`references/craft.md`](.claude/skills/crucible/references/craft.md) · [`references/engines.md`](.claude/skills/crucible/references/engines.md)
 </details>
 
 <details>
@@ -271,14 +293,21 @@ The cycle repeats until you say the game is done.
 │   ├── studio-builder.md      builds one ticket in its own worktree
 │   ├── experience-critic.md   coach / judge / coherence, read-only
 │   ├── code-critic.md         ticket / architecture / audit, read-only
-│   └── playtester.md          plays via the step-play harness
+│   ├── playtester.md          plays via the step-play harness
+│   └── art-director.md        style bible, look-dev scene, coherence reviews
 ├── templates/                 CLAUDE.md, hooks, settings.json, drive.sh
+│   ├── web/                   kickoff, shot, perf, accept/check, blind tools
+│   └── unreal/                crucible_ue.py engine adapter
 └── references/
+    ├── studio.md              org chart, model routing, rituals, dispatch brief
+    ├── playbooks.md           how to spend 15 minutes, 30 minutes, hours or weeks
+    ├── craft.md               art, 3D, animation, VFX, comic style, feel, UI, performance
+    ├── adapters.md            engine adapter interface, Unreal, MCP, isolation, locks
     ├── brief-template.md      the one page you approve
     ├── claude-code.md         setup, roles, models, hooks, drivers, model limits
     ├── context.md             files as memory, STATUS/TRACKER, packs, return contracts
     ├── director.md            heartbeat, decomposition, milestones, initiative, scope
-    ├── gauntlet.md            capped rounds, critics, champion, held-out judge, debt
+    ├── gauntlet.md            up to 6 rounds, plateau stop, critics, champion, held-out judge
     ├── departments.md         what each department builds and how it is judged
     ├── engines.md             headless engines, capture scripts, step-play harness
     ├── endurance.md           tiers, cost, calibrated bars, week-long runs
@@ -292,8 +321,8 @@ Crucible is honest about what current models cannot do, and it is designed aroun
 
 - **Claude cannot generate images, audio or video, cannot hear audio, and cannot watch video.** Art is made with code and tools. Critics judge renders, frame strips and spectrograms. Sound taste is left to your playtest.
 - **Whether a game is fun** cannot be judged reliably by an LLM critic. That is what the human playtest is for. You can also comment on the vertical slice preview at any time without stopping the run.
-- **The machine sets the ceiling.** Unreal needs a GPU. In a GPU-less container, Godot or the web are realistic targets.
-- **Realistic target:** a very good indie game, or a strong alpha or beta. AAA is not the goal.
+- **The machine sets the ceiling.** Unreal needs a GPU and a local installation; the adapter's `probe` tells the studio what this machine can do. In a GPU-less container, Godot or the web are realistic targets.
+- **The target:** a game a player would not recognise as AI-made - a very good indie game, reaching toward AA. The benchmarks above show where Crucible stands today and what it still has to win.
 
 ## Credits
 

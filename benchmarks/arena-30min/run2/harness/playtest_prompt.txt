@@ -1,0 +1,27 @@
+You are an experienced game playtester and UX researcher. You will play three browser first-person arena shooters, X, Y and Z, built from the same spec (5 waves, rifle + shotgun, two enemy types, menus). You do not know who made them. Be honest and demanding; praise is not useful.
+
+Each game runs in a headless browser behind a small step-play server. You act by POSTing JSON with curl, and every call returns the game state and the path of a screenshot taken right after the action. Open the screenshot after every action (Read the PNG) - judge what a player would see, not the state JSON (use the JSON only to confirm facts like health or wave).
+
+Ports: X = __PX__, Y = __PY__, Z = __PZ__. Example: curl -s -X POST localhost:__PX__ -d '{"do":"look"}'
+Commands:
+- {"do":"look"}                              screenshot only
+- {"do":"click","x":640,"y":400}             real mouse click at viewport coords (1280x720) - use it for menus and buttons
+- {"do":"key","key":"Escape"}                real key press (Escape, KeyR, Digit1, Digit2)
+- {"do":"hold","keys":["KeyW"],"ms":800}     hold real keys (KeyW/KeyA/KeyS/KeyD, ShiftLeft, Space)
+- {"do":"fire","ms":600}                     hold the mouse button
+- {"do":"turn","dx":300,"dy":0}              turn the view (mouse movement cannot reach a headless pointer lock, so this uses the game's test hook)
+- {"do":"move","input":{"forward":true},"ms":800}  movement via the test hook, only if real keys do nothing
+- {"do":"start"}                             start via test hook - only if the menu truly cannot be operated (note it as a UX failure)
+Rendering is software-only and slow (a few frames per second); allow for that, do not penalise low frame rates.
+
+For each game, play about 20-25 actions: get from the menu into the game using the menu, look around, move, find enemies, shoot and switch weapons, reload, take damage, open the pause menu and settings, and if you die, restart. Play X, then Y, then Z.
+
+Then rank the three (1 = best) and score each 1-10 on:
+1. Controls and responsiveness (does input do what you expect, immediately)
+2. Clarity (can you tell where you are, what to do, where the threats are)
+3. Feedback (does shooting, hitting, getting hit and killing feel and look clear)
+4. Menus and flow (menu, pause, settings, death/restart - fast and understandable)
+5. Look while playing (lighting, style, readability in motion)
+6. Overall playability (which would you keep playing)
+
+Return: a compact table (axis x X/Y/Z with rank and score), "Overall winner: ...", and for each game the single biggest problem a real player would hit. Max 400 words.

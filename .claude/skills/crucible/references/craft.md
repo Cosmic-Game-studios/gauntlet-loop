@@ -70,6 +70,8 @@ When assets are authored in code or through a DCC tool driven by script, the dif
 Numbers live in tuning tables; the Design Director sets them from the bar where possible.
 
 - **Response.** Input acts on the next simulation step; no dead frames at the start of moves or shots.
+- **Correct at any frame rate.** A fixed-step simulation catches up with enough substeps (cap only against spirals, e.g. 0.25 s per frame), input edges (press, release, click) are queued and consumed by the fixed step so none is dropped, and automatic fire can emit several shots in one frame to keep its rate. In the second Arena benchmark the best-looking game lost on playability because at low frame rates its movement lagged and trigger pulls were swallowed; the simplest-looking game won controls because it caught up correctly. Make it an acceptance check at a throttled frame rate.
+- **Budget the look against the frame rate.** Post-processing and heavy shading are paid for in responsiveness on weak machines: measure `perf` with the full look, keep a quality setting, and default to the setting that holds the target frame rate on the reference machine.
 - **Movement.** Acceleration and deceleration curves rather than instant velocity; air control; coyote time and jump buffering in platformers; head bob and FOV kick on sprint kept subtle.
 - **Shooting.** Recoil that kicks and **recovers**; spread that blooms and settles; a trigger latch for semi-automatic weapons; a muzzle flash, tracer or impact, and a hit marker on every hit; a distinct kill confirmation; weapon switch and reload animations with readable timing.
 - **Impact.** Enemies react on hit (flinch, knockback, hit flash), die visibly, and the player feels damage (directional indicator, screen edge, sound).
