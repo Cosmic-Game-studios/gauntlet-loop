@@ -46,7 +46,7 @@ On OK you become the **Game Director** of a studio (`references/studio.md`): a l
 
 Read in this order, and only what the current step needs:
 
-1. **Before the first dispatch** (about 10 minutes of reading, worth it):
+1. **Before the first dispatch** (in sprint mode, under an hour, read only `playbooks.md`, the dispatch brief in `studio.md` and the formats in `state.md`, then dispatch; otherwise about 10 minutes of reading, worth it):
    - `references/studio.md` - org chart, model routing, the five rituals, how to write a dispatch brief.
    - `references/playbooks.md` - pick the playbook for the time available; it sets the waves and how often each ritual runs.
    - `references/context.md` - files are memory, context packs, prompt order for caching, resumed builders, the acceptance list.

@@ -13,14 +13,16 @@ Timeline for a 30-minute cap (scale proportionally):
 
 | Minutes | Who | What |
 |---|---|---|
-| 0-3 | Director | Probe (one command), brief, pillars, `ARCHITECTURE.md` with one owner per file and the shared interfaces, a shared constants/palette file, `acceptance.json`, role prompt files (`claude-code.md`), `tools/shot.mjs` and `tools/accept.mjs` from the templates. Commit. |
-| 3-11 | 5 builders, parallel, deadline minute 10:30 | **Wave 1 ships the whole game at first-pass quality** - no stubs in another owner's file. Opus: gameplay core + weapons and feel; look + arena (Art Director role: style bible, renderer and post setup, level); enemies (models, animation, AI); HUD + all screens (UI is a hero ticket). Sonnet: audio + bar captures in comparable framing (at most 3 minutes on bars). |
-| 11-12.5 | Director | Integrate, acceptance run, perf probe, one shared capture set and contact sheets, commit - the first playable build. |
-| 12.5-15 | Review board, parallel | Opus coaches for the look, the enemies, the HUD/screens (ux mode), plus the Code critic. |
-| 15-19.5 | Resumed builders, deadline 19:00 | One gap each (code blockers first). |
+| 0-4 | Director | Probe (one command); brief and pillars; `ARCHITECTURE.md` (below); engine vendored into the game (web: `three.module.js`, `three.core.js` and `examples/jsm` into `game/vendor/`, `game/index.html` with an import map for `three` and `three/addons/` - only the Director edits it); a no-op stub per module that exports its interface, so half-built modules never break another builder's render; shared constants/palette file; `acceptance.json` (checks, not scripts); role prompt files and `tools/` from the templates (`claude-code.md`). Commit. |
+| 4-11.5 | 5 builders, parallel, deadline = dispatch time + 7.5 min | **Wave 1 ships the whole game at first-pass quality**, each builder replacing its own stubs. Opus: gameplay core + weapons and feel (also owns the debug/test hook); look + arena (Art Director role - give it `studio-builder.md` plus the kickoff items of `art-director.md`: style bible, renderer and post setup, level); enemies (models, animation, AI); HUD + all screens (UI is a hero ticket). Sonnet: audio, then QA tools - `tools/check.mjs` for every acceptance id, `tools/review.json` (the review capture script: gameplay frames in the bar's framing, an enemy lineup, every screen) and bar captures in comparable framing (at most 3 minutes on bars). Builders report errors in other owners' files instead of fixing them. |
+| 11.5-13 | Director | Integrate, `tools/accept.mjs`, perf probe, `tools/shot.mjs` with `tools/review.json` and contact sheets, commit - the first playable build. |
+| 13-15.5 | Review board, parallel, deadline in every prompt | Opus coaches for the look, the enemies, the HUD/screens (ux mode), plus the Code critic (reads code and the acceptance results; launches no browser in sprint mode). |
+| 15.5-20 | Fix builders, deadline = dispatch + 4 min | One gap each (code blockers first). In headless runs these are fresh foreground Agent calls with the ticket, the one gap and the file list - resumed agents may run in the background and cannot be awaited. |
 | 19.5-26.5 | Review + fix, round 2 | Same shape, shorter: coaches on the three most visible pieces, resumed builders with deadline 26:00. If time allows, round 3 on the single weakest piece. |
 | 26.5-28.5 | Sonnet re-check | Fix diffs of the last round re-checked against their blockers and the acceptance list; revert a fix that breaks a check. |
-| 28.5-30 | Director | Final acceptance run, commit, `KNOWN_GAPS.md`, `PLAY.md`, `STATUS.md` = `WAITING FOR HUMAN`. |
+| 28.5-30 | Director | Final acceptance run, commit, `KNOWN_GAPS.md`, `PLAY.md`, the last contact sheet as the handoff preview, `STATUS.md` state line `state: WAITING FOR HUMAN RC-1`. |
+
+**`ARCHITECTURE.md` in sprint mode** is short but complete: the file-owner table; the debug/test hook and its owner (if the brief or spec names a test hook, extend that one) with `step(n)` - fixed 1/60 s ticks that work while paused and render once - plus whatever the capture script needs (start, pose, spawn, show a given screen); and the signature of every cross-module call (rendering entry point, colliders and nav data, enemy raycast, player damage, audio event names). Input rules for web FPS games: pause only on pointer-lock loss or Escape; starting a run never requires pointer lock; test hooks never open menus.
 
 About 16 dispatches, at most 10 of them Opus. No judges, champions or playtesters in sprint mode - the coaches' verdicts and the acceptance list decide, and open gaps go to `KNOWN_GAPS.md`. If background-agent notifications work in the environment, a **pipeline per piece** (each piece goes to its next review as soon as its builder returns, instead of waiting for the wave) fits one or two more rounds; check that once at kickoff.
 
@@ -34,7 +36,7 @@ The full milestone ladder (`director.md`): Tech Spike -> Vertical Slice -> Conte
 
 ## Keeping the machine healthy
 
-Headless rendering is CPU-heavy, and a starved machine makes every builder slower. All renders go through the shared tool (`tools/shot.mjs` on the web): stepped simulation, a modest resolution (e.g. 960x540), and a lock so at most two renders run at once (`flock`). Builders take at most three renders per round; review captures are taken once by the Director or QA and shared as contact sheets. The number of parallel builders follows the machine: about one per CPU core plus one, which is five on a 4-core machine.
+Headless rendering is CPU-heavy, and a starved machine makes every builder slower. All renders go through the shared tool (`tools/shot.mjs` on the web): stepped simulation, a modest resolution (e.g. 960x540), and a lock so at most two renders run at once (`flock`). Builders take at most two or three renders per round (skip a render when the lock wait times out); review captures are taken once by the Director or QA and shared as contact sheets. The number of parallel builders follows the machine: about one per CPU core plus one, which is five on a 4-core machine.
 
 ## Completion goal
 

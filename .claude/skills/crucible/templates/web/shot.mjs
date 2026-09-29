@@ -6,12 +6,13 @@
 //   {"wait": 500}                           wall-clock wait (avoid; prefer "step")
 //   {"key": "KeyW", "ms": 400}              hold a real key      {"click": [640, 400]}   real click
 //   {"shot": "name"}                        screenshot -> <outDir>/<name>.png
-// Run it under a lock so at most two renders share the CPU:  flock -w 300 /tmp/render.lock node tools/shot.mjs ...
+// Run it under one of two locks so at most two renders share the CPU, and skip the render if the wait times out:
+//   flock -w 60 /tmp/render.$((RANDOM%2)).lock node tools/shot.mjs ...
 import { chromium } from 'playwright'; import http from 'http'; import fs from 'fs'; import path from 'path';
 const args = process.argv.slice(2); const [gameDir, actionsFile, outDir] = args;
 const opt = (k, d) => { const i = args.indexOf(k); return i > 0 ? args[i + 1] : d; };
 const [W, H] = opt('--size', '960x540').split('x').map(Number); const sheet = opt('--sheet', null);
-const stepHook = opt('--step-hook', 'window.__studio && window.__studio.step');
+const stepHook = opt('--step-hook', '(window.__studio && window.__studio.step) || (window.__game && window.__game.step)');
 fs.mkdirSync(outDir, { recursive: true });
 const types = { '.js': 'text/javascript', '.mjs': 'text/javascript', '.html': 'text/html', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml' };
 const srv = http.createServer((q, s) => { let p = path.join(gameDir, decodeURIComponent(q.url.split('?')[0])); if (fs.existsSync(p) && fs.statSync(p).isDirectory()) p = path.join(p, 'index.html'); if (!fs.existsSync(p)) { s.statusCode = 404; return s.end(); } s.setHeader('Content-Type', types[path.extname(p)] || 'application/octet-stream'); s.end(fs.readFileSync(p)); }).listen(0);
@@ -23,7 +24,7 @@ await p.goto(`http://localhost:${port}/index.html`); await p.waitForTimeout(1500
 const shots = [];
 for (const a of JSON.parse(fs.readFileSync(actionsFile, 'utf8'))) {
   if (a.eval) await p.evaluate(a.eval);
-  else if (a.step) await p.evaluate(([h, n]) => { const f = eval(h); if (typeof f === 'function') f(n); }, [stepHook, a.step]);
+  else if (a.step) await p.evaluate(([h, n]) => { const f = eval(h); if (typeof f !== 'function') throw new Error('step hook missing: ' + h); f(n); }, [stepHook, a.step]);
   else if (a.wait) await p.waitForTimeout(a.wait);
   else if (a.key) { await p.keyboard.down(a.key); await p.waitForTimeout(a.ms || 300); await p.keyboard.up(a.key); }
   else if (a.click) await p.mouse.click(a.click[0], a.click[1]);

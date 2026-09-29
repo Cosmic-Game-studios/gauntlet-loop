@@ -39,6 +39,7 @@ Route by the kind of thinking the ticket needs, not by the department's name.
 | Visual and spatial building: 3D models, characters, environment art, level layout, lighting and post, VFX, animation, UI/HUD design, weapon feel and viewmodels | **Opus** | Visual design, spatial reasoning and "feel" are where the stronger model makes the visible difference |
 | Implementation against a clear spec: systems, AI/navigation logic, save/load, tools, audio synthesis code, build scripts, bug fixes with a known cause | **Sonnet** | Strong, fast and cheaper for well-scoped code |
 | Playtesting (plays and reports) | **Sonnet** (Opus at a release gate) | Many steps, simple judgement per step |
+| Re-checking a fix diff against the named blockers and the acceptance list | **Sonnet** | Verification against explicit criteria, not taste |
 | Mechanical work: renaming evidence, file rotation, dashboard, running a test suite and summarising | **Haiku** | Cheapest; no taste involved |
 
 When a Sonnet ticket fails its first review on quality (not on a bug), the next round goes to Opus. When an Opus ticket turns out to be pure implementation, the Director routes its follow-ups to Sonnet. Where the environment supports an `effort` setting, critics and leads run at high effort; builders at the default.

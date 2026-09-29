@@ -62,7 +62,7 @@ Every dispatch is built stable-first (`studio.md` - dispatch brief): role file, 
 
 ## Rule 5 - Continuity where it is cheap, freshness where it matters
 
-- **Builders are resumed** for their own revision rounds (for example `SendMessage` to the builder agent): the ticket's context is already loaded and cached, so a revision costs a fraction of a fresh builder and keeps what it learned about the code.
+- **Builders are resumed** for their own revision rounds where the runtime lets the Director wait for the resumed agent (for example `SendMessage` in an interactive session): the ticket's context is already loaded and cached, so a revision costs a fraction of a fresh builder. In headless sprint runs, where a resumed agent may run in the background and die with the session, a fix round is a fresh foreground builder with the ticket, the one gap and the list of files - still small, because it reads only those.
 - **Critics and judges are always new agents**, so they never know how hard the builder tried or what the last critic said.
 - A builder that has been resumed many times, or whose ticket changed shape, is replaced by a fresh one with a clean pack.
 

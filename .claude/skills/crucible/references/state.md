@@ -37,15 +37,15 @@ studio/
 ```json
 [
   { "id": "A-01", "area": "weapons", "check": "rifle fires automatically while fire is held; ammo decreases",
-    "how": "node tools/accept.mjs weapons.auto", "passes": true,  "last_run": "HB-004" },
+    "how": "node tools/check.mjs A-01", "passes": true,  "last_run": "HB-004" },
   { "id": "A-02", "area": "weapons", "check": "recoil recovers to within 1 degree of the aim point 0.5 s after a burst",
-    "how": "node tools/accept.mjs weapons.recoil", "passes": false, "last_run": "HB-004" },
+    "how": "node tools/check.mjs A-02", "passes": false, "last_run": "HB-004" },
   { "id": "A-17", "area": "ux", "check": "from page load to playing in at most two clicks",
-    "how": "node tools/accept.mjs ux.start", "passes": true, "last_run": "HB-004" }
+    "how": "node tools/check.mjs A-17", "passes": true, "last_run": "HB-004" }
 ]
 ```
 
-Checks are added, never weakened. `passes` is only set by running `how`.
+Checks are added, never weakened. `passes` is only set by running `how`. Each `how` calls a small check script (`tools/check.mjs <id>`, written by QA, at most about 20 seconds per check, using the game's debug hook) - never `accept.mjs` itself, which runs the whole list.
 
 ## STATUS.md (overwritten every heartbeat, max ~40 lines)
 

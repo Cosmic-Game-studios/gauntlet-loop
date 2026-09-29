@@ -21,7 +21,7 @@ The Director prepares, commits, and then **stops and waits**:
   - the packaged build and a one-line command or path to launch it,
   - `PLAY.md`: controls, what to try, how long a full playthrough takes, known issues (honest, short), the areas still in `DEBT.md`, and **what only a human can judge** - especially sound and music (no Claude model can hear them) and moment-to-moment feel,
   - `CHANGES.md` (from RC-2 onward): what changed since the last round, mapped to each feedback item,
-  - a 60-90 s highlight video and 6 screenshots, so the human sees the state even before playing.
+  - a 60-90 s highlight video and 6 screenshots, so the human sees the state even before playing (in sprint mode: the last review contact sheet instead of a video).
 - One message to the user:
 
 ```
