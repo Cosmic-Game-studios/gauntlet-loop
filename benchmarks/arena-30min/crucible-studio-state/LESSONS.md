@@ -1,0 +1,1 @@
+- HB-002 (exp critic): the shared Dive bar shots (dive_1/dive_2.png) are an overhead debug view + Start menu, not combat frames -> critic returned NONE. Bar evidence must be captured in the same framing as ours (first-person, combat, HUD). Recapture with run_dive_example.mjs into studio/bars/.

@@ -25,6 +25,7 @@ For each: **Builds** - what it produces. **Evidence** - what the critic sees. **
 - **Builds:** style bible, colour script, style frames, 2D textures, icons, UI art. Claude cannot generate images, so art is made with code and tools: SVG (UI, icons, logos, 2D sprites), procedural textures (noise, gradients, masks, in Python or Blender nodes), style frames as blocked-out Blender scenes rendered with target lighting and palette, and fetched reference images from the bar games as mood boards. An external image generator is used only if the probe found one (`MACHINE.md`).
 - **Evidence:** the image at final use size, plus in-engine screenshot once integrated.
 - **Bar:** the reference game's concept art or press-kit images.
+- **Readability is a style-bible rule, not a polish item.** The style bible defines value and hue separation: threats, pickups and interactive objects must contrast with the environment (different hue family *and* value band), checked by a scripted luminance/hue test on captures and by a Silhouette critic question: "Find every enemy in this frame within one second." A cohesive palette that camouflages the threats fails the floor.
 - **First visual ticket of the project** (runs in parallel with Tech Spike; it needs no build): the **style bible** - palette, value range, shape language, material rules, 6 reference frames. Every visual ticket afterwards is judged against it by the Coherence critic.
 
 ## Asset sourcing (all visual and audio departments)

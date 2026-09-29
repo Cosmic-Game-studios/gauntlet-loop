@@ -138,7 +138,48 @@ flowchart LR
 - **Blind review by fresh critics:** screenshots and code, with the contender's identity hidden.
 - **Workflow, context and management:** measured from the runs.
 
-*Results are being added.*
+### The three games
+
+<p align="center"><img src="assets/benchmark/solo.png" alt="Solo agent - six scenes" width="100%"></p>
+<p align="center"><img src="assets/benchmark/gauntlet.png" alt="Gauntlet Loop - six scenes" width="100%"></p>
+<p align="center"><img src="assets/benchmark/studio.png" alt="Crucible - six scenes" width="100%"></p>
+
+### Results
+
+| | Solo agent | Gauntlet Loop | Crucible |
+|---|:---:|:---:|:---:|
+| **Look and UX** (2 blind judges, 1-10) | 4.5 | **6.5** 🏆 | 4.5 |
+| **Code quality** (2 blind judges, 1-10) | 6.5 | 5 | **8** 🏆 |
+| Correctness · architecture · performance | 6.5 · 6 · 7 | 5 · 3 · 3.5 | **8 · 7.5 · 8** |
+| All spec features working (independent harness) | ✅ | ✅ | ✅ |
+| **Context handling**¹ | 5 | 4 | **9** |
+| **Workflow**¹ | 5 | 6 | 6 |
+| **Management and traceability**¹ | 3 | 5 | **9** |
+| Time used of 30 min | 14 min | 21 min | 20 min |
+| Cost (list price) | **$2.63** | $7.89 | $5.88 |
+| Subagents | 0 | 18 | 9 (over 3 fresh heartbeats) |
+
+<sub>¹ Assessed from the run logs by the benchmark author. Not blind.</sub>
+
+**Verdict.** In a 30-minute window, no contender clearly wins:
+
+- **Gauntlet Loop:** the best-looking game. 16 visual critic rounds pushed art, level and HUD.
+- **Crucible:** the best-engineered game. Both blind code reviews picked it, and it is the only run whose state survives a restart: each heartbeat was a fresh session with at most about 60k context. It also cost less than the Gauntlet Loop.
+- **Solo agent:** the best value.
+
+Combined blind quality comes out at Crucible 6.25, Gauntlet 5.75, Solo 5.5. That gap is too small to call a win.
+
+The Crucible run logged 14 points of friction, and all of them are fixed in the skill now:
+
+- compressed schedules that use the full time
+- a gate that requires comparable reference evidence before any blind critic
+- re-review of fixes before merge
+- deterministic stepping as the first tool
+- threat readability as a style rule
+
+Crucible is built for runs of hours to days. This benchmark tested the opposite end.
+
+→ Full report, raw data, all three games and Crucible's `studio/` memory: [`benchmarks/arena-30min/`](benchmarks/arena-30min/RESULTS.md)
 
 ## Under the hood
 
