@@ -1,147 +1,263 @@
 <p align="center">
-  <img src="assets/banner.png" alt="gauntlet loop" width="100%">
+  <img src="assets/crucible-banner.png" alt="Crucible - an autonomous game studio for Claude Code" width="100%">
 </p>
 
-# Gauntlet Loop
+<p align="center">
+  <b>Describe your game. Approve one page. Crucible runs the studio until there is a game to play.</b>
+</p>
 
-A skill that turns any goal into one short, paste-ready prompt. That prompt makes your agent pick a real quality bar, split the work into small pieces, run a builder and a separate harsh critic on each one, compare blind against the bar, and keep looping until it wins.
+<p align="center">
+  <a href="#quick-start"><img alt="Claude Code skill" src="https://img.shields.io/badge/Claude%20Code-skill-d97757?style=flat-square"></a>
+  <a href="#engines-and-tools"><img alt="Engines" src="https://img.shields.io/badge/engines-Web%20%7C%20Godot%20%7C%20Unity%20%7C%20Unreal-2b2e35?style=flat-square"></a>
+  <a href="#engines-and-tools"><img alt="Blender" src="https://img.shields.io/badge/3D-Blender%20(bpy)-e87d0d?style=flat-square"></a>
+  <a href="LICENSE"><img alt="License CC BY 4.0" src="https://img.shields.io/badge/license-CC%20BY%204.0-lightgrey?style=flat-square"></a>
+  <a href="https://github.com/mshumer/Claude-of-Duty/blob/main/prompt.md"><img alt="Built on the Gauntlet Loop" src="https://img.shields.io/badge/built%20on-Gauntlet%20Loop-6f42c1?style=flat-square"></a>
+</p>
 
-Most agent output stops at "good enough" because nothing is holding it to a standard. This gives it a standard it cannot argue with.
+<p align="center">
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#how-it-works">How it works</a> ·
+  <a href="#benchmark">Benchmark</a> ·
+  <a href="#under-the-hood">Under the hood</a> ·
+  <a href="#limits">Limits</a> ·
+  <a href="#credits">Credits</a>
+</p>
 
-> The gauntlet loop is [Matt Shumer's](https://github.com/mshumer) idea. He wrote the original prompt and named the technique while building [Claude of Duty](https://github.com/mshumer/Claude-of-Duty). This repo packages that pattern as a reusable skill.
+---
+
+**Crucible** is a Claude Code skill that runs a complete game studio of agents. You pitch a game and approve a one-page brief. From there a **Game Director** agent breaks the game into tickets, sends them to departments (design, code, 3D in Blender, animation, tech art, audio, levels, UI, QA), and drives it from a first tech spike to a release candidate. It does all of that without asking you anything. When the game is done, you play it and say what you think, and Crucible turns your feedback into the next build.
+
+> [!NOTE]
+> Crucible is an evolution of the **Gauntlet Loop**, a technique by [Matt Shumer](https://github.com/mshumer) in which a builder and a separate harsh critic loop against a real reference until the work wins. Crucible keeps that core. It adds what building a whole game needs: a management layer, departments, capped rounds with a held-out judge, context engineering for multi-day runs, and a human playtest loop. See [Credits](#credits).
+
+## Why Crucible
+
+A single agent asked to build a game stops at "it runs". A single critic loop polishes the pieces but never assembles them into a game. It also forgets everything once the context fills up, and it will loop forever on a piece it cannot beat.
+
+Crucible is built for exactly those failure modes:
+
+| Problem | What Crucible does |
+|---|---|
+| Nobody holds the whole game together | A **Game Director** owns the brief, the tracker, the milestones and every cut. It never builds anything itself. |
+| "Good enough" output | Every ticket faces a **Code critic** and a blind **Experience critic** that compares it with a real shipped game. |
+| Endless revision, optimising for the critic | Rounds are **capped** (hero 3, core 2, bulk 1). A **held-out judge** decides, and the builder never sees it. Work that falls short becomes debt for later polish passes. |
+| Context loss on long runs | **Files are the memory.** A one-screen `STATUS.md` and a checkbox `TRACKER.md` belong to the Director. Every other agent gets a small context pack and returns at most 5 lines. |
+| The pitch never lists everything a game needs | A **completeness pass** adds what the genre expects: settings, rebinding, hit feedback, checkpoints, juice. |
+| Taste the model cannot judge | **You** play the release candidate. Fun, feel and sound are yours to judge, and every piece of feedback becomes a new bar and new tickets. |
 
 ## Quick start
 
-```
-git clone https://github.com/robonuggets/gauntlet-loop
+**1. Install the skill into your game project**
+
+```bash
+git clone https://github.com/Cosmic-Game-studios/gauntlet-loop
+cp -r gauntlet-loop/.claude/skills/crucible your-game/.claude/skills/
 ```
 
-Copy the skill folder into your project:
+**2. Pitch your game in Claude Code**
 
 ```
-cp -r gauntlet-loop/.claude/skills/gauntlet-loop your-project/.claude/skills/
+/crucible A co-op roguelite about lighthouse keepers fighting sea monsters.
+          Godot 4, stylised like Sea of Thieves, 20-minute runs.
 ```
 
-Then in your agent:
+Crucible first checks the machine: GPU or software rendering, installed engines, Blender, capture tools. It then asks at most five questions and shows you a one-page **Game Brief**. Say **OK**, or tell it what to change.
 
-```
-/gauntlet-loop build me a pricing page for my SaaS
+**3. Let it run**
+
+After OK, the Director installs its subagents and hooks into the project and starts working. For long unattended runs, use the bundled driver. It runs every heartbeat as a fresh headless session, so the context never fills up:
+
+```bash
+bash tools/drive.sh opus
 ```
 
-It offers you 2 or 3 quality bars to aim at, you pick one, and it hands back a single prompt you paste into a fresh session.
+**4. Play it**
 
-## What's included
+At the release candidate, Crucible hands you the build, a `PLAY.md` and a highlight video, then waits. Tell it what you think in your own words, in your own language:
 
-```
-.claude/skills/gauntlet-loop/
-└── SKILL.md      # the whole skill, one file
-README.md
-LICENSE           # CC BY 4.0
-```
+> *"The gunplay doesn't feel good, make it more like CS2. And the art should be more borderless comic style."*
+
+It turns each point into a diagnosis, a new bar and a set of tickets, protects what you liked with regression bars, and comes back with the next build.
 
 ## How it works
 
-1. **You give a goal.** Anything. A site, an essay, a CLI tool, a research brief.
-2. **It offers 2 or 3 bars.** Each one is a specific, real thing your agent can actually fetch and compare against. Not "award-winning design", but a named page, a named post, a named repo.
-3. **You pick one.** It writes one short prompt, around 150 words, and stops.
-4. **You paste it into a fresh session.** That agent splits the work, runs builder and critic pairs, and loops.
-
-The critic is the part that matters. It is a separate agent with fresh context, it opens the actual output, it puts your work next to the bar with the labels stripped, and it says which one is better. Not a score out of 10, which drifts upward every round. A pick.
-
-The loop exits when your work wins the blind comparison, or when you stop the run. Never after a fixed number of rounds.
-
-## Crucible: a whole game, autonomously
-
-`crucible` scales the loop up to a full game studio.
-
-```
-/crucible a co-op roguelite about lighthouse keepers fighting sea monsters, Unreal 5, stylised like Sea of Thieves
+```mermaid
+flowchart LR
+    P([Your pitch]) --> Q[Machine probe<br/>+ max 5 questions]
+    Q --> B[/Game Brief/]
+    B -->|you: OK| D{{Game Director}}
+    D -->|tickets| DEP[Departments<br/>Design · Code · 3D · Anim<br/>Tech Art · Audio · Level · UI · QA]
+    DEP --> G[[Ticket gauntlet]]
+    G -->|WON / PASSED| D
+    D --> M[Milestones<br/>Tech Spike → Vertical Slice →<br/>Content Alpha → Beta → RC]
+    M --> H([You play the RC])
+    H -->|feedback| D
 ```
 
-1. **Intake.** It asks at most 5 questions (engine, scope, reference games, art direction, must-haves), only if the pitch leaves them open.
-2. **Game Brief.** It writes a one-screen brief: pillars, "not this", core loop, bars per department, vertical slice. You say OK or ask for changes. After that it never asks you anything until the game is done.
-3. **Game Director.** A lead agent breaks the brief into features and tickets, routes them to departments (Design, Code, Art, 3D/Blender, Animation, Tech Art, Audio, Level, UI/UX, QA, Build), and runs a heartbeat loop: load state, sense, judge the milestone gate, plan and cut, dispatch, integrate, report.
-4. **Every ticket runs the gauntlet with two separate critics.** Builder -> machine verify -> an **Experience critic** judges blind against a real shipped game (two independent wins on hero tickets), and a **Code critic** reviews the diff against the architecture and a named reference repo (correctness, robustness, performance, architecture). Both must pass. Rounds are capped (hero 3, core 2, bulk 1) because longer loops start optimising for the critic instead of the player: the best version is kept, a held-out judge the builder never sees decides, and anything that falls short but meets the floor is merged as debt for a later polish pass. A ticket that misses the floor gets one re-scope, then is cut or replaced.
-5. **It adds what you did not ask for.** A completeness pass lists what the genre expects (settings, rebinding, hit feedback, checkpoints, juice) and builds it.
-6. **Milestones with hard gates.** Tech Spike -> Vertical Slice -> Content Alpha -> Beta -> Release Candidate, each judged on a real build.
-7. **You play, it improves.** At the Release Candidate it hands you the game and waits. You play and write feedback in your own words ("gunplay should feel like CS2", "more borderless comic art", "I want smooth frame rates"). It turns each item into a diagnosis, a new bar and tickets, protects what you liked with regression bars, runs a patch cycle, and hands you the next build. Until you say it is done.
-8. **Context engineering, so it can run for a week.** Files are the memory, context is a scratchpad. The Director works from a one-screen `STATUS.md` and a checkbox `TRACKER.md` (tickets and errors), ticked the moment something happens. Every subagent gets a small context pack and returns at most 5 lines; details go to files. Repeated mistakes become `LESSONS.md` rules. Compaction or a restart loses nothing.
-9. **Spends effort where the player notices.** Tickets are tiered hero / core / bulk: full gauntlet for the core loop and the vertical slice, batched judging for props and filler. Cheap checks run before any critic, bars are calibrated so they can actually be beaten, and usage limits pause and resume the run instead of killing it.
-10. **Built for Claude Code.** Ships subagent definitions (builder in its own git worktree, read-only critics, playtester) with per-role models and tool allowlists, hooks that re-inject `STATUS.md` after every compaction and snapshot state before it, and a driver that runs each heartbeat as a fresh headless session for multi-day runs. It is designed around the model's real limits: no image, audio or video generation, no hearing or watching video - art is made through Blender, SVG and procedural code, audio through synthesis and MIDI, and critics judge renders, frame strips and spectrograms.
-11. **Everything headless.** Blender, Unreal, Unity, Godot and web are driven from scripts, with screenshots, turntables and video as the critic's evidence. All memory lives in a `studio/` folder so the run survives context resets, and a dashboard shows progress live.
+**The human is needed twice:** once to approve the brief, and once to play and give feedback. In between, the Director decides, logs each decision, and keeps going.
+
+### The ticket gauntlet
+
+```mermaid
+flowchart LR
+    BLD[Builder<br/>own worktree] --> V[Machine verify<br/>build · tests · validators]
+    V -->|fail| BLD
+    V --> C[Code critic<br/>vs reference repo]
+    C --> X[Coach critic<br/>one gap vs the bar]
+    X -->|next round, max 3| BLD
+    X --> CH[(Champion<br/>best so far)]
+    CH --> J{Held-out judge<br/>blind · both orders}
+    J -->|beats the bar| W[WON]
+    J -->|meets the floor| PA[PASSED → debt]
+    J -->|misses the floor| F[FAILED → one re-scope]
+```
+
+- **Two critics, never one.** The Experience critic sees only images and never reads code. The Code critic reads only code and never judges looks. If one critic did both, each concern would excuse the other.
+- **Capped rounds.** After two or three rounds, revising mostly optimises for the critic rather than the player. So rounds stop there, a fresh judge on held-out captures decides, and what falls short is picked up later in polish passes with fresh eyes.
+- **The best version wins, not the latest.** A revision that made things worse is thrown away.
+
+## Benchmark
+
+> [!IMPORTANT]
+> **30-minute time window.** All three contenders build the same game from the same spec, on the same model, and each gets 30 minutes. Crucible is designed for runs of hours to days, so this is a deliberately hard setting for it.
+
+**Task:** *Arena*, a 3D first-person arena shooter in the browser (three.js). It has two weapons, two procedurally modelled enemy types with navigation, five waves, a HUD, menus, and synthesised audio. No external assets are allowed. The task is complex enough that a single agent cannot one-shot it well.
+
+**Contenders:**
+
+| | Method |
+|---|---|
+| **Solo agent** | One Claude Code session, no loop, no subagents |
+| **Gauntlet Loop** | The original gauntlet loop prompt: builder and harsh blind critic per piece, looping until it wins |
+| **Crucible** | Game Director, departments, capped two-critic gauntlet, file-based context, one fresh session per heartbeat |
+
+**Evaluation:**
+- **Independent automated test harness:** movement, collision, shooting, reloading, enemy AI, waves, pause, game over, frame rate, runtime errors.
+- **Blind review by fresh critics:** screenshots and code, with the contender's identity hidden.
+- **Workflow, context and management:** measured from the runs.
+
+*Results are being added.*
+
+## Under the hood
+
+<details>
+<summary><b>Game Director and milestones</b></summary>
+
+The Director runs **heartbeats**: load state from files, sense results, judge the milestone gate, plan and cut, dispatch, integrate, report. It decomposes the brief into features and tickets and assigns each ticket a tier (hero, core, bulk). It routes tickets to departments and chains cross-department features. It also runs a completeness pass for everything the genre needs.
+
+Milestones only advance when their gate is met on a real build: **Tech Spike → Vertical Slice → Content Alpha → Beta → Release Candidate → Human Playtest**. Scope is controlled by a mandatory "not this" list, a parking lot for ideas, kill reviews, and a circuit breaker: a wall-clock cap, a budget, or no progress hands off the best build with an honest `KNOWN_GAPS.md`.
+
+→ [`references/director.md`](.claude/skills/crucible/references/director.md)
+</details>
+
+<details>
+<summary><b>Context engineering</b></summary>
+
+- **Files are the memory, context is a scratchpad.** Anything that matters is written the moment it happens.
+- **`STATUS.md` and `TRACKER.md` belong to the Director alone.** They hold a one-screen status and a checkbox list of every ticket and error.
+- **Context packs.** Every builder and critic gets only the files for its one job, never the project state. This also keeps the critics blind.
+- **Return contracts.** Subagents return at most 5 lines. Details go to files, so the Director stays small over hundreds of heartbeats.
+- **`LESSONS.md`.** A mistake that repeats becomes a rule for every later builder.
+- **Hooks.** `SessionStart` re-injects the state after every compaction, and `PreCompact` snapshots it first.
+
+→ [`references/context.md`](.claude/skills/crucible/references/context.md)
+</details>
+
+<details>
+<summary><b>Built for Claude Code</b></summary>
+
+| Role | Subagent | Model | Tools |
+|---|---|---|---|
+| Game Director | main session | Opus | all |
+| Builder | `studio-builder` (own git worktree) | Opus for hero, Sonnet for core and bulk | all except spawning agents |
+| Coach, judge, coherence | `experience-critic` | Opus | `Read, Glob` (read-only, images) |
+| Code, architecture, audit | `code-critic` | Opus | `Read, Grep, Glob, Bash` (no edits) |
+| Playtester | `playtester` | Sonnet | `Read, Glob, Bash` (no edits) |
+
+Heartbeat drivers: `tools/drive.sh` (a fresh headless session per heartbeat, for multi-day runs), a scheduled Routine (cloud), or a self-paced `/loop`. The Director verifies that it can really spawn agents before the first ticket. If it can't, it falls back to separate headless sessions and never role-plays the critics itself.
+
+→ [`references/claude-code.md`](.claude/skills/crucible/references/claude-code.md)
+</details>
+
+<details>
+<summary><b>Engines and tools</b></summary>
+
+Everything runs headless and by script, and every critic judges captured evidence, never a description:
+
+- **Blender** (`blender -b -P`): procedural modelling, validation, turntables, deformation tests for characters, export.
+- **Web** (three.js and Playwright), **Godot 4**, **Unity 6** and **Unreal 5**: headless builds, tests, fixed-camera captures, and a step-play harness so agents can play turn by turn.
+- **Content without generative models.** Art comes from SVG, procedural textures and Blender renders. Audio comes from synthesis code and MIDI with a soundfont. External generators are used only if the machine has them.
+- **Custom hero characters** go through hard gates: topology, 8-pose deformation tests, motion-arc and spacing checks for animation.
+
+→ [`references/engines.md`](.claude/skills/crucible/references/engines.md) · [`references/departments.md`](.claude/skills/crucible/references/departments.md)
+</details>
+
+<details>
+<summary><b>Human playtest loop</b></summary>
+
+At the release candidate the Director stops the driver, hands over the build with `PLAY.md`, and waits. Each piece of feedback gets:
+
+1. **A diagnosis:** the critics measure what is actually wrong.
+2. **A new bar:** your reference becomes the bar, for example "like CS2" becomes CS2's recoil and hit feedback, frame-stepped.
+3. **Tickets** across the departments involved.
+4. **Regression bars** for everything you liked, so a patch that makes anything worse does not ship.
+
+The cycle repeats until you say the game is done.
+
+→ [`references/feedback.md`](.claude/skills/crucible/references/feedback.md)
+</details>
+
+<details>
+<summary><b>Cost and endurance</b></summary>
+
+- **Ticket tiers.** The full gauntlet goes to what the player notices (about 15%). Bulk assets are judged in batches.
+- **Cheap checks first.** No critic is spent on work that fails a script.
+- **Model tiering.** Opus judges, Sonnet builds core and bulk, Haiku does clerk work.
+- **Calibrated bars.** Narrow questions, matched scope, both orders, degraded control pairs, a bar ladder.
+- **Built for week-long runs.** Heartbeats pause and resume on usage limits, every merge is a commit, and progress (not activity) is tracked.
+
+→ [`references/endurance.md`](.claude/skills/crucible/references/endurance.md)
+</details>
+
+## Repository layout
 
 ```
 .claude/skills/crucible/
-├── SKILL.md                     # intake flow, bar rules, entry point
-├── agents/                      # subagents installed into the game project's .claude/agents/
-│   ├── studio-builder.md        # builds one ticket, own worktree
-│   ├── experience-critic.md     # coach / judge / coherence, read-only, images only
-│   ├── code-critic.md           # ticket / architecture / audit, read-only
-│   └── playtester.md            # plays via the step-play harness
-├── templates/                   # CLAUDE.md, settings.json hooks, hook scripts, drive.sh
+├── SKILL.md                   intake, bar rules, entry point
+├── agents/                    subagents installed into your project's .claude/agents/
+│   ├── studio-builder.md      builds one ticket in its own worktree
+│   ├── experience-critic.md   coach / judge / coherence, read-only
+│   ├── code-critic.md         ticket / architecture / audit, read-only
+│   └── playtester.md          plays via the step-play harness
+├── templates/                 CLAUDE.md, hooks, settings.json, drive.sh
 └── references/
-    ├── brief-template.md        # the Game Brief the user approves
-    ├── claude-code.md           # setup, roles -> subagents + models, hooks, heartbeat driver, model limits
-    ├── context.md               # files as memory, STATUS/TRACKER, context packs, return contracts
-    ├── director.md              # heartbeat, decomposition, routing, milestones, initiative, scope control
-    ├── gauntlet.md              # capped rounds, code critic, coach, champion, held-out judge, debt
-    ├── departments.md           # every department: builds, evidence, bar, verify
-    ├── endurance.md             # ticket tiers, cheap-first gates, calibrated bars, week-long runs
-    ├── engines.md               # headless Blender, Unreal, Unity, Godot, web + capture
-    ├── state.md                 # the studio/ folder, ticket and heartbeat formats, resume
-    └── feedback.md              # Release Candidate handoff, human playtest, feedback -> patch cycles
+    ├── brief-template.md      the one page you approve
+    ├── claude-code.md         setup, roles, models, hooks, drivers, model limits
+    ├── context.md             files as memory, STATUS/TRACKER, packs, return contracts
+    ├── director.md            heartbeat, decomposition, milestones, initiative, scope
+    ├── gauntlet.md            capped rounds, critics, champion, held-out judge, debt
+    ├── departments.md         what each department builds and how it is judged
+    ├── engines.md             headless engines, capture scripts, step-play harness
+    ├── endurance.md           tiers, cost, calibrated bars, week-long runs
+    ├── state.md               the studio/ folder and its file formats
+    └── feedback.md            release candidate handoff and the human playtest loop
 ```
 
-## Why a bar and not a rubric
+## Limits
 
-A rubric asks the agent to grade itself against words it wrote. A bar makes it compare against something that already exists and is undeniably good.
+Crucible is honest about what current models cannot do, and it is designed around those limits:
 
-The skill will not accept a vague bar. It checks three things before it writes anything:
+- **Claude cannot generate images, audio or video, cannot hear audio, and cannot watch video.** Art is made with code and tools. Critics judge renders, frame strips and spectrograms. Sound taste is left to your playtest.
+- **Whether a game is fun** cannot be judged reliably by an LLM critic. That is what the human playtest is for. You can also comment on the vertical slice preview at any time without stopping the run.
+- **The machine sets the ceiling.** Unreal needs a GPU. In a GPU-less container, Godot or the web are realistic targets.
+- **Realistic target:** a very good indie game, or a strong alpha or beta. AAA is not the goal.
 
-- **Named.** A specific thing, not a category.
-- **Fetchable.** The critic can screenshot it, read it, run it, or open it. If the agent cannot get the reference, it hallucinates the comparison and approves everything.
-- **Comparable.** Both can sit side by side and a judge can pick one.
+## Credits
 
-## Examples
+Crucible is an evolution of the **Gauntlet Loop**. The technique of a harsh critic, blind comparison against a real bar, and refusing to stop until the work wins is **[Matt Shumer's](https://github.com/mshumer)**. He built [Claude of Duty](https://github.com/mshumer/Claude-of-Duty), wrote the [original prompt](https://github.com/mshumer/Claude-of-Duty/blob/main/prompt.md), and named the loop. The original gauntlet-loop skill that this repository started from was written by Jay E at [RoboNuggets](https://robonuggets.com).
 
-```
-/gauntlet-loop a landing page for my running brand, dark and green, has to feel alive
-```
-Bar becomes a specific brand's live campaign page, screenshotted at desktop and mobile.
-
-```
-/gauntlet-loop a 2000 word explainer on vector databases for non-engineers
-```
-Bar becomes a named writer's actual published posts, judged on which one a non-engineer understands faster.
-
-```
-/gauntlet-loop a CLI that formats JSON logs
-```
-Bar becomes a named tool's implementation plus its benchmark, so taste and a number both have to win.
-
-## Works with any agent
-
-`/loop` and `ultracode` are Claude Code features. `/loop` reruns a prompt until you stop it, and `ultracode` opts a turn into multi-agent orchestration.
-
-For any other agent, the skill swaps those two lines for plain instructions: keep looping until the critic picks ours, and run the builders and critics as parallel subagents. The structure is identical.
-
-## What breaks it
-
-- A vague bar. The critic invents a comparison and approves everything. By far the most common failure.
-- The builder judging its own work. The critic needs fresh context and no knowledge of how hard the builder tried.
-- A soft critic. Give it a binary job, not a score.
-- A fixed round count. The exit is winning, or you calling it. (For a single piece. At the scale of a whole game, `crucible` caps rounds on purpose and moves the rest of the quality work to held-out judges and polish passes - see above.)
-
-## Credit
-
-The gauntlet loop technique is **[Matt Shumer's](https://github.com/mshumer)**. He built [Claude of Duty](https://github.com/mshumer/Claude-of-Duty), wrote the [original prompt](https://github.com/mshumer/Claude-of-Duty/blob/main/prompt.md), and named the loop. Every idea underneath this skill - the harsh critic, the blind comparison, the refusal to stop until the work wins - comes from that prompt.
-
-This repo is not the technique. It is a skill that writes a gauntlet loop prompt for you, for any goal, so you do not have to hand-write one each time.
-
-Related reading: [Anthropic on building effective agents](https://www.anthropic.com/engineering/building-effective-agents), which covers the evaluator pattern the loop is built on.
+Related reading: [Anthropic on building effective agents](https://www.anthropic.com/engineering/building-effective-agents), which covers the evaluator-optimizer pattern at the heart of the gauntlet.
 
 ## License
 
-CC BY 4.0. Free to use with attribution.
-
-Skill by Jay E at [RoboNuggets](https://robonuggets.com). Technique by Matt Shumer.
+[CC BY 4.0](LICENSE). Free to use with attribution.
