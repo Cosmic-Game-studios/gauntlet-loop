@@ -23,6 +23,8 @@ PITCH -> questions (max 5) -> BRIEF -> [human: OK / edit]
       -> HANDOFF -> [human: plays, gives feedback] -> patch cycle -> next RC -> HANDOFF   (until human says done)
 ```
 
+**Language.** Talk to the human in their language - the questions, the brief, the handoff message, `PLAY.md` and the feedback plan. Quoted phrases in this skill (like the OK line below) are templates: translate them. Everything the agents read internally (`studio/` files, tickets, prompts) stays in English.
+
 ## Phase 0 - Intake (the only time you talk to the user)
 
 1. **Probe the machine** before promising anything. Silently check: GPU or software rendering (Xvfb, lavapipe/llvmpipe), free disk, installed engines and versions (Blender, Godot, Unreal, Unity), licences that need credentials (Unity), ffmpeg, a browser for web builds, network access to fetch bars (video sites, store pages, repos), Python audio/image libraries (numpy, scipy, Pillow), MIDI rendering (fluidsynth + a soundfont), and whether any external image/audio/3D generation tool is connected (MCP server or CLI). Claude itself cannot generate images, audio or video, nor hear audio or watch video - the plan must not depend on it (`references/claude-code.md`). Write it to `studio/MACHINE.md`. An engine that cannot build **and capture screenshots/video** headlessly here is not offered - or it is offered with exactly what the user must install first.
