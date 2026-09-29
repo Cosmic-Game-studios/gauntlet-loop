@@ -28,7 +28,9 @@ Bars         Feel/gameplay  [named game + exact moment/clip]
 
 Milestones   Tech Spike -> Vertical Slice -> Content Alpha -> Beta -> Release Candidate -> Human Playtest
 Vertical slice [the one 3-5 minute stretch that proves the game is fun]
-Budget       [only if the user named one: tokens / money / wall-clock]
+Assets       [sourcing: CC0 kits (e.g. Kenney, Quaternius, Poly Haven) / licensed packs / generated / custom Blender - and which assets must be custom]
+Machine      [engine + capture path verified by the probe, e.g. "Godot 4.4, software rendering via Xvfb, video via --write-movie"]
+Budget       [user's budget if named; otherwise proposed wall-clock cap, default 7 days]
 ```
 
 ## Rules
@@ -37,4 +39,5 @@ Budget       [only if the user named one: tokens / money / wall-clock]
 - **Not this is mandatory.** It is the Director's main tool for cutting scope.
 - **Bars come from the user's reference games.** If the user named none, propose them and mark them as proposals.
 - **Vertical slice is concrete.** A place, a sequence, an ending. Not "the first level".
+- **Assets must be realistic.** Custom rigged and animated characters are the most expensive thing the studio makes. Default: kits and retargeted animation for everything except the hero assets that define the game's look.
 - **Scope must fit the engine and the tools.** If the pitch is an open-world MMO, say so and propose the slice that proves the idea.

@@ -5,10 +5,9 @@ Every ticket, in every department, runs the same gauntlet. This is where quality
 ```
                  +---------------------------------------------------------------+
                  v                                                               |
-  BUILD --> VERIFY --> +-- EXPERIENCE CRITIC (blind A/B vs shipped game) --+     |
-              |        |                                                   +--> both pass? --no--> gaps back to BUILD
-            fail       +-- CODE CRITIC (review vs architecture + ref repo) +          |
-              |                                                                      yes --> Director merges
+  BUILD --> VERIFY --> CODE CRITIC --PASS--> EXPERIENCE CRITIC(S) --> both pass? --no--> gaps back to BUILD
+              |            |                                             |
+            fail         BLOCK --> back to BUILD                        yes --> WON --> Director merges (MERGED)
               +--> back to BUILD
 ```
 
@@ -17,11 +16,11 @@ Two critics, on two separate tracks, because they judge different things with di
 - The **Experience critic** judges what the player sees, hears and feels. It never reads code - if it did, it would forgive a bad result because the code looks clever.
 - The **Code critic** judges what is under the hood. It never judges looks - if it did, it would forgive a hack because the result looks good.
 
-Mixing them into one critic lets each concern excuse the other. Separate critics, separate verdicts, and a ticket needs **both** to pass where both apply.
+Mixing them into one critic lets each concern excuse the other. Separate critics, separate verdicts, and a ticket needs **both** to pass where both apply. The Code critic runs first because it is cheaper and its blockers usually change what the Experience critic would see.
 
 ## 1. Build
 
-- A builder subagent with the ticket, the pillars, the style bible, `ARCHITECTURE.md` and the bar. Nothing else.
+- A builder subagent with the ticket's context pack (`context.md`): the ticket, the pillars, the relevant style bible and `ARCHITECTURE.md` sections, the bar, the matching `LESSONS.md` rules and the last GAP/BLOCKERS. Nothing else.
 - It produces the artifact **and the evidence**: the change, plus the captures the Experience critic will judge (see `engines.md`), plus the diff and test results the Code critic will judge.
 - It never self-approves and never writes "done" - it writes "ready for verify".
 - Its context pack is listed in the ticket (`context.md`). It reads those files and nothing else, and returns at most 5 lines; everything else goes to `evidence/<ticket>/round-<n>/`.
@@ -44,8 +43,8 @@ A **fresh** subagent every round. It has never seen the builder's reasoning, the
 
 It gets:
 
-- Evidence A and B, labels stripped and order randomised: ours and the bar's (the real, fetched reference - not a description).
-- The one question for this ticket, written by the Director: "Which dash feels more responsive and readable?", "Which character reads better as a silhouette at game camera distance?", "Which hit sound is more satisfying?"
+- Evidence A and B, labels stripped and order randomised: ours and the bar's (the real, fetched reference - not a description), in a form the critic can actually perceive (see **What critics can perceive** below).
+- The one question for this ticket, written by the Director, about one narrow axis: "Which dash reads more clearly in the frame strip?", "Which character reads better as a silhouette at game camera distance?", "Which palette fits the style frames better?"
 - The pillars.
 
 It returns exactly:
@@ -58,7 +57,28 @@ GAP:    the single biggest thing that would flip the pick, as an instruction the
 
 - Harsh. Praise is not useful. No scores out of 10 - they drift up every round.
 - Judges only the evidence. Missing or unclear evidence = `PICK: bar, GAP: evidence insufficient - capture X`.
-- Feel tickets (movement, gunplay, combat, camera, UI responsiveness) are judged on **video plus input trace plus frame timing**, never a single screenshot.
+- Feel tickets (movement, gunplay, combat, camera, UI responsiveness) are judged on **frame strips plus the ticket's numbers** (from our input trace and frame log), never a single screenshot and never on "how it feels".
+
+### What critics can perceive
+
+LLM critics see images and read text. They cannot hear, and they see video only as sampled frames. So every piece of evidence is converted into something they can judge:
+
+| Kind | Evidence the critic gets |
+|---|---|
+| Still visuals | Paired images at matched camera, crop and resolution, UI stripped |
+| Motion, animation, feel | Frame strips / contact sheets at a known fps (e.g. every 2nd frame of the first 20), same moment for both sides, plus numbers |
+| Audio | Spectrogram + waveform images, LUFS / peak / onset-timing data, the event it plays on - judged for fit, loudness, timing and layering against the audio direction. Taste in sound stays with the human playtest. |
+| Code | Text (diff, logs, profiler output) |
+
+**Bar numbers need a method.** A number is only a bar if `BARS.md` says how it was measured. Frame counts (startup, active, recovery frames; animation length) can be counted by frame-stepping a bar clip at a known fps. Input latency cannot be measured from someone else's video - use published values or genre norms, and say which.
+
+### Calibration: keeping blind comparisons honest
+
+Critics recognise famous games, and press renders are not gameplay. So:
+
+- **Both orders.** A hero comparison is run with A/B and B/A (two fresh critics). A win counts only if the pick is consistent; a split is a loss with the combined GAP.
+- **Control pairs.** Now and then (e.g. every 20th comparison), the Director slips in a pair where one side is the bar deliberately degraded (blurred, desaturated, frames dropped). A critic that picks the degraded side is discarded along with its verdict, and the Director logs it.
+- **Matched scope.** Same camera, crop, resolution and lighting context; compare gameplay to gameplay, never gameplay to a trailer or a press render unless the axis is still-image composition.
 
 ## 3b. Code critic (fresh, harsh, reads everything)
 
@@ -104,10 +124,11 @@ BLOCKERS: ranked, each with file:line and the fix as an instruction (empty if PA
 ## 4. Decide
 
 - A ticket is **WON** when every applicable track passes:
-  - Experience: hero - two independent fresh critics pick ours, each with a re-randomised order; core - one; bulk - passes its Coherence batch.
+  - Experience: hero - two fresh critics pick ours in both orders (see Calibration); core - one; bulk - passes its Coherence batch.
   - Numbers: every number in the ticket is met on the measurement, not on the critic's impression.
   - Code: one fresh Code critic returns `PASS` on the final diff (after any Experience-driven changes - never on an older diff).
 - Otherwise every open GAP and BLOCKER goes back to the builder together, Code blockers first. The builder fixes, verify runs again, and **both** critics re-judge from scratch - a visual fix can break code, a code fix can change feel.
+- WON means the gauntlet is passed. MERGED means the Director has integrated it into main and the integration build still passes. Only MERGED tickets are ticked `[x]` in `TRACKER.md`.
 
 ## Stalls and escalation
 

@@ -16,7 +16,7 @@ The Director runs one heartbeat per `/loop` iteration. Each heartbeat starts fro
 7. REPORT    Overwrite STATUS.md, append HEARTBEAT.md, regenerate dashboard.html, commit. Rotate files (context.md).
 ```
 
-Heartbeats are self-paced. A heartbeat ends when it has dispatched work and written its report. The next one starts when work returns.
+A heartbeat ends when it has dispatched work and written its report. The next one is started by the heartbeat driver (`SKILL.md`): a scheduled Routine or `/loop`. If a heartbeat starts and dispatched work is still running, it only does SENSE, INTEGRATE and REPORT, then ends.
 
 Write-through, not write-back: tick a checkbox, log an error, record a decision the moment it happens. If the session dies mid-heartbeat, the files are still right.
 
@@ -52,7 +52,7 @@ Decompose just in time. Only the current milestone gets tickets. Later milestone
 | test plans, bug hunts, automated playtests | QA |
 | builds, packaging, CI, platform settings | Build |
 
-Cross-department features (for example a new enemy) become a **chain**: Design spec -> Art concept -> 3D model -> Animation -> Tech Art import -> Code behaviour -> Audio -> Level placement -> QA. Each link is its own ticket; the next link unblocks only when the previous one WON.
+Cross-department features (for example a new enemy) become a **chain**: Design spec -> Art concept -> 3D model -> Animation -> Tech Art import -> Code behaviour -> Audio -> Level placement -> QA. Each link is its own ticket; the next link unblocks only when the previous one WON. The one exception is Design: a spec is **APPROVED** when it is complete and testable (the Code critic's checklist, no Experience critic), which unblocks the chain; the Design ticket itself stays open and is WON only when the implemented feature wins its gauntlet.
 
 ## Milestones and exit gates
 
@@ -61,11 +61,13 @@ The Director only advances when the gate is met on a real build, judged by a fre
 | Milestone | What it is | Exit gate |
 |---|---|---|
 | **Tech Spike** | The pipeline works end to end: engine builds headless, a Blender asset round-trips into the engine, screenshots and video capture work, a bot can press inputs. | A scripted run captures a video of a grey-box character moving in-engine, from a clean checkout, with one command. |
-| **Vertical Slice** | The 3-5 minute slice from the brief, at final quality. The whole bet is proven here. | Blind: a critic prefers our slice capture over the feel bar's clip on at least 2 of 3 axes (feel, readability, look). Numbers bar met. Architecture critic passes the codebase. |
+| **Vertical Slice** | The 3-5 minute slice from the brief, at final quality. The whole bet is proven here. | Three separate blind comparisons of the slice against the bars - feel (frame strips + numbers), readability, look - each with its own question; ours wins at least 2 of 3. Numbers bar met. Architecture critic passes the codebase. A preview (build + video) goes on the dashboard; the human may comment, the run does not wait. |
 | **Content Alpha** | Every feature exists, every level is playable end to end, placeholder art allowed outside the slice. | A playtest agent finishes the game start to end without human help. No blocker bugs. |
 | **Beta** | All content at slice quality. Balance, onboarding, audio mix, performance. | Every feature's ticket chain is WON. Perf budget met on every level. 3 fresh playtest agents finish; frustration heatmap clean. |
-| **Release Candidate** | Complete, polished, shippable. Everything the brief asked for plus everything the Completeness list added. | Packaged build installs and runs from scratch, 30 min crash-free, completeness list closed, Architecture critic and Tech auditor pass on the whole game, final blind comparison against the visual and feel bars wins. |
+| **Release Candidate** | Complete, polished, shippable. Everything the brief asked for plus everything the Completeness list added. | Packaged build installs and runs from scratch, 30 min crash-free, completeness list closed, Architecture critic and Tech auditor pass on the whole game, final blind comparisons against the visual and feel bars win. **Or** the circuit breaker fires (below): then the best build is handed off with an honest known-gaps list. |
 | **Human Playtest** | The studio hands the game to the human and waits. Their feedback starts a patch cycle, which ends in the next Release Candidate. | Loops until the human says the game is done. See `feedback.md`. |
+
+**Circuit breaker.** The human always gets a game, even if the bars prove out of reach. The Director hands off early - the best current build plus `KNOWN_GAPS.md` - when the wall-clock cap or budget in the brief is reached, or when a process review (`endurance.md`) could not restore progress. It never hands off a build that does not launch.
 
 Before the Release Candidate, the human is never asked anything. At the Release Candidate, the human is the only thing the studio waits for.
 
@@ -75,7 +77,7 @@ If the Vertical Slice cannot win after sustained effort, the Director does not p
 
 A pitch never lists everything a good game needs. The Director is expected to add what a player of this genre would miss, without asking, as long as it serves the pillars and does not break "not this".
 
-At the start of pre-production, and again at Content Alpha, the Director writes `studio/COMPLETENESS.md` from three sources:
+During Tech Spike, and again at Content Alpha, the Director writes `studio/COMPLETENESS.md` from three sources:
 
 1. **Genre expectations.** A fresh subagent studies the reference games and lists what every good game of this kind has: for a shooter, e.g. crosshair options, ADS, reload cancel, hit markers, kill feed, sensitivity and FOV sliders; for a platformer, coyote time, jump buffering, checkpoints.
 2. **Shipping basics.** Title screen, pause, settings (graphics, audio, controls, rebinding), save/continue, credits, loading feedback, controller support, subtitles, colour-blind options, sensible defaults, no dead ends, clean quit.
@@ -94,7 +96,7 @@ Before the first content ticket, the Director has Code write `studio/ARCHITECTUR
 The Director's default move is to cut.
 
 - Anything outside the brief goes to `PARKING.md`, not the tracker.
-- A feature that fails its gauntlet 3 heartbeats in a row triggers a **kill review**: simplify it, replace it with a cheaper version that serves the same pillar, or cut it.
+- A feature with two tickets stalled (`gauntlet.md` - stall rules) triggers a **kill review**: simplify it, replace it with a cheaper version that serves the same pillar, or cut it.
 - "Not this" in the brief is binding.
 - Adding a feature requires cutting or shrinking one of equal cost.
 
@@ -110,12 +112,12 @@ The only reasons to stop and ask: the brief itself is impossible, a budget the u
 
 ## Integration critic
 
-Tickets pass alone and fail together, so every heartbeat that merged something runs an **integration pass** on the real build:
+Tickets pass alone and fail together, so the Director runs an **integration pass** on the real build. The build and smoke test run on every merge; the full pass with captures and a critic runs every 5 merges (and always before a milestone gate):
 
 1. Build from a clean checkout.
 2. Run the automated smoke test and the playtest bot through the current slice.
-3. Capture a 60-second video and 6 fixed-camera screenshots.
-4. A fresh **Coherence critic** watches it against the bars and the style bible and answers: what is the single biggest thing that breaks the fantasy right now? That becomes the top ticket.
+3. Capture frame strips from a 60-second scripted run and 6 fixed-camera screenshots (the video goes to the dashboard for the human).
+4. A fresh **Coherence critic** looks at them against the bars and the style bible and answers: what is the single biggest thing that breaks the fantasy right now? That becomes a ticket, ranked by which pillar it breaks - it does not automatically jump the queue, unless the same gap is reported twice in a row.
 
 ## Parallelism
 

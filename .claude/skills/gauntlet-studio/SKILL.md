@@ -7,7 +7,7 @@ description: Turns a game idea into a fully autonomous, multi-agent game studio 
 
 The gauntlet loop, scaled up to a whole game studio.
 
-One user pitch goes in. A locked Game Brief comes out, then a Game Director runs a studio of agent departments until the game ships. Every piece of work - a mechanic, a mesh, a sound, a level - has to beat a real shipped game in a blind comparison before it is merged.
+One user pitch goes in. A locked Game Brief comes out, then a Game Director runs a studio of agent departments until the game ships. Nothing is merged on the builder's word: every piece of work passes machine checks and fresh critics, and the pieces that matter most have to beat a real shipped game in a blind comparison.
 
 You have three jobs, in order:
 
@@ -15,7 +15,7 @@ You have three jobs, in order:
 2. **Run** - become the Game Director and run the studio fully autonomously until a complete Release Candidate.
 3. **Playtest loop** - hand the game to the human, wait, turn their feedback into a patch cycle, repeat.
 
-The human touches the run exactly twice: approving the brief at the start, and playing and giving feedback at the end. Between those, never ask - decide, log, keep going.
+The human is needed exactly twice: approving the brief at the start, and playing and giving feedback at the end. Between those, never ask - decide, log, keep going. (The human may look at the dashboard and the Vertical Slice preview at any time and comment; the run never waits for it.)
 
 ```
 PITCH -> questions (max 5) -> BRIEF -> [human: OK / edit]
@@ -25,17 +25,18 @@ PITCH -> questions (max 5) -> BRIEF -> [human: OK / edit]
 
 ## Phase 0 - Intake (the only time you talk to the user)
 
-1. **Read the pitch.** Extract what is already there: genre, fantasy, engine, platform, art style, camera, scope, references.
-2. **Ask only what is missing, max 5 questions, in one message.** Priority order:
-   - Engine and target platform (Unreal 5 / Unity / Godot / web). Default if unanswered: Godot 4 for 2D and small 3D, Unreal 5 for high-fidelity 3D.
+1. **Probe the machine** before promising anything. Silently check: GPU or software rendering (Xvfb, lavapipe/llvmpipe), free disk, installed engines and versions (Blender, Godot, Unreal, Unity), licences that need credentials (Unity), ffmpeg, a browser for web builds, network access to fetch bars (video sites, store pages, repos), and which generation tools (image, audio, 3D) exist. Write it to `studio/MACHINE.md`. An engine that cannot build **and capture screenshots/video** headlessly here is not offered - or it is offered with exactly what the user must install first.
+2. **Read the pitch.** Extract what is already there: genre, fantasy, engine, platform, art style, camera, scope, references.
+3. **Ask only what is missing, max 5 questions, in one message.** Priority order:
+   - Engine and target platform, from the engines that passed the probe. Default if unanswered: the most capable engine that passed (Godot 4 or web are the usual safe choices in a GPU-less container; Unreal 5 only where it is installed and can render).
    - Scope: how long is one session, how long is the whole game (a 10-minute slice, a 1-hour game, a 10-hour game).
    - 2 or 3 games it should feel like. These become the bars.
    - Art direction in one line (stylised low-poly, realistic, pixel, cel-shaded...).
-   - Anything non-negotiable (a mechanic, a platform, a deadline, a budget in tokens or money).
+   - Anything non-negotiable (a mechanic, a platform, a deadline, a budget in tokens, money or wall-clock). If no limit is named, the brief proposes a wall-clock cap (default: 7 days) the user can change.
    If the pitch already answers everything, ask nothing.
-3. **Write the Game Brief** using `references/brief-template.md`. One screen. Fill every field. Propose the bars yourself using the bar rules below; the user can swap them.
-4. **Show it and stop.** End with exactly: `Say OK to start the studio, or tell me what to change.`
-5. **Edit loop.** On any change request, rewrite the brief and show it again. On OK, lock it: write it to `studio/BRIEF.md` and never edit it again without the user.
+4. **Write the Game Brief** using `references/brief-template.md`. One screen. Fill every field. Propose the bars yourself using the bar rules below; the user can swap them.
+5. **Show it and stop.** End with exactly: `Say OK to start the studio, or tell me what to change.`
+6. **Edit loop.** On any change request, rewrite the brief and show it again. On OK, lock it: write it to `studio/BRIEF.md` and never edit it again without the user.
 
 ## Phase 1+ - The studio run
 
@@ -50,7 +51,9 @@ On OK, read and follow, in this order:
 - `references/endurance.md` - ticket tiers, cheap-first gates, model tiering, calibrated bars, stall economics, running for a week and surviving usage limits.
 - `references/feedback.md` - the Release Candidate handoff, waiting for the human, and turning their feedback into bars, tickets and patch cycles.
 
-Start with `/loop` (self-paced) on the Director heartbeat, and use multi-agent orchestration (Workflow / ultracode or parallel subagents) for department fan-out. On agents without those features: "Keep looping the Director heartbeat until the Release Candidate gate passes, then hand off and wait for the human. Run department builders and critics as parallel subagents with fresh context."
+**The heartbeat driver.** Heartbeats need something that wakes the Director even after a session ends or a usage limit hits. Use, in order of preference: a recurring scheduled Routine/trigger that fires the next heartbeat into a session (survives restarts and limits), or `/loop` self-paced in the current session, or - on other agents - an outer script that re-runs the agent with "run the next heartbeat" until `STATUS.md` says `WAITING FOR HUMAN` or `DONE`. At handoff the Director disables the driver itself; a new human message restarts it.
+
+Start with the driver on the Director heartbeat, and use multi-agent orchestration (Workflow / ultracode or parallel subagents) for department fan-out. On agents without those features: "Keep looping the Director heartbeat until the Release Candidate gate passes, then hand off and wait for the human. Run department builders and critics as parallel subagents with fresh context."
 
 ## Bar rules for games
 

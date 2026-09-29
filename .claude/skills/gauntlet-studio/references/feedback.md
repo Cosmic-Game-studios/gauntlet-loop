@@ -11,7 +11,7 @@ The human is **not** a dependency during development. They come in at the end, w
 
 ## 1. Release Candidate (when the studio is done)
 
-The Director only hands over when the Release Candidate gate is met (see `director.md`): every feature WON, completeness list closed, perf budget met, 30 min crash-free, packaged build launches from scratch. The human never receives a broken or half-finished game.
+The Director only hands over when the Release Candidate gate is met (see `director.md`): every feature WON, completeness list closed, perf budget met, 30 min crash-free, packaged build launches from scratch. The one exception is the circuit breaker (wall-clock cap, budget, or no progress): then the best launching build goes out with `KNOWN_GAPS.md`, and the handoff message says so plainly. The human never receives a build that does not launch.
 
 ## 2. Handoff
 
@@ -30,7 +30,7 @@ Play it, then tell me what you think - in your own words, as rough as you like.
 Screenshots, clips or timestamps help but are not needed.
 ```
 
-Then the run ends its turn and **waits**. No `/loop` heartbeats, no polish, no background work while the human plays. The build they test must not change under them.
+Then the Director sets `STATUS.md` to `WAITING FOR HUMAN RC-<n>`, **disables the heartbeat driver** (cancels the Routine or stops `/loop`), and **waits**. No polish, no background work while the human plays. The build they test must not change under them. The human's next message restarts the driver.
 
 ## 3. Feedback intake
 
@@ -78,7 +78,7 @@ A big direction change (like a new art style) amends the brief and the style bib
 
 Feedback fixes one thing and must not break what the human did not complain about.
 
-- `studio/KEEP.md` - everything the human praised or did not mention in areas they clearly played. These get **regression bars**: the current RC's capture becomes the bar the new build must not lose to.
+- `studio/KEEP.md` - everything the human praised, plus every feature the feedback did not criticise (the studio cannot see what the human played, so silence counts as "keep" by default; the feedback plan lists these so the human can correct it). These get **regression bars**: the current RC's capture becomes the bar the new build must not lose to.
 - Every patch ticket is also judged by the Experience critic against the **previous RC** on the same evidence ("which is better?"), not only against the external bar. A patch that is worse than the RC it replaces is not WON.
 - Code critic and Tech auditor re-run on the whole game at the end of every patch cycle: no new crashes, no perf regression.
 

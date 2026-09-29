@@ -10,6 +10,9 @@ Critics judge captures, never descriptions. Every pipeline must produce, with on
 - **Video** of a scripted run (input sequence file -> engine -> mp4), with an input trace and frame-time log.
 - **Turntables** for assets.
 - **Logs** for build, tests and runtime errors.
+- **Critic-ready conversions** (`gauntlet.md` - What critics can perceive): frame strips / contact sheets from every video (ffmpeg, fixed fps), spectrogram + waveform images and LUFS/peak/onset data from every audio file, and the same conversion applied to the bar material in `studio/bars/`.
+
+No GPU is not an automatic blocker: Blender renders with Cycles on CPU, Godot and web can render through software Vulkan/OpenGL (lavapipe/llvmpipe) under Xvfb, slowly. `godot --headless` alone uses a dummy renderer and **cannot** capture images. The probe in `MACHINE.md` records which path works.
 
 Captures are written to `studio/evidence/<ticket-id>/round-<n>/`.
 

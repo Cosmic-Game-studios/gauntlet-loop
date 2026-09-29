@@ -37,6 +37,8 @@ Nobody reads "everything". Each agent gets the smallest set of files that lets i
 
 Packs are lists of file paths plus line ranges, not pasted content. The agent reads them itself.
 
+The skill files themselves are part of this budget. Builders and critics never read them - the ticket and their role's section (`gauntlet.md` 3a or 3b, or the department's entry) are copied into their prompt. The Director reads `context.md` and `director.md` once per session and opens the other references only for the step that needs them (`feedback.md` at handoff, `endurance.md` at a process review). Paperwork serves the game: if a heartbeat spends more effort on tracking than on dispatched work, cut the tracking back to STATUS + TRACKER.
+
 ## Rule 3 - Return contracts keep the Director small
 
 Subagents write their full output to files and return **at most 5 lines** to whoever spawned them:

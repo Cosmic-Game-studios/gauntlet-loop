@@ -4,6 +4,9 @@ All memory lives in `studio/` at the project root, written the moment something 
 
 ```
 studio/
+├── MACHINE.md        # probe result: GPU/rendering, engines, disk, licences, capture paths, tools
+├── ASSETS.md         # every sourced asset + licence
+├── KNOWN_GAPS.md     # only at an early handoff: what did not reach its bar and why
 ├── STATUS.md         # ONE SCREEN. Where we are, what runs, what blocks, next 5 actions. Read first, always.
 ├── TRACKER.md        # the Director's checklist: every ticket as a checkbox + errors section
 ├── BRIEF.md          # locked Game Brief. Changed only by the user, or by human feedback (## Amendments)
@@ -67,7 +70,7 @@ Checkbox list first, grouped by feature. One line per ticket. Details live in th
 - [x] E-017  Footstep SFX double-trigger on stairs                    sev: minor     fixed by T-233
 ```
 
-Legend: `[ ]` open, `[x]` WON and merged, `[~]` cut. Status words: `BACKLOG, READY, BUILDING, VERIFY, IN GAUNTLET, WON, MERGED, BLOCKED, STALLED, CUT`.
+Legend: `[ ]` open (any status up to WON), `[x]` MERGED, `[~]` cut. Status words: `BACKLOG, READY, BUILDING, VERIFY, IN GAUNTLET, WON, MERGED, BLOCKED, STALLED, CUT`.
 
 ## Ticket block (below the checklist in TRACKER.md)
 
@@ -76,8 +79,8 @@ Legend: `[ ]` open, `[x]` WON and merged, `[~]` cut. Status words: `BACKLOG, REA
 feature:     Core movement
 goal:        8 m dash, 0.15 s, cancels into attack, i-frames first 0.1 s
 bar:         Hades - Zagreus dash, gameplay capture 00:40-01:10 (bars/hades_dash.mp4)
-question:    Which dash reads more clearly and commits faster?
-numbers:     startup <= 1 frame, input-to-motion < 50 ms (bar measured: 1 frame, ~33 ms)
+question:    In the frame strips, which dash reads more clearly from start to end?
+numbers:     startup <= 1 frame (bar: 1 frame, frame-stepped at 60 fps), input-to-motion < 50 ms (genre norm, not measurable from bar clip)
 code bar:    Lyra - dash ability (bars/lyra/)
 pack:        ARCHITECTURE.md#movement, LESSONS.md#code, bars/hades_dash.mp4
 acceptance:  unit tests for distance/timing; numbers met; Experience WON x2 blind; Code critic PASS

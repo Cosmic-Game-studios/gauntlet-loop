@@ -7,7 +7,7 @@ For each: **Builds** - what it produces. **Evidence** - what the critic sees. **
 ## Design
 
 - **Builds:** feature specs (one page), tuning tables (data files, never hard-coded), progression curves, economy.
-- **Evidence:** the spec plus a playtest trace after Code implements it. Design tickets are only WON once the implemented version wins.
+- **Evidence:** the spec plus a playtest trace after Code implements it. A spec is APPROVED (unblocks its chain) when complete and testable; the Design ticket is only WON once the implemented version wins (`director.md` - chains).
 - **Bar:** the same system in the named reference game (e.g. "Celeste's coyote time and jump buffer values").
 - **Verify:** every number lives in a data file; every rule is testable.
 
@@ -25,7 +25,18 @@ For each: **Builds** - what it produces. **Evidence** - what the critic sees. **
 - **Builds:** style bible, colour script, concept sheets, style frames, 2D textures, icons, UI art. Uses image generation where available, then paint-over and clean-up.
 - **Evidence:** the image at final use size, plus in-engine screenshot once integrated.
 - **Bar:** the reference game's concept art or press-kit images.
-- **First ticket of the project:** the **style bible** - palette, value range, shape language, material rules, 6 reference frames. Every visual ticket afterwards is judged against it by the Coherence critic.
+- **First visual ticket of the project** (runs in parallel with Tech Spike; it needs no build): the **style bible** - palette, value range, shape language, material rules, 6 reference frames. Every visual ticket afterwards is judged against it by the Coherence critic.
+
+## Asset sourcing (all visual and audio departments)
+
+Build less, choose more. Source in this order, per the brief's `Assets` line:
+
+1. **CC0 / licensed kits** (e.g. Kenney, Quaternius, Poly Haven, licensed marketplace packs) for props, environment pieces, textures, SFX - restyled to the style bible (materials, palette, shaders).
+2. **Retargeted animation** from licensed libraries onto our skeletons.
+3. **Generated** (image, audio, image-to-3D) as a starting point, always cleaned up and validated.
+4. **Custom Blender work** for the hero assets that define the game's identity: the player character, key enemies, signature props and landmarks.
+
+Every sourced asset has its licence recorded in `studio/ASSETS.md`. No asset of unknown licence ships.
 
 ## 3D (Blender)
 
@@ -84,4 +95,4 @@ For each: **Builds** - what it produces. **Evidence** - what the critic sees. **
 
 - **Builds:** one-command build, headless CI, packaging for the target platform, crash capture, versioning.
 - **Evidence:** a clean-checkout build log and a packaged build that launches.
-- **Rule:** the Tech Spike milestone is mostly Build and Tech Art. No content ticket starts before a clean one-command build exists.
+- **Rule:** the Tech Spike milestone is mostly Build and Tech Art. No content ticket that goes into the engine starts before a clean one-command build exists. Pre-production documents (style bible, architecture, completeness list, bars) run in parallel.
