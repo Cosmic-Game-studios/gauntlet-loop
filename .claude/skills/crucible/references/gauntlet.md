@@ -100,6 +100,10 @@ Harsh, no scores out of 10, only what is in the evidence. Missing or unclear evi
 
 **One GAP per round, never a list.** A list invites the builder to tick boxes for the critic; one gap forces the most important fix.
 
+**Review what you merge.** A critic's verdict applies only to the diff it saw. Fixes made for a critic's blockers are re-checked before merge (a quick fresh Code critic pass on just the fix diff) - never merged on the builder's word or on a smoke test alone. If fixes and reviews run in the same wave to save time, the review targets the *previous* merged state and the fixes get their own re-check in the next wave.
+
+**Builder continuity, critic freshness.** Within one ticket, the Director may resume the same builder for its next round (e.g. `SendMessage` to the builder agent) - it keeps the ticket's context cheaply. Critics and judges are always new agents.
+
 ## 5. Champion
 
 The Director keeps the **champion**: the best version so far, not the latest. Round 1's output is the first champion. From round 2 on, a fresh critic compares the new version against the champion on the ticket's question ("which is better?"); the new version only becomes champion if it wins. A revision that made things worse is discarded, not built upon. (Hero only; for core, the last round that passed verify and Code critic is the champion.)

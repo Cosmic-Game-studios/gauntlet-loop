@@ -56,6 +56,20 @@ Cross-department features (for example a new enemy) become a **chain**: Design s
 
 ## Milestones and exit gates
 
+### Compressed schedules (caps under a day)
+
+The milestone ladder assumes days. When the brief's cap is shorter, scale it instead of skipping the gauntlet:
+
+| Cap | Plan |
+|---|---|
+| under 1 hour | Setup + Tech Spike in heartbeat 1 (minimal studio files: STATUS, TRACKER, BRIEF, ARCHITECTURE, BARS); then alternating **fix waves** and **review waves** until the cap; hand off at the cap. Heartbeats of 5-10 minutes. |
+| 1-8 hours | Tech Spike -> Vertical Slice -> Release Candidate; one polish pass on DEBT.md. |
+| a day or more | The full ladder below. |
+
+In every plan: the first heartbeat ends with a **playable build and captured, comparable bar evidence** (see BARS gate below), and the Code critic reviews the Tech Spike in heartbeat 1 while builders polish, so its blockers land in heartbeat 2, not 3.
+
+**BARS gate.** Before any Experience critic runs, `BARS.md` must list, per piece, bar evidence in the same framing as ours (same camera type, distance, resolution) - captured by script, stored in `studio/bars/`. If a bar has no comparable view (e.g. the reference has no first-person weapon), that piece is judged against its **numbers and the internal hero bar** instead, and no blind A/B critic is spent on it.
+
 The Director only advances when the gate is met on a real build, judged by a fresh critic. Never on a date or a round count.
 
 | Milestone | What it is | Exit gate |
@@ -66,6 +80,8 @@ The Director only advances when the gate is met on a real build, judged by a fre
 | **Beta** | All content at slice quality. Balance, onboarding, audio mix, performance. | Every ticket chain MERGED (WON or PASSED at the floor); every hero debt item WON or accepted in `DECISIONS.md`. Perf budget met on every level. 3 fresh playtest agents finish; frustration heatmap clean. |
 | **Release Candidate** | Complete, polished, shippable. Everything the brief asked for plus everything the Completeness list added. | Packaged build installs and runs from scratch, 30 min crash-free, completeness list closed, Architecture critic and Tech auditor pass on the whole game, final blind comparisons against the visual and feel bars win. **Or** the circuit breaker fires (below): then the best build is handed off with an honest known-gaps list. |
 | **Human Playtest** | The studio hands the game to the human and waits. Their feedback starts a patch cycle, which ends in the next Release Candidate. | Loops until the human says the game is done. See `feedback.md`. |
+
+**Use all the time you have.** Reaching a gate early is not a reason to stop. While wall-clock or budget remains before the cap, the Director keeps running heartbeats on `DEBT.md`, open errors and the Coherence critic's top gap - and only hands off when the Release Candidate gate is met *and* nothing on the debt list can be improved within the remaining time, or when the cap is reached.
 
 **Circuit breaker.** The human always gets a game, even if the bars prove out of reach. The Director hands off early - the best current build plus `KNOWN_GAPS.md` - when the wall-clock cap or budget in the brief is reached, or when a process review (`endurance.md`) could not restore progress. It never hands off a build that does not launch.
 

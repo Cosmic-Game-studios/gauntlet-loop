@@ -15,7 +15,9 @@ The Director installs the studio into the game project before any ticket:
 | `templates/hooks/*.sh` | `.claude/hooks/` | |
 | `templates/drive.sh` | `tools/drive.sh` | Optional outer driver for multi-day unattended runs. |
 
-New subagent files are picked up when a session starts. If the current session does not list them, the Director continues in a fresh session (the hooks restore its state), or - as a fallback - uses the built-in general-purpose agent with the role file's body pasted as the prompt.
+New subagent files are picked up when a session starts. If the current session does not list them, the Director continues in a fresh session (the hooks restore its state), or - as a fallback - uses the built-in general-purpose agent with the role file's body (everything below the `---` frontmatter) pasted as the start of the prompt.
+
+**Worktrees are for conflicts, not ceremony.** `isolation: worktree` protects parallel builders that could touch the same files. When `ARCHITECTURE.md` gives every module a single owner and the wave's tickets touch disjoint files, builders may work in the main checkout and the Director commits after integration; when files overlap, use worktrees (or sequence the tickets).
 
 ## Roles as subagents
 
@@ -28,11 +30,11 @@ New subagent files are picked up when a session starts. If the current session d
 | Playtester / first-time player | `playtester` | `sonnet` (opus for the Release Candidate gate) | `Read, Glob, Bash`; `Edit, Write` disallowed | Plays through the step-play harness. |
 | Clerk work (renaming evidence, rotating files, dashboard) | general-purpose | `haiku` | all | Only for mechanical work. |
 
-**Check that you can spawn agents - before the first ticket.** Blindness and fresh context depend on real, separate agents. In the setup heartbeat, spawn one trivial subagent. If the `Agent` tool is missing (for example because the Director itself runs as a subagent, and subagents may not be able to spawn further agents in some environments), **do not role-play builder and critics yourself** - that silently removes the fresh context and blindness the whole loop depends on. Use headless processes instead: run each builder or critic as `claude -p "<role file body + ticket prompt>" --model <model> --allowedTools <the role's tools> --output-format json` from Bash. Each is a real, separate Claude Code session with a fresh context; the JSON result reports tokens and cost for `STATUS.md`. If neither works, stop and tell the human - do not continue in a degraded mode.
+**Check that you can spawn agents - before the first ticket.** Blindness and fresh context depend on real, separate agents. The first real dispatch is the check (no separate trivial agent needed): if the `Agent` tool is present and the first builders return, spawning works. If the `Agent` tool is missing (for example because the Director itself runs as a subagent, and subagents may not be able to spawn further agents in some environments), **do not role-play builder and critics yourself** - that silently removes the fresh context and blindness the whole loop depends on. Use headless processes instead: run each builder or critic as `claude -p "<role file body + ticket prompt>" --model <model> --allowedTools <the role's tools> --output-format json` from Bash. Each is a real, separate Claude Code session with a fresh context; the JSON result reports tokens and cost for `STATUS.md`. If neither works, stop and tell the human - do not continue in a degraded mode.
 
 **Who spawns whom.** Only the Director spawns builders and critics. A builder never spawns its own critic - that would let the builder choose its judge and see its reasoning. Nesting stays one level deep, well within Claude Code's subagent depth limit.
 
-**Parallelism.** Independent tickets are dispatched as several `Agent` calls in a single message so they run concurrently, in the background; the Director is notified as each finishes. If the user has opted into multi-agent orchestration (the Workflow tool / `ultracode`), a whole milestone's ticket batch can run as one workflow; otherwise parallel `Agent` calls are the default.
+**Parallelism.** Independent tickets are dispatched as several `Agent` calls in a single message so they run concurrently; the Director is notified as each finishes. **In headless heartbeats (`drive.sh`, `claude -p`) dispatch them in the foreground** (`run_in_background: false`, still several calls in one message): the calls run in parallel and the heartbeat blocks until all return, so no subagent is killed when the session ends and no polling loop is needed. If the user has opted into multi-agent orchestration (the Workflow tool / `ultracode`), a whole milestone's ticket batch can run as one workflow; otherwise parallel `Agent` calls are the default.
 
 ## Context engineering with hooks
 

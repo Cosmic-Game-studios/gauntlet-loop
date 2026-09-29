@@ -66,6 +66,10 @@ Claude cannot generate images, audio or video (see `claude-code.md` for the full
 
 An external generation tool (MCP server or CLI) is used only if `MACHINE.md` lists one; its output still goes through validation and critics.
 
+## First tool of every project: deterministic stepping
+
+Build this in the first heartbeat, before any capture or test: a debug hook that advances the simulation by N fixed steps with given inputs, independent of the real frame rate. Headless and software rendering run at a few frames per second; anything time-based (tests, captures, flashes that last one frame, auto-fire) is unreliable without it. Every test, capture script and playtester uses the stepped simulation.
+
 ## Capture scripts (owned by Tech Art, built in Tech Spike)
 
 Evidence is produced by scripts, never by the builder, so nobody can cherry-pick a flattering angle:
