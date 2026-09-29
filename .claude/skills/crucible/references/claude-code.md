@@ -31,6 +31,7 @@ New subagent files are picked up when a session starts. If the current session d
 | Builder | `studio-builder` | `inherit`; the Director passes `model` per ticket from the routing table in `studio.md` (Opus for visual, spatial and feel work; Sonnet for implementation) | all except spawning agents | Works on the files its ticket owns. Worktree isolation only when files could overlap. |
 | Art / UX / coach / judge / coherence critic | `experience-critic` | `opus` | `Read` | Read-only, no Glob or Bash; it gets explicit file paths. `Read` opens images, which is how it sees evidence. Blind keys and the held-out QA suite are behind `permissions.deny` rules in the project settings. |
 | Code / architecture / audit critic | `code-critic` | `opus` | `Read, Grep, Glob, Bash`; `Edit, Write` disallowed | Can run tests and the profiler, cannot change code. |
+| Visual QA inspector | `visual-qa` | `opus` | `Read, Bash`; `Edit, Write, Agent` disallowed | Plays the build through `tools/play.mjs` and looks at every screenshot; not blind, never a judge. |
 | Playtester / first-time player | `playtester` | `sonnet` (opus at a release gate) | `Read, Glob, Bash`; `Edit, Write` disallowed | Plays through the step-play harness. |
 | QA runs, clerk work | general-purpose | `haiku` | all | Running the acceptance suite and summarising, renaming evidence, dashboard. |
 

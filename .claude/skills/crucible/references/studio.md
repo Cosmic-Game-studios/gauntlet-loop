@@ -23,7 +23,7 @@ Why this shape: in the first Arena benchmark, a studio with three generalist bui
    Gameplay Engineering · AI Engineering · UI/UX · Audio · Tools & Build
                                         |
    ----- REVIEW BOARD (always fresh, never builds) ----------------------------------------
-   Art critic · UX critic · Code critic · Playtester · Held-out judge
+   Art critic · UX critic · Visual QA inspector · Code critic · Playtester · Held-out judge
 ```
 
 Leads are not permanent agents. A lead is a role the Director spawns for lead work: the Art Director writes the style bible and later reviews coherence; the Tech Director writes the architecture contract and later reviews code. Lead output lives in files (`STYLE_BIBLE.md`, `ARCHITECTURE.md`, `DESIGN.md`), which is how the leadership stays present in every later ticket without being in anyone's context.
@@ -35,7 +35,7 @@ Route by the kind of thinking the ticket needs, not by the department's name.
 | Work | Model | Why |
 |---|---|---|
 | Game Director, all leads (art, tech, design direction) | **Opus** | Judgement, taste, planning across the whole game |
-| Every critic and judge (art, UX, code, held-out) | **Opus** | A weak critic lets everything through; critic quality sets the ceiling |
+| Every critic and judge (art, UX, code, held-out) and the Visual QA inspector | **Opus** | A weak critic lets everything through; critic quality sets the ceiling |
 | Visual and spatial building: 3D models, characters, environment art, level layout, lighting and post, VFX, animation, UI/HUD design, weapon feel and viewmodels - the look of a 3D world is where the studio is judged hardest, so these tickets get the strongest model and the most review rounds | **Opus** | Visual design, spatial reasoning and "feel" are where the stronger model makes the visible difference |
 | Implementation against a clear spec: systems, AI/navigation logic, save/load, tools, audio synthesis code, build scripts, bug fixes with a known cause | **Sonnet** | Strong, fast and cheaper for well-scoped code |
 | Playtesting (plays and reports) | **Sonnet** (Opus at a release gate) | Many steps, simple judgement per step |

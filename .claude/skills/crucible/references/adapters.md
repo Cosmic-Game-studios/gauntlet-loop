@@ -67,4 +67,4 @@ Same verbs, written as a small script at Tech Spike:
 
 ## Web
 
-`templates/web/`: `shot.mjs` (capture), `perf.mjs` (perf), `accept.mjs` + `check.mjs` (test), `blind.sh` (blind pairs), `lookdev.js` (renderer and style starter), `kickoff.sh` (all of it in one command); build and package are the project's bundler or a static copy; step is the game's debug hook.
+`templates/web/`: `shot.mjs` (capture, incl. filmstrips), `play.mjs` (step-play sessions for the Visual QA inspector and playtesters), `perf.mjs` (perf), `accept.mjs` + `check.mjs` (test), `blind.sh` (blind pairs), `lookdev.js` (renderer and style starter), `kickoff.sh` (all of it in one command); build and package are the project's bundler or a static copy; step is the game's debug hook.

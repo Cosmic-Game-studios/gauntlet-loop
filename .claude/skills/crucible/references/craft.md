@@ -65,6 +65,17 @@ When assets are authored in code or through a DCC tool driven by script, the dif
 - **Comic surface detail**: hand-drawn-looking hatching or halftone in shadows, bold flat colour areas, strong rim light, painted gradients on the sky.
 - **Stylised is not simple.** A comic style still needs value structure, readable silhouettes, material separation and lighting mood - it only draws them with fewer, bolder strokes.
 
+## Visual QA checklist (Visual QA inspector, every visual builder before returning)
+
+What makes a 3D game look unfinished, in the order players notice it:
+- **Characters:** T-pose or bind pose visible at any moment; feet sliding or floating; limbs intersecting the body; rigid parts that should bend; no windup before an attack; death that pops out instead of playing; outline hull cracked at seams or missing on some parts.
+- **Weapons and effects:** flash or bloom covering the crosshair or the target; tracers from the wrong point; impacts missing on some surfaces; effects that never clean up or freeze; damage numbers unreadable against the background; viewmodel clipping into the camera or walls.
+- **World:** props floating or sunk into the floor; seams and holes; z-fighting; stretched or blurry textures; repeating tiles visible at a glance; empty or flat sky; flat, shadowless or over-dark lighting; everything in one value band.
+- **Readability:** enemies that share hue and value with the level; pickups invisible from mid range; the player's eye pulled to decoration instead of threats.
+- **UI:** text overflowing or overlapping; HUD elements covering the action; screens in a different style than the game; unreadable at the target resolution.
+
+Every visual builder runs its own piece through this list with `tools/play.mjs` or its evidence set before returning; the inspector checks the whole build.
+
 ## Game feel (Design Director, Gameplay Engineering)
 
 Numbers live in tuning tables; the Design Director sets them from the bar where possible.

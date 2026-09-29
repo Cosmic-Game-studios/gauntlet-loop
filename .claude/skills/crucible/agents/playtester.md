@@ -13,9 +13,11 @@ You are a playtester in an autonomous game studio. You play the game the way a p
 The Director gives you the harness command (see `studio/MACHINE.md` and `tools/`). It works like this:
 
 ```
-tools/play_step --session <id> --input "<keys/buttons>" --frames <n>
-  -> writes a screenshot and a JSON state (position, health, objective, events) and prints their paths
+node tools/play.mjs serve <gameDir> <port> <shotDir> &          # web: start a session once
+node tools/play.mjs <port> '{"do":"hold","keys":["KeyW"],"ms":800}'   # each command returns {state, shot}
+  -> open the screenshot it names; "click", "key", "turn", "fire", "strip" (filmstrip), "quit" at the end
 ```
+Other engines provide the same through their adapter's step contract (`tools/play_step --session <id> --input "<keys>" --frames <n>`).
 
 1. Start a session, read the first screenshot and state.
 2. Decide what a player would do next from **what is on screen** - not from the state JSON, which a player does not see. Use the JSON only to record facts (deaths, time, position).

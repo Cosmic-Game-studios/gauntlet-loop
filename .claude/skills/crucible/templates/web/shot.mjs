@@ -6,6 +6,8 @@
 //   {"wait": 500}                           wall-clock wait (avoid; prefer "step")
 //   {"key": "KeyW", "ms": 400}              hold a real key      {"click": [640, 400]}   real click
 //   {"shot": "name"}                        screenshot -> <outDir>/<name>.png
+//   {"strip": "name", "frames": 8, "step": 3, "js": "..."}   filmstrip in one image: frames `step` ticks apart (animation, recoil,
+//                                           effects); `js` runs before each frame with ${i} replaced (turntables: rotate the model by i)
 // Run it under one of two locks so at most two renders share the CPU, and skip the render if the wait times out:
 //   flock -w 60 /tmp/render.$((RANDOM%2)).lock node tools/shot.mjs ...
 import { chromium } from 'playwright'; import http from 'http'; import fs from 'fs'; import path from 'path';
@@ -25,7 +27,18 @@ p.on('pageerror', e => errors.push(e.message)); p.on('console', m => { if (m.typ
 await p.goto(`http://localhost:${port}/index.html`); await p.waitForTimeout(1500);
 const shots = [];
 for (const a of JSON.parse(fs.readFileSync(actionsFile, 'utf8'))) {
-  if (a.eval) await p.evaluate(a.eval);
+  if (a.strip) {
+    const imgs = [], k = a.step || 3, nf = Math.min(a.frames || 8, 12);
+    for (let i = 0; i < nf; i++) {
+      if (a.js) await p.evaluate(a.js.replaceAll('${i}', String(i)));
+      await p.evaluate(([h, n]) => { const f = eval(h); if (typeof f !== 'function') throw new Error('step hook missing: ' + h); f(n); }, [stepHook, k]);
+      imgs.push((await p.screenshot({ type: 'jpeg', quality: 80 })).toString('base64'));
+    }
+    const sp = await b.newPage({ viewport: { width: 1600, height: 100 } });
+    await sp.setContent(`<body style="margin:0;background:#111"><div style="display:grid;grid-template-columns:repeat(${Math.min(4, nf)},1fr);gap:3px;padding:3px">${imgs.map((d, i) => `<figure style="margin:0;position:relative"><img src="data:image/jpeg;base64,${d}" style="width:100%;display:block"><figcaption style="position:absolute;left:4px;top:4px;background:#000b;color:#fff;font:13px sans-serif;padding:1px 5px">${i + 1} (+${k * i}t)</figcaption></figure>`).join('')}</div></body>`);
+    const f = path.join(outDir, a.strip + '.png'); await sp.screenshot({ path: f, fullPage: true }); await sp.close(); shots.push([f, a.strip]);
+  }
+  else if (a.eval) await p.evaluate(a.eval);
   else if (a.step) await p.evaluate(([h, n]) => { const f = eval(h); if (typeof f !== 'function') throw new Error('step hook missing: ' + h); f(n); }, [stepHook, a.step]);
   else if (a.wait) await p.waitForTimeout(a.wait);
   else if (a.key) { await p.keyboard.down(a.key); await p.waitForTimeout(a.ms || 300); await p.keyboard.up(a.key); }

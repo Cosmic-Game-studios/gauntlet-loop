@@ -92,7 +92,7 @@ Evidence is produced by scripts, never by the builder, so nobody can cherry-pick
 
 LLM agents cannot play in real time. The studio builds a turn-based harness during Tech Spike:
 
-- `tools/play_step --session <id> --input "<keys>" --frames <n>` advances the game deterministically by N frames with the given inputs, then writes a screenshot and a JSON state (position, health, objective, events).
+- Web: `tools/play.mjs` (from `templates/web/`) runs a step-play session in headless Chromium - real clicks and keys, the debug hook, filmstrips and zooms. Other engines: `tools/play_step --session <id> --input "<keys>" --frames <n>` advances the game deterministically by N frames with the given inputs, then writes a screenshot and a JSON state (position, health, objective, events).
 - In Godot and web this is a debug mode in the game itself (paused tree / fixed timestep driven by the harness); in Unreal and Unity an automation/test hook that steps the world.
 - The same harness drives the QA bot and the scripted runs for captures.
 

@@ -20,7 +20,7 @@ What does not converge within the budget becomes debt for a later polish pass wi
 ```
             round 1..N  (N = hero up to 6, core up to 3, bulk 1; plateau stop after 2 rounds without a new champion)
   +------------------------------------------------------------------+
-  |  BUILD/REVISE --> VERIFY --> CODE CRITIC --> COACH CRITIC --> gap  |--+
+  |  BUILD/REVISE --> VERIFY --> CODE CRITIC + VISUAL QA + COACH --> gap |--+
   +------------------------------------------------------------------+  |
        ^                                                    |          |
        +-------------------- next round --------------------+          |
@@ -36,6 +36,26 @@ What does not converge within the budget becomes debt for a later polish pass wi
                beats the bar          meets the floor,          misses the floor
                -> merge               -> merge + DEBT.md        -> one re-scope, else cut
 ```
+
+## The visual loop: every visible piece is looked at in the game, in motion and up close
+
+A screenshot from a fixed camera hides most of what makes a game look cheap: the T-pose at 3 m, the feet that slide, the outline that cracks, the flash that covers the target, the prop floating at the edge of the level. So every visible piece (models, animation, VFX, world, lighting, UI) gets two kinds of visual review in every round, in parallel:
+
+1. **Visual QA inspector** (`visual-qa`, Opus, not blind). Plays the integrated build through `tools/play.mjs` - walks, aims, fires, spawns enemies close, zooms on models, takes filmstrips of walk cycles, attacks, deaths, recoil and effects, opens every screen - and returns up to 8 ranked defects with screenshot evidence. Defects are treated like code blockers: the Director routes each to the owner of the file and the next round fixes them first. The inspector's BEST line tells builders what not to break.
+2. **Coach** (`experience-critic`, blind). Compares the piece against its bar on one question and names the single biggest gap. It never sees the build's history.
+
+The **evidence set per visible piece** is fixed at kickoff in `tools/review.json` (web: `shot.mjs` actions) so every round is comparable:
+
+| Piece | Evidence the coach gets (each one image) |
+|---|---|
+| Character / enemy model | turntable strip (8 angles at game distance) + close-up + black silhouette, next to the bar's enemy |
+| Animation | filmstrips of walk, attack (windup, strike, recover), hit reaction and death, 8 frames, fixed tick spacing |
+| Weapon and viewmodel | filmstrips of fire, reload and switch, first-person framing like the bar |
+| VFX | filmstrips of muzzle flash, impact, hit feedback and death effect, stepped on the simulation clock |
+| World, lighting, look | gameplay frames at eye height from 4 fixed poses, next to the bar in the same framing |
+| UI | every screen at the target resolution |
+
+A visible piece is not WON while the inspector still lists a defect in it that a player would notice in the first minute, whatever the coach picks.
 
 ## Round budget (hard)
 
@@ -199,6 +219,7 @@ Critics recognise famous games, and press renders are not gameplay.
 | **Judge** | `experience-critic` judge | Final outcome, held-out | Held-out captures, both orders |
 | **Silhouette** | `experience-critic` coach/judge | Characters, props, enemies | Black-fill silhouettes at game distance |
 | **Coherence** | `experience-critic` coherence | Does it belong in this game; bulk batches | Asset in-engine next to 5 merged assets and the style bible |
+| **Visual QA** | `visual-qa` | Everything a player sees, in the running build: defects up close, in motion, in combat, on every screen | Its own step-play session (`tools/play.mjs`): screenshots, filmstrips, zooms |
 | **Playtest** | `playtester` | Is it clear, is it paced, where do players get stuck | Step-play session, deaths, stalls, time-to-objective |
 | **First-time player** | `playtester` with no brief | Onboarding, UI clarity | Step-play session, narrated confusion |
 | **Code** | `code-critic` ticket | One ticket's diff | Diff, tests, profiler, architecture, code bar |

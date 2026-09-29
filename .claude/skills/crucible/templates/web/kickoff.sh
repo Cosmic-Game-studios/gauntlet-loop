@@ -30,7 +30,7 @@ for m in "$@"; do
   fi
 done
 [ -f "$GAME/src/lookdev.js" ] || cp "$SKILL/templates/web/lookdev.js" "$GAME/src/lookdev.js"
-for t in shot.mjs perf.mjs accept.mjs check.mjs blind.sh; do [ -f "tools/$t" ] || cp "$SKILL/templates/web/$t" tools/; done
+for t in shot.mjs play.mjs perf.mjs accept.mjs check.mjs blind.sh; do [ -f "tools/$t" ] || cp "$SKILL/templates/web/$t" tools/; done
 [ -f tools/pack.mjs ] || cp "$SKILL/templates/pack.mjs" tools/
 [ -f tools/checks.mjs ] || printf '%s\n' "// Check registry - QA owns this file. export default { 'A-01': async ({ page, hook, step }) => { ... } }" "export default {};" > tools/checks.mjs
 for f in "$SKILL"/agents/*.md; do awk 'c>=2; /^---$/{c++}' "$f" > "studio/prompts/$(basename "$f")"; done
