@@ -17,7 +17,8 @@ Everything important lives in `studio/` (see `state.md`), written the moment it 
 | Every non-obvious decision | `DECISIONS.md` | Immediately |
 | Every bug and build error | `TRACKER.md` → `## Errors` | Immediately, with log path |
 | What the studio learned | `LESSONS.md` | When a gap repeats (see Rule 3) |
-| Critic verdicts, captures, logs | `evidence/<ticket>/round-<n>/` | By the critic itself |
+| Captures and logs | `evidence/<ticket>/round-<n>/` | By the capture scripts |
+| Critic and playtester verdicts | `evidence/<ticket>/round-<n>/verdicts.md` | By the Director, from their returns (critics are read-only) |
 
 `STATUS.md` is the **first file any agent reads** and it must fit on one screen (max ~40 lines). It answers: milestone, gate progress, what is running, what is blocked, top risk, next 5 actions, budget used.
 
@@ -44,7 +45,7 @@ The skill files themselves are part of this budget. Builders and critics never r
 Subagents write their full output to files and return **at most 5 lines** to whoever spawned them:
 
 ```
-T-042 round 4: EXPERIENCE A(ours) x2 | CODE PASS
+T-042 round 3: JUDGE ours x2 (both orders) | CODE PASS
 evidence: studio/evidence/T-042/round-4/
 next: WON - ready to merge
 ```

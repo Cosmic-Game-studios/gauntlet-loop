@@ -34,16 +34,17 @@ studio/
 ## STATUS.md (overwritten every heartbeat, max ~40 lines)
 
 ```
-# STATUS  -  HB-087  2026-10-04 14:10  -  state: RUNNING   (or: paused: limit until ~16:00 / WAITING FOR HUMAN RC-1)
+# STATUS  -  HB-087  2026-10-04 14:10  -  state: RUNNING
+#   states: RUNNING | paused: limit until <time> | BLOCKED ON HUMAN - <question> | WAITING FOR HUMAN RC-<n> | DONE
 
 Milestone:  Content Alpha   gate 3/5   [x] all features exist  [x] levels 1-4 playable  [x] no blockers
                                         [ ] bot finishes game   [ ] level 5 playable
-Progress:   212/301 tickets WON (70%)   today: 31 WON   avg rounds/WON: hero 4.1, core 2.3, bulk 1.4
+Progress:   212/301 tickets WON (70%)   today: 31 WON   avg rounds: hero 2.4, core 1.6, bulk 1.0   WON/PASSED: 160/52
 In flight:  9  (Code 3, 3D 2, Audio 1, Level 2, QA 1)
 Blocked:    T-244 boss arena navmesh (waits T-240)     T-251 FAILED -> re-scope (split) next HB
 Debt:       14 PASSED tickets in DEBT.md (5 hero, 9 core) - polish pass at Beta
 Errors:     2 open (E-019 crash on level 4 load - T-260 on it; E-021 audio pops on pause)
-Top risk:   Level 5 pacing - Playtest critic: 3 min of dead corridor
+Top risk:   Level 5 pacing - playtester: 3 min of dead corridor
 Numbers:    61 fps avg / 48 1%-low (target 60/50), load 3.2 s, 0 crashes in last 40 min bot play
 Budget:     n/a (no user budget)
 Next:       1. split T-251   2. merge T-238, T-241   3. dispatch level 5 blockout   4. fix E-019   5. lessons review 3D
@@ -58,12 +59,12 @@ Checkbox list first, grouped by feature. One line per ticket. Details live in th
 
 ## Core movement
 - [x] T-031  Input system                       [Code]    hero  WON r2   merged HB-012
-- [x] T-042  Player dash                        [Code]    hero  WON r6   merged HB-019
+- [x] T-042  Player dash                        [Code]    hero  WON r3   merged HB-019
 - [ ] T-043  Wall run                           [Code]    hero  IN GAUNTLET r3   gap: loses momentum at corner
 - [ ] T-044  Wall run animation                 [Anim]    core  BLOCKED by T-043
 
 ## Weapons
-- [x] T-101  Rifle model                        [3D]      hero  WON r4
+- [x] T-101  Rifle model                        [3D]      hero  PASSED r3  debt D-12   merged HB-024
 - [ ] T-102  Rifle recoil pattern               [Code]    hero  BUILDING r1
 - [~] T-109  Crafting bench                     [Design]  CUT  (D-031)
 
@@ -110,4 +111,4 @@ numbers:  58 fps (target 60), load 4.1 s, 0 crashes / 12 min bot play
 
 On any new session, context reset or compaction, the Director reads, in this order: `STATUS.md`, `TRACKER.md` (open section), `MILESTONE.md`, the last 10 `DECISIONS.md` lines, the latest `feedback/RC-<n>.md` if in a patch cycle. `BRIEF.md` pillars when planning. Nothing else. Then it runs the next heartbeat.
 
-Tickets marked BUILDING or IN GAUNTLET with no evidence for their current round are reset to READY. `paused: limit` in `STATUS.md` means continue normally. `WAITING FOR HUMAN` means do nothing until the human writes.
+Tickets marked BUILDING or IN GAUNTLET with no evidence for their current round are reset to READY. `paused: limit` in `STATUS.md` means continue normally. `WAITING FOR HUMAN` and `BLOCKED ON HUMAN` mean do nothing until the human writes. `DONE` is set only when the human says the game is finished.

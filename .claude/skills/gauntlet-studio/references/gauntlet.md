@@ -49,6 +49,7 @@ No ticket ever gets more rounds than its budget. The Director cannot extend it; 
 
 - A `studio-builder` subagent (see `claude-code.md`) with the ticket's context pack (`context.md`): the ticket, the pillars, the relevant style bible and `ARCHITECTURE.md` sections, the bar, the matching `LESSONS.md` rules, and - from round 2 on - the coach critic's GAP and the Code critic's BLOCKERS. Nothing else.
 - It changes the work and nothing outside its ticket's files.
+- Each builder runs in a fresh git worktree. From round 2 on, the Director names the **champion branch** (`ticket/T-042-r1` etc.) in the prompt and the builder checks it out first, so a revision builds on the best version, not on main. Every round commits to its own branch `ticket/<id>-r<n>`.
 - It does **not** produce the critics' evidence. Evidence is captured by the studio's capture scripts (`engines.md`) after verify, so a builder cannot cherry-pick flattering angles or frames.
 - It returns at most 5 lines and writes "ready for verify", never "done".
 
@@ -76,6 +77,7 @@ It checks in this order: **correctness** (every case, incl. frame-rate independe
 
 ```
 VERDICT:  PASS or BLOCK
+FLOOR:    ok, or "correctness/robustness blocker present"
 VS BAR:   one sentence: where the reference implementation does this better, or "matches or beats"
 BLOCKERS: ranked, each with file:line and the fix as an instruction (empty if PASS)
 ```
@@ -94,7 +96,7 @@ WHY:    two sentences, concrete
 GAP:    the single biggest thing that would flip the pick, as an instruction the builder can act on
 ```
 
-Harsh, no scores out of 10, only what is in the evidence. Missing or unclear evidence = `PICK: bar, GAP: evidence insufficient - capture X`.
+Harsh, no scores out of 10, only what is in the evidence. Missing or unclear evidence = `PICK: NONE, GAP: evidence insufficient - capture X`, counted as a loss.
 
 **One GAP per round, never a list.** A list invites the builder to tick boxes for the critic; one gap forces the most important fix.
 

@@ -16,7 +16,7 @@ The Director runs one heartbeat per `/loop` iteration. Each heartbeat starts fro
 7. REPORT    Overwrite STATUS.md, append HEARTBEAT.md, regenerate dashboard.html, commit. Rotate files (context.md).
 ```
 
-A heartbeat ends when it has dispatched work and written its report. The next one is started by the heartbeat driver (`claude-code.md`): `tools/drive.sh`, a scheduled Routine, or `/loop`. The very first heartbeat is **setup**: install the studio subagents, hooks and `CLAUDE.md` into the project (`claude-code.md`), write `STATUS.md` and `TRACKER.md`, then start Tech Spike. If a heartbeat starts and dispatched work is still running, it only does SENSE, INTEGRATE and REPORT, then ends.
+A heartbeat ends when it has dispatched work and written its report. The next one is started by the heartbeat driver (`claude-code.md`): `tools/drive.sh`, a scheduled Routine, or `/loop`. The very first heartbeat is **setup**: install the studio subagents, hooks and `CLAUDE.md` into the project (`claude-code.md`), write `STATUS.md` and `TRACKER.md`, then start Tech Spike. **Dispatched work must outlive nothing.** Under `drive.sh` each heartbeat is one headless `claude -p` process, and background subagents die when it exits. So in headless mode the Director waits for every ticket round it dispatched (parallel `Agent` calls, awaited) before INTEGRATE and REPORT; a heartbeat is one wave of ticket rounds. In an interactive session with `/loop` or a Routine, background agents survive between heartbeats; a heartbeat that finds work still running only does SENSE, INTEGRATE and REPORT, and it does not count as an idle heartbeat for the progress checks in `endurance.md`.
 
 Write-through, not write-back: tick a checkbox, log an error, record a decision the moment it happens. If the session dies mid-heartbeat, the files are still right.
 
@@ -52,7 +52,7 @@ Decompose just in time. Only the current milestone gets tickets. Later milestone
 | test plans, bug hunts, automated playtests | QA |
 | builds, packaging, CI, platform settings | Build |
 
-Cross-department features (for example a new enemy) become a **chain**: Design spec -> Art concept -> 3D model -> Animation -> Tech Art import -> Code behaviour -> Audio -> Level placement -> QA. Each link is its own ticket; the next link unblocks only when the previous one WON. The one exception is Design: a spec is **APPROVED** when it is complete and testable (the Code critic's checklist, no Experience critic), which unblocks the chain; the Design ticket itself stays open and is WON only when the implemented feature wins its gauntlet.
+Cross-department features (for example a new enemy) become a **chain**: Design spec -> Art concept -> 3D model -> Animation -> Tech Art import -> Code behaviour -> Audio -> Level placement -> QA. Each link is its own ticket; the next link unblocks only when the previous one WON. The one exception is Design: a spec is **APPROVED** when the Director has checked it is complete and testable (every rule has a number or a test, every number is in a data file, it serves a pillar) - no critic is spent on it - which unblocks the chain; the Design ticket itself stays open and is WON only when the implemented feature wins its gauntlet.
 
 ## Milestones and exit gates
 
@@ -63,7 +63,7 @@ The Director only advances when the gate is met on a real build, judged by a fre
 | **Tech Spike** | The pipeline works end to end: engine builds headless, a Blender asset round-trips into the engine, screenshots and video capture work, a bot can press inputs. | A scripted run captures a video of a grey-box character moving in-engine, from a clean checkout, with one command. |
 | **Vertical Slice** | The 3-5 minute slice from the brief, at final quality. The whole bet is proven here. | Three separate blind comparisons of the slice against the bars - feel (frame strips + numbers), readability, look - each with its own question; ours wins at least 2 of 3. Numbers bar met. Architecture critic passes the codebase. A preview (build + video) goes on the dashboard; the human may comment, the run does not wait. |
 | **Content Alpha** | Every feature exists, every level is playable end to end, placeholder art allowed outside the slice. | A playtest agent finishes the game start to end without human help. No blocker bugs. |
-| **Beta** | All content at slice quality. Balance, onboarding, audio mix, performance. | Every feature's ticket chain is WON. Perf budget met on every level. 3 fresh playtest agents finish; frustration heatmap clean. |
+| **Beta** | All content at slice quality. Balance, onboarding, audio mix, performance. | Every ticket chain MERGED (WON or PASSED at the floor); every hero debt item WON or accepted in `DECISIONS.md`. Perf budget met on every level. 3 fresh playtest agents finish; frustration heatmap clean. |
 | **Release Candidate** | Complete, polished, shippable. Everything the brief asked for plus everything the Completeness list added. | Packaged build installs and runs from scratch, 30 min crash-free, completeness list closed, Architecture critic and Tech auditor pass on the whole game, final blind comparisons against the visual and feel bars win. **Or** the circuit breaker fires (below): then the best build is handed off with an honest known-gaps list. |
 | **Human Playtest** | The studio hands the game to the human and waits. Their feedback starts a patch cycle, which ends in the next Release Candidate. | Loops until the human says the game is done. See `feedback.md`. |
 
@@ -112,7 +112,7 @@ After the brief is locked, the Director never waits on the user. For every non-o
 D-014  [heartbeat 23]  Cut the crafting system. Reason: pillar 2 (every run < 20 min) and two failed gauntlets. Replacement: fixed loadouts.
 ```
 
-The only reasons to stop and ask: the brief itself is impossible, a budget the user set is about to be exceeded, or something needs credentials, payment or legal sign-off.
+The only reasons to stop and ask: the brief itself is impossible, a budget the user set is about to be exceeded, or something needs credentials, payment or legal sign-off. Then the Director sets `STATUS.md` to `state: BLOCKED ON HUMAN - <question>`, stops the driver like at a handoff, and asks once. It keeps working on everything the question does not block only in an interactive session; under `drive.sh` the run pauses until the human answers.
 
 ## Integration critic
 

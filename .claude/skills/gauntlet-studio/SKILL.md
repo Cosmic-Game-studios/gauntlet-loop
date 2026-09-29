@@ -42,8 +42,8 @@ PITCH -> questions (max 5) -> BRIEF -> [human: OK / edit]
 
 On OK, read and follow, in this order:
 
-- `references/claude-code.md` - how the studio runs in Claude Code: setup (install the subagents, hooks and `CLAUDE.md` into the game project), which subagent and model plays which role, the heartbeat driver, and the model's real limits (no image/audio/video generation, no hearing, no video). Do the setup in the first heartbeat.
 - `references/context.md` - context engineering: files are memory, STATUS.md and the TRACKER.md checklist, context packs, 5-line return contracts, fresh context per heartbeat. Read this first; it governs how you read everything else.
+- `references/claude-code.md` - how the studio runs in Claude Code: setup (install the subagents, hooks and `CLAUDE.md` into the game project), which subagent and model plays which role, the heartbeat driver, and the model's real limits (no image/audio/video generation, no hearing, no video). Do the setup in the first heartbeat.
 - `references/director.md` - the Game Director's heartbeat, decomposition, milestones, initiative, scope control.
 - `references/departments.md` - every department's builder, its bar, its verifier, its critic.
 - `references/gauntlet.md` - the per-ticket gauntlet: capped rounds (hero 3, core 2, bulk 1), Code critic, coach critic, champion, held-out judge, WON / PASSED / FAILED, debt and polish passes. This is the quality engine.
@@ -52,7 +52,7 @@ On OK, read and follow, in this order:
 - `references/endurance.md` - ticket tiers, cheap-first gates, model tiering, calibrated bars, stall economics, running for a week and surviving usage limits.
 - `references/feedback.md` - the Release Candidate handoff, waiting for the human, and turning their feedback into bars, tickets and patch cycles.
 
-**The heartbeat driver.** Heartbeats need something that wakes the Director even after a session ends or a usage limit hits: `tools/drive.sh` (a fresh headless session per heartbeat, for multi-day runs), a scheduled Routine (cloud), or a self-paced `/loop` (interactive). Details and trade-offs in `references/claude-code.md`. At handoff the Director stops the driver itself; the human's next message restarts it.
+**The heartbeat driver.** Heartbeats need something that wakes the Director even after a session ends or a usage limit hits: `tools/drive.sh` (a fresh headless session per heartbeat, for multi-day runs), a scheduled Routine (cloud), or a self-paced `/loop` (interactive). Details and trade-offs in `references/claude-code.md`. At handoff the Director stops the driver itself; how the human gets back in and the driver restarts is in `references/claude-code.md`.
 
 Department fan-out uses parallel `Agent` calls to the studio subagents, run in the background. If the user has opted into multi-agent orchestration (Workflow / `ultracode`), ticket batches may run as workflows. On agents other than Claude Code: "Run one Director heartbeat at a time from the studio files. Run builders and critics as separate subagents with fresh context. Stop and wait for the human when the Release Candidate is handed off."
 

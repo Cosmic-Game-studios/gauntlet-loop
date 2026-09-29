@@ -10,12 +10,14 @@ PAUSE_ON_ERROR=900      # seconds to wait after a failed heartbeat (usage limit,
 PAUSE_BETWEEN=5
 
 while true; do
-  if grep -Eq 'state: (WAITING FOR HUMAN|DONE)' studio/STATUS.md 2>/dev/null; then
-    echo "studio is waiting for the human or done - driver stops."; exit 0
+  if grep -Eq 'state: (WAITING FOR HUMAN|BLOCKED ON HUMAN|DONE)' studio/STATUS.md 2>/dev/null; then
+    grep -E 'state:' studio/STATUS.md | head -n 1
+    echo "studio needs the human (or is done) - driver stops. Answer in a Claude Code session in this project, then run: bash tools/drive.sh"
+    exit 0
   fi
 
   echo "--- heartbeat $(date -u +%FT%TZ) ---"
-  if claude -p "Use the gauntlet-studio skill. You are the Game Director. Run exactly one heartbeat from the studio files, then stop." \
+  if claude -p "Use the gauntlet-studio skill. You are the Game Director. Run exactly one heartbeat from the studio files. This is headless mode: wait for every subagent you dispatch before you integrate and report, then stop." \
        --model "$MODEL" --permission-mode auto --output-format text; then
     sleep "$PAUSE_BETWEEN"
   else

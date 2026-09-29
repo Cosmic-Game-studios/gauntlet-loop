@@ -39,4 +39,6 @@ BEST:       one moment that worked, with screenshot path
 TOP FIX:    the single change that would most improve this stretch for a player
 ```
 
+When the Director gives you pass criteria (e.g. "finish in under 300 steps, at most 1 STUCK, no DEAD TIME over 600 frames"), add a last line `CRITERIA: PASS` or `CRITERIA: FAIL - <which>`. Judge against them strictly.
+
 Be concrete: screenshot paths, frame numbers, what was on screen. "Felt a bit slow" is useless; "frames 1200-2100: corridor with no enemies or choices" is useful.

@@ -26,7 +26,7 @@ PICK:   A or B
 WHY:    two sentences, concrete, pointing at what you see (frame numbers, regions of the image, numbers)
 GAP:    the single biggest thing that would flip the pick, as one instruction a builder can act on
 ```
-One GAP, never a list. If the evidence is missing or unclear: `PICK: <the reference side>`, `GAP: evidence insufficient - capture <what>`.
+One GAP, never a list. If the evidence is missing or unclear: `PICK: NONE`, `GAP: evidence insufficient - capture <what>` (the Director counts NONE as a loss).
 
 **judge** - decide, give no advice.
 ```

@@ -8,6 +8,7 @@ The Director installs the studio into the game project before any ticket:
 
 | Copy from the skill | To the game project | Why |
 |---|---|---|
+| the whole skill folder | `.claude/skills/gauntlet-studio/` (if it is not already there) | `drive.sh` starts every heartbeat with "use the gauntlet-studio skill"; a headless session only finds project or user skills. |
 | `agents/*.md` | `.claude/agents/` | Subagent roles with their own model, tool allowlist and prompt. Skills cannot register subagents; they must live in `.claude/agents/`. |
 | `templates/CLAUDE.md` | `CLAUDE.md` (append if one exists) | Every subagent inherits `CLAUDE.md`, so the studio's core rules reach all of them without repeating them in every prompt. |
 | `templates/settings.json` | `.claude/settings.json` (merge the `hooks` key) | Hooks below. |
@@ -49,6 +50,8 @@ Pick the first one that fits where the run lives:
 3. **Interactive CLI session:** `/loop` without an interval (self-paced). Note: a self-paced `/loop` is not restored on `--resume`; the `SessionStart` hook reminds the Director to restart it when `STATUS.md` says `RUNNING`.
 
 At handoff the Director sets `WAITING FOR HUMAN`, which stops `drive.sh`, and cancels any Routine or loop it created.
+
+**Getting back in after a handoff or question.** The human answers in any Claude Code session in the project (interactive, or `claude -p "<feedback>"`). Claude Code loads the skill; the `SessionStart` hook shows `WAITING FOR HUMAN` or `BLOCKED ON HUMAN`; the Director records the answer (`feedback/RC-<n>.md` or `DECISIONS.md`), sets `state: RUNNING`, and restarts the driver it was using - for `drive.sh`, it tells the human the one command to run (`bash tools/drive.sh`), or starts it in the background itself where the session allows long-running processes.
 
 ## Model limits the loop is built around
 

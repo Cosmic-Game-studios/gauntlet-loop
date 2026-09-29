@@ -11,7 +11,7 @@ The human is **not** a dependency during development. They come in at the end, w
 
 ## 1. Release Candidate (when the studio is done)
 
-The Director only hands over when the Release Candidate gate is met (see `director.md`): every feature WON, completeness list closed, perf budget met, 30 min crash-free, packaged build launches from scratch. The one exception is the circuit breaker (wall-clock cap, budget, or no progress): then the best launching build goes out with `KNOWN_GAPS.md`, and the handoff message says so plainly. The human never receives a build that does not launch.
+The Director only hands over when the Release Candidate gate is met (see `director.md`): every feature MERGED at the floor with hero debt resolved, completeness list closed, perf budget met, 30 min crash-free, packaged build launches from scratch. The one exception is the circuit breaker (wall-clock cap, budget, or no progress): then the best launching build goes out with `KNOWN_GAPS.md`, and the handoff message says so plainly. The human never receives a build that does not launch.
 
 ## 2. Handoff
 
@@ -30,7 +30,7 @@ Play it, then tell me what you think - in your own words, as rough as you like.
 Screenshots, clips or timestamps help but are not needed.
 ```
 
-Then the Director sets `STATUS.md` to `WAITING FOR HUMAN RC-<n>`, **disables the heartbeat driver** (cancels the Routine or stops `/loop`), and **waits**. No polish, no background work while the human plays. The build they test must not change under them. The human's next message restarts the driver.
+Then the Director sets `STATUS.md` to `WAITING FOR HUMAN RC-<n>`, **disables the heartbeat driver** (cancels the Routine or stops `/loop`), and **waits**. No polish, no background work while the human plays. The build they test must not change under them. The human's next message restarts the driver (`claude-code.md` - getting back in).
 
 ## 3. Feedback intake
 
@@ -50,7 +50,7 @@ Human feedback is usually a feeling plus, sometimes, a reference. The Director's
 ```
 F-3.1  "Gunplay doesn't feel good, more like CS2"
 type:        feel / gunplay
-diagnosis:   Feel critic + Code critic on current weapons: [what is actually wrong - e.g. hitscan delay 2 frames,
+diagnosis:   Coach critic (frame strips + numbers) + Code critic on current weapons: [what is actually wrong - e.g. hitscan delay 2 frames,
              no recoil pattern, random spread from shot 1, weak hit feedback, no tagging on hit]
 new bar:     CS2 - AK-47 and M4A1-S: first-shot accuracy, learnable spray pattern, tap/burst/spray rhythm,
              hit feedback (sound + flinch + headshot sound). Source: official gameplay capture [URL + timestamps]
@@ -58,17 +58,17 @@ numbers:     input-to-shot < 1 frame after input sampling, first-shot deviation 
 tickets:     T-201 recoil/spray pattern system [Code], T-202 weapon tuning tables [Design], T-203 hit feedback SFX [Audio],
              T-204 muzzle/tracer/impact VFX [Tech Art], T-205 viewmodel kick animation [Animation]
 pillar:      supports P1 "every fight is decided by skill"; brief amended (A-2): "shooting feel reference = CS2"
-done when:   Feel critic picks ours over the CS2 clip on "which gun would a skilled player rather shoot?", x2 blind
+done when:   numbers met, then 2 held-out judges pick ours over the CS2 frame strips on "which weapon's recoil and hit feedback reads as more controllable?", both orders
 ```
 
 How the common kinds of feedback translate:
 
 | Feedback kind | Diagnosis first | New bar | Typical departments |
 |---|---|---|---|
-| **Feel** ("gunplay/movement/combat feels off") | Feel critic + Code critic measure the current state (latency, frame data, curves) | Named game's exact mechanic, captured | Code, Design, Animation, Audio, Tech Art |
+| **Feel** ("gunplay/movement/combat feels off") | Coach critic + Code critic measure the current state (latency, frame data, curves) | Named game's exact mechanic, captured | Code, Design, Animation, Audio, Tech Art |
 | **Look** ("more borderless comic art", "looks cheap") | Coherence critic lists what currently contradicts the new direction | Named game(s) with that style + new style frames | Art (new style bible), Tech Art (shaders, outlines, post), 3D, UI |
 | **Performance** ("smooth frame rates") | Tech auditor profiles every level, finds the top 5 costs | The numbers bar: target fps on target hardware, 1% lows, no hitches > N ms | Tech Art, Code, 3D (LODs), Build |
-| **Content / pacing** ("level 3 is boring") | Playtest critic replays it: dead time, repetition, difficulty curve | Named level from the reference game | Level, Design |
+| **Content / pacing** ("level 3 is boring") | `playtester` replays it: dead time, repetition, difficulty curve | Named level from the reference game | Level, Design |
 | **Clarity** ("didn't understand X") | First-time player critic reproduces the confusion | Named game's onboarding for a similar mechanic | UI/UX, Design, Level |
 | **Bug** | QA reproduces it and adds a regression test | - | Owning department |
 

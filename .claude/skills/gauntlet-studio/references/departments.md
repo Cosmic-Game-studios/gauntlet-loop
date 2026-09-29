@@ -75,7 +75,8 @@ Every sourced asset has its licence recorded in `studio/ASSETS.md`. No asset of 
 - **Evidence:** top-down map, playtest bot route and death heatmap, walkthrough video.
 - **Bar:** a named level from the reference game (its layout, pacing and teaching beats).
 - **Verify:** navmesh, every objective reachable, pacing within the target time.
-- **Rule:** grey-box first. Art only after the blockout wins the Playtest critic.
+- **Rule:** grey-box first. Art only after the blockout passes the `playtester` against the ticket's pass criteria (target time to objective, max stuck points, max dead time - taken from the bar level's pacing).
+- **Level judging:** the `playtester` report with `CRITERIA: PASS` is the floor; the Experience judge compares top-down map and frame strips of the walkthrough against the bar level for WON.
 
 ## UI/UX
 

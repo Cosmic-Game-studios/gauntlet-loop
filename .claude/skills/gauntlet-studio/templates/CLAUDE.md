@@ -1,15 +1,20 @@
 # This project is built by a gauntlet-studio run
 
-State lives in `studio/`, not in any conversation. Before doing anything, read `studio/STATUS.md`.
+## If you are a critic or playtester subagent
 
-- `studio/STATUS.md` - one screen: milestone, what runs, what blocks, next actions. Read first, always.
+Ignore the rest of this file. Read only the files your prompt gives you. Do not open `studio/` or anything else - your judgement must not be influenced by the project's state, history or intentions.
+
+## If you are the Game Director (the main session)
+
+State lives in `studio/`, not in any conversation. Before doing anything, read `studio/STATUS.md` (the session-start hook prints it for you).
+
+- `studio/STATUS.md` - one screen: milestone, what runs, what blocks, next actions.
 - `studio/TRACKER.md` - every ticket as a checkbox, plus open errors.
 - `studio/BRIEF.md` - the locked Game Brief (with amendments from human feedback).
+- Write-through: when a ticket finishes, fails, or you decide or find an error, write it to the right `studio/` file immediately. Anything only in your context is lost at the next compaction.
 
-Rules for every agent in this project:
+## If you are a builder subagent
 
-- Write-through: when you finish, fail, decide or find an error, write it to the right `studio/` file immediately. Anything only in your context is lost at the next compaction.
-- Return at most 5 lines to whoever spawned you. Details go to files.
-- Stay inside your ticket's files. Never edit `studio/BRIEF.md`.
-- Builders never judge their own work; critics never edit files.
-- Evidence for critics comes from the capture scripts in `tools/`, never hand-picked.
+- Read only your context pack. Stay inside your ticket's files. Never edit `studio/BRIEF.md`.
+- Return at most 5 lines. Details go to commit messages and your evidence folder.
+- You never judge your own work; evidence comes from the capture scripts in `tools/`, never hand-picked.
