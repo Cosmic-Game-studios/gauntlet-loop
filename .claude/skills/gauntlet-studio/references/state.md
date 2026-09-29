@@ -21,6 +21,7 @@ studio/
 ├── DECISIONS.md      # append-only decision log (D-001 ...)
 ├── PARKING.md        # ideas outside scope, never on the tracker without a cut
 ├── HEARTBEAT.md      # last 20 heartbeat entries (older ones in archive/)
+├── DEBT.md           # PASSED tickets: judge's WHY, tier, pillar, evidence - input for polish passes
 ├── KEEP.md           # what the human liked or did not complain about -> regression bars
 ├── feedback/         # RC-<n>.md: human feedback, interpretation, new bars, tickets, status
 ├── handoff/          # RC-<n>/: build, PLAY.md, CHANGES.md, highlight video, screenshots
@@ -39,7 +40,8 @@ Milestone:  Content Alpha   gate 3/5   [x] all features exist  [x] levels 1-4 pl
                                         [ ] bot finishes game   [ ] level 5 playable
 Progress:   212/301 tickets WON (70%)   today: 31 WON   avg rounds/WON: hero 4.1, core 2.3, bulk 1.4
 In flight:  9  (Code 3, 3D 2, Audio 1, Level 2, QA 1)
-Blocked:    T-244 boss arena navmesh (waits T-240)     T-251 (stalled r5 -> split review next HB)
+Blocked:    T-244 boss arena navmesh (waits T-240)     T-251 FAILED -> re-scope (split) next HB
+Debt:       14 PASSED tickets in DEBT.md (5 hero, 9 core) - polish pass at Beta
 Errors:     2 open (E-019 crash on level 4 load - T-260 on it; E-021 audio pops on pause)
 Top risk:   Level 5 pacing - Playtest critic: 3 min of dead corridor
 Numbers:    61 fps avg / 48 1%-low (target 60/50), load 3.2 s, 0 crashes in last 40 min bot play
@@ -70,12 +72,12 @@ Checkbox list first, grouped by feature. One line per ticket. Details live in th
 - [x] E-017  Footstep SFX double-trigger on stairs                    sev: minor     fixed by T-233
 ```
 
-Legend: `[ ]` open (any status up to WON), `[x]` MERGED, `[~]` cut. Status words: `BACKLOG, READY, BUILDING, VERIFY, IN GAUNTLET, WON, MERGED, BLOCKED, STALLED, CUT`.
+Legend: `[ ]` open (any status up to WON), `[x]` MERGED, `[~]` cut. Status words: `BACKLOG, READY, BUILDING, VERIFY, IN GAUNTLET, JUDGING, WON, PASSED, FAILED, MERGED, BLOCKED, CUT`. `PASSED` tickets are merged too; they carry a `debt` marker until a polish pass lifts them to WON.
 
 ## Ticket block (below the checklist in TRACKER.md)
 
 ```
-### T-042  Player dash                      [Code]  tier: hero  status: IN GAUNTLET  round: 3/8
+### T-042  Player dash                      [Code]  tier: hero  status: IN GAUNTLET  round: 2/3  champion: r1
 feature:     Core movement
 goal:        8 m dash, 0.15 s, cancels into attack, i-frames first 0.1 s
 bar:         Hades - Zagreus dash, gameplay capture 00:40-01:10 (bars/hades_dash.mp4)
@@ -83,7 +85,7 @@ question:    In the frame strips, which dash reads more clearly from start to en
 numbers:     startup <= 1 frame (bar: 1 frame, frame-stepped at 60 fps), input-to-motion < 50 ms (genre norm, not measurable from bar clip)
 code bar:    Lyra - dash ability (bars/lyra/)
 pack:        ARCHITECTURE.md#movement, LESSONS.md#code, bars/hades_dash.mp4
-acceptance:  unit tests for distance/timing; numbers met; Experience WON x2 blind; Code critic PASS
+acceptance:  unit tests for distance/timing; numbers met; Code critic PASS; judge picks ours (2 judges, both orders)
 depends:     T-031 WON
 budget:      0.2 ms CPU/frame
 last gap:    Experience: "Startup has 3 dead frames before motion; the bar moves on frame 1."
@@ -96,7 +98,7 @@ last gap:    Experience: "Startup has 3 dead frames before motion; the bar moves
 ## HB-023  milestone: Vertical Slice  gate: 2/4
 merged:   T-042, T-047
 won:      T-051 (awaiting merge)
-stalled:  T-039 (round 8, same gap) -> split into T-060, T-061
+failed:   T-039 (3/3 rounds, floor missed: open robustness blocker) -> re-scoped: split into T-060, T-061
 cut:      -
 lessons:  L-007 [3D] pivot at feet, +Y forward on export
 top gap:  Coherence critic: "Enemy VFX are saturated neon, rest of the world is muted - breaks pillar 1."

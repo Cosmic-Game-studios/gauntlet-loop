@@ -61,22 +61,30 @@ The loop exits when your work wins the blind comparison, or when you stop the ru
 1. **Intake.** It asks at most 5 questions (engine, scope, reference games, art direction, must-haves), only if the pitch leaves them open.
 2. **Game Brief.** It writes a one-screen brief: pillars, "not this", core loop, bars per department, vertical slice. You say OK or ask for changes. After that it never asks you anything until the game is done.
 3. **Game Director.** A lead agent breaks the brief into features and tickets, routes them to departments (Design, Code, Art, 3D/Blender, Animation, Tech Art, Audio, Level, UI/UX, QA, Build), and runs a heartbeat loop: load state, sense, judge the milestone gate, plan and cut, dispatch, integrate, report.
-4. **Every ticket runs the gauntlet with two separate critics.** Builder -> machine verify -> an **Experience critic** judges blind against a real shipped game (two independent wins on hero tickets), and a **Code critic** reviews the diff against the architecture and a named reference repo (correctness, robustness, performance, architecture). Both must pass. Stalls get a new builder, a split, or a kill review. Never a round count.
+4. **Every ticket runs the gauntlet with two separate critics.** Builder -> machine verify -> an **Experience critic** judges blind against a real shipped game (two independent wins on hero tickets), and a **Code critic** reviews the diff against the architecture and a named reference repo (correctness, robustness, performance, architecture). Both must pass. Rounds are capped (hero 3, core 2, bulk 1) because longer loops start optimising for the critic instead of the player: the best version is kept, a held-out judge the builder never sees decides, and anything that falls short but meets the floor is merged as debt for a later polish pass. A ticket that misses the floor gets one re-scope, then is cut or replaced.
 5. **It adds what you did not ask for.** A completeness pass lists what the genre expects (settings, rebinding, hit feedback, checkpoints, juice) and builds it.
 6. **Milestones with hard gates.** Tech Spike -> Vertical Slice -> Content Alpha -> Beta -> Release Candidate, each judged on a real build.
 7. **You play, it improves.** At the Release Candidate it hands you the game and waits. You play and write feedback in your own words ("gunplay should feel like CS2", "more borderless comic art", "I want smooth frame rates"). It turns each item into a diagnosis, a new bar and tickets, protects what you liked with regression bars, runs a patch cycle, and hands you the next build. Until you say it is done.
 8. **Context engineering, so it can run for a week.** Files are the memory, context is a scratchpad. The Director works from a one-screen `STATUS.md` and a checkbox `TRACKER.md` (tickets and errors), ticked the moment something happens. Every subagent gets a small context pack and returns at most 5 lines; details go to files. Repeated mistakes become `LESSONS.md` rules. Compaction or a restart loses nothing.
 9. **Spends effort where the player notices.** Tickets are tiered hero / core / bulk: full gauntlet for the core loop and the vertical slice, batched judging for props and filler. Cheap checks run before any critic, bars are calibrated so they can actually be beaten, and usage limits pause and resume the run instead of killing it.
-10. **Everything headless.** Blender, Unreal, Unity, Godot and web are driven from scripts, with screenshots, turntables and video as the critic's evidence. All memory lives in a `studio/` folder so the run survives context resets, and a dashboard shows progress live.
+10. **Built for Claude Code.** Ships subagent definitions (builder in its own git worktree, read-only critics, playtester) with per-role models and tool allowlists, hooks that re-inject `STATUS.md` after every compaction and snapshot state before it, and a driver that runs each heartbeat as a fresh headless session for multi-day runs. It is designed around the model's real limits: no image, audio or video generation, no hearing or watching video - art is made through Blender, SVG and procedural code, audio through synthesis and MIDI, and critics judge renders, frame strips and spectrograms.
+11. **Everything headless.** Blender, Unreal, Unity, Godot and web are driven from scripts, with screenshots, turntables and video as the critic's evidence. All memory lives in a `studio/` folder so the run survives context resets, and a dashboard shows progress live.
 
 ```
 .claude/skills/gauntlet-studio/
 ├── SKILL.md                     # intake flow, bar rules, entry point
+├── agents/                      # subagents installed into the game project's .claude/agents/
+│   ├── studio-builder.md        # builds one ticket, own worktree
+│   ├── experience-critic.md     # coach / judge / coherence, read-only, images only
+│   ├── code-critic.md           # ticket / architecture / audit, read-only
+│   └── playtester.md            # plays via the step-play harness
+├── templates/                   # CLAUDE.md, settings.json hooks, hook scripts, drive.sh
 └── references/
     ├── brief-template.md        # the Game Brief the user approves
+    ├── claude-code.md           # setup, roles -> subagents + models, hooks, heartbeat driver, model limits
     ├── context.md               # files as memory, STATUS/TRACKER, context packs, return contracts
     ├── director.md              # heartbeat, decomposition, routing, milestones, initiative, scope control
-    ├── gauntlet.md              # builder / verify / Experience + Code critic protocol, critic roster, stalls
+    ├── gauntlet.md              # capped rounds, code critic, coach, champion, held-out judge, debt
     ├── departments.md           # every department: builds, evidence, bar, verify
     ├── endurance.md             # ticket tiers, cheap-first gates, calibrated bars, week-long runs
     ├── engines.md               # headless Blender, Unreal, Unity, Godot, web + capture
@@ -122,7 +130,7 @@ For any other agent, the skill swaps those two lines for plain instructions: kee
 - A vague bar. The critic invents a comparison and approves everything. By far the most common failure.
 - The builder judging its own work. The critic needs fresh context and no knowledge of how hard the builder tried.
 - A soft critic. Give it a binary job, not a score.
-- A fixed round count. The exit is winning, or you calling it.
+- A fixed round count. The exit is winning, or you calling it. (For a single piece. At the scale of a whole game, `gauntlet-studio` caps rounds on purpose and moves the rest of the quality work to held-out judges and polish passes - see above.)
 
 ## Credit
 

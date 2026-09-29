@@ -25,7 +25,7 @@ PITCH -> questions (max 5) -> BRIEF -> [human: OK / edit]
 
 ## Phase 0 - Intake (the only time you talk to the user)
 
-1. **Probe the machine** before promising anything. Silently check: GPU or software rendering (Xvfb, lavapipe/llvmpipe), free disk, installed engines and versions (Blender, Godot, Unreal, Unity), licences that need credentials (Unity), ffmpeg, a browser for web builds, network access to fetch bars (video sites, store pages, repos), and which generation tools (image, audio, 3D) exist. Write it to `studio/MACHINE.md`. An engine that cannot build **and capture screenshots/video** headlessly here is not offered - or it is offered with exactly what the user must install first.
+1. **Probe the machine** before promising anything. Silently check: GPU or software rendering (Xvfb, lavapipe/llvmpipe), free disk, installed engines and versions (Blender, Godot, Unreal, Unity), licences that need credentials (Unity), ffmpeg, a browser for web builds, network access to fetch bars (video sites, store pages, repos), Python audio/image libraries (numpy, scipy, Pillow), MIDI rendering (fluidsynth + a soundfont), and whether any external image/audio/3D generation tool is connected (MCP server or CLI). Claude itself cannot generate images, audio or video, nor hear audio or watch video - the plan must not depend on it (`references/claude-code.md`). Write it to `studio/MACHINE.md`. An engine that cannot build **and capture screenshots/video** headlessly here is not offered - or it is offered with exactly what the user must install first.
 2. **Read the pitch.** Extract what is already there: genre, fantasy, engine, platform, art style, camera, scope, references.
 3. **Ask only what is missing, max 5 questions, in one message.** Priority order:
    - Engine and target platform, from the engines that passed the probe. Default if unanswered: the most capable engine that passed (Godot 4 or web are the usual safe choices in a GPU-less container; Unreal 5 only where it is installed and can render).
@@ -42,18 +42,19 @@ PITCH -> questions (max 5) -> BRIEF -> [human: OK / edit]
 
 On OK, read and follow, in this order:
 
+- `references/claude-code.md` - how the studio runs in Claude Code: setup (install the subagents, hooks and `CLAUDE.md` into the game project), which subagent and model plays which role, the heartbeat driver, and the model's real limits (no image/audio/video generation, no hearing, no video). Do the setup in the first heartbeat.
 - `references/context.md` - context engineering: files are memory, STATUS.md and the TRACKER.md checklist, context packs, 5-line return contracts, fresh context per heartbeat. Read this first; it governs how you read everything else.
 - `references/director.md` - the Game Director's heartbeat, decomposition, milestones, initiative, scope control.
 - `references/departments.md` - every department's builder, its bar, its verifier, its critic.
-- `references/gauntlet.md` - the per-ticket builder / verifier / Experience critic / Code critic protocol. This is the quality engine.
+- `references/gauntlet.md` - the per-ticket gauntlet: capped rounds (hero 3, core 2, bulk 1), Code critic, coach critic, champion, held-out judge, WON / PASSED / FAILED, debt and polish passes. This is the quality engine.
 - `references/engines.md` - how agents drive Unreal, Unity, Godot, Blender and the web headlessly, and how they capture evidence for critics.
 - `references/state.md` - the `studio/` folder that holds all memory, so the run survives context resets.
 - `references/endurance.md` - ticket tiers, cheap-first gates, model tiering, calibrated bars, stall economics, running for a week and surviving usage limits.
 - `references/feedback.md` - the Release Candidate handoff, waiting for the human, and turning their feedback into bars, tickets and patch cycles.
 
-**The heartbeat driver.** Heartbeats need something that wakes the Director even after a session ends or a usage limit hits. Use, in order of preference: a recurring scheduled Routine/trigger that fires the next heartbeat into a session (survives restarts and limits), or `/loop` self-paced in the current session, or - on other agents - an outer script that re-runs the agent with "run the next heartbeat" until `STATUS.md` says `WAITING FOR HUMAN` or `DONE`. At handoff the Director disables the driver itself; a new human message restarts it.
+**The heartbeat driver.** Heartbeats need something that wakes the Director even after a session ends or a usage limit hits: `tools/drive.sh` (a fresh headless session per heartbeat, for multi-day runs), a scheduled Routine (cloud), or a self-paced `/loop` (interactive). Details and trade-offs in `references/claude-code.md`. At handoff the Director stops the driver itself; the human's next message restarts it.
 
-Start with the driver on the Director heartbeat, and use multi-agent orchestration (Workflow / ultracode or parallel subagents) for department fan-out. On agents without those features: "Keep looping the Director heartbeat until the Release Candidate gate passes, then hand off and wait for the human. Run department builders and critics as parallel subagents with fresh context."
+Department fan-out uses parallel `Agent` calls to the studio subagents, run in the background. If the user has opted into multi-agent orchestration (Workflow / `ultracode`), ticket batches may run as workflows. On agents other than Claude Code: "Run one Director heartbeat at a time from the studio files. Run builders and critics as separate subagents with fresh context. Stop and wait for the human when the Release Candidate is handed off."
 
 ## Bar rules for games
 
@@ -67,6 +68,7 @@ A bar is a **named shipped game**, narrowed to the exact thing being judged, tha
 ## What breaks an autonomous studio
 
 - **The Director building.** The Director plans, routes, merges and cuts. It never writes a ticket's output itself.
+- **Endless revision rounds.** After two or three rounds, revising mostly optimises for the critic, not the player. Rounds are capped per tier; a held-out judge decides; what falls short becomes debt for a polish pass with fresh eyes.
 - **One critic for everything.** A critic that sees both the visuals and the code lets each excuse the other. Experience and Code are separate critics with separate evidence, and a ticket needs both.
 - **Critics judging descriptions.** Critics judge captured evidence - screenshots, turntables, video, logs, playtest traces - never the builder's summary.
 - **Pieces that pass alone and fail together.** Integration is judged separately, every heartbeat, on a real build.

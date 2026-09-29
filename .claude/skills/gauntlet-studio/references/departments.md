@@ -22,7 +22,7 @@ For each: **Builds** - what it produces. **Evidence** - what the critic sees. **
 
 ## Art (2D)
 
-- **Builds:** style bible, colour script, concept sheets, style frames, 2D textures, icons, UI art. Uses image generation where available, then paint-over and clean-up.
+- **Builds:** style bible, colour script, style frames, 2D textures, icons, UI art. Claude cannot generate images, so art is made with code and tools: SVG (UI, icons, logos, 2D sprites), procedural textures (noise, gradients, masks, in Python or Blender nodes), style frames as blocked-out Blender scenes rendered with target lighting and palette, and fetched reference images from the bar games as mood boards. An external image generator is used only if the probe found one (`MACHINE.md`).
 - **Evidence:** the image at final use size, plus in-engine screenshot once integrated.
 - **Bar:** the reference game's concept art or press-kit images.
 - **First visual ticket of the project** (runs in parallel with Tech Spike; it needs no build): the **style bible** - palette, value range, shape language, material rules, 6 reference frames. Every visual ticket afterwards is judged against it by the Coherence critic.
@@ -64,8 +64,8 @@ Every sourced asset has its licence recorded in `studio/ASSETS.md`. No asset of 
 
 ## Audio
 
-- **Builds:** SFX, music, ambience, mix, adaptive layers. Uses audio generation or synthesis tools where available, plus procedural sound where useful.
-- **Evidence:** the sound in context - gameplay video with audio - plus the isolated file.
+- **Builds:** SFX, music, ambience, mix, adaptive layers. Claude can neither generate nor hear audio, so audio is made as code and judged as data: SFX by synthesis scripts (oscillators, noise, envelopes, filters, layering - sfxr-style for retro, physical-modelling-style layers for impacts) and CC0 libraries processed by script; music composed as MIDI and rendered with a soundfont or synth; mixing by measured loudness targets. An external audio generator is used only if the probe found one. Audio is always flagged for the human playtest in `PLAY.md`.
+- **Evidence:** spectrogram and waveform images, LUFS / peak / onset timing, and which gameplay event (frame) it plays on - never "listen to it".
 - **Bar:** the reference game's equivalent sound or track.
 - **Verify:** loudness target, no clipping, loop points, correct format, triggers wired.
 

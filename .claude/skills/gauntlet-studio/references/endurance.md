@@ -8,9 +8,9 @@ The Director assigns every ticket a tier when it writes it. The tier decides how
 
 | Tier | What | Gauntlet | Share of tickets |
 |---|---|---|---|
-| **Hero** | Anything in the vertical slice, the core loop's feel (movement, gunplay, combat), the main character, the first 60 seconds, anything the human gave feedback on | Full: verify, Experience critic x2 blind vs the external bar, Code critic | ~15% |
-| **Core** | Features and assets the player meets often | Verify, one Experience critic vs the bar **or** the approved hero reference, Code critic | ~35% |
-| **Bulk** | Props, variations, filler rooms, secondary SFX, menu screens after the first | Verify, then judged **in batches** of up to 10 by one Coherence critic ("which of these do not belong next to the hero set?"), Code critic only on code changes | ~50% |
+| **Hero** | Anything in the vertical slice, the core loop's feel (movement, gunplay, combat), the main character, the first 60 seconds, anything the human gave feedback on | Up to 3 rounds; Code critic, coach critic vs the external bar, champion, 2 held-out judges in both orders | ~15% |
+| **Core** | Features and assets the player meets often | Up to 2 rounds; Code critic, coach critic vs the bar **or** the approved hero reference, 1 held-out judge | ~35% |
+| **Bulk** | Props, variations, filler rooms, secondary SFX, menu screens after the first | 1 round; judged **in batches** of up to 10 by one Coherence critic ("which of these do not belong next to the hero set?"), Code critic only on code changes | ~50% |
 
 Once a hero asset or mechanic has WON, it becomes the **internal bar** for its core and bulk siblings. Comparing a crate to an approved in-game hero prop is cheaper and more useful than comparing it to a AAA screenshot.
 
@@ -28,11 +28,11 @@ static checks / lint  ->  unit tests  ->  asset validators  ->  headless build  
 
 ## Model tiering
 
-Where the environment lets the studio choose models per subagent:
+In Claude Code the Director passes `model` per subagent call (mapping in `claude-code.md`):
 
-- **Strongest model:** the Director's planning steps, Code critic on hero and core tickets, Experience critics on hero tickets, feedback translation.
-- **Mid model:** builders, core Experience critics, Coherence batch critics.
-- **Fast model:** verification scripts runs, log summarisation, file hygiene, evidence renaming, dashboard generation.
+- **Opus:** the Director, hero builders, all judges, the Code critic, feedback translation.
+- **Sonnet:** core and bulk builders, core coach rounds, Coherence batches, playtesters (Opus for the Release Candidate gate).
+- **Haiku:** mechanical clerk work only - evidence renaming, file rotation, dashboard generation. Never judging, never building.
 
 If there is no choice of model, the tiers still apply to how many critics run.
 
@@ -47,7 +47,7 @@ A bar that can never be beaten burns budget forever. AAA assets made by teams of
 
 ## Stall economics
 
-- Every ticket carries a round budget by tier: hero 8, core 5, bulk 3. At the budget it escalates (`gauntlet.md` - swap, split, lower the ask, kill review), it does not keep grinding.
+- Every ticket carries a hard round budget by tier: hero 3, core 2, bulk 1. At the budget the held-out judge decides WON / PASSED / FAILED (`gauntlet.md`); a FAILED ticket gets one re-scope, then it is cut or replaced. Nothing grinds.
 - A repeated GAP becomes a `LESSONS.md` rule (`context.md`), so the next ticket does not pay for the same mistake.
 - The Director tracks rounds per WON ticket per department in `STATUS.md`. A department whose average climbs is a process problem (missing tool, bad bar, missing lesson) - the Director fixes the process, not the ticket.
 

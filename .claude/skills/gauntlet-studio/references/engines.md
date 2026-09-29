@@ -56,13 +56,32 @@ Captures are written to `studio/evidence/<ticket-id>/round-<n>/`.
 - Build with the bundler, serve locally, drive with Playwright (Chromium preinstalled): scripted inputs, screenshots, video recording, `performance` timings.
 - Assets as glTF from Blender.
 
-## Generative tools
+## Making content without generative models
 
-Use them where available, never as the final word:
+Claude cannot generate images, audio or video (see `claude-code.md` for the full table). Content comes from code and tools:
 
-- **Image generation** for concepts, style frames, texture bases, UI art - always corrected against the style bible and judged in-engine.
-- **Audio / music generation or synthesis** for SFX and music - always judged in context over gameplay video.
-- **3D generation** (image-to-mesh) only as a blockout starting point; the result still goes through the Blender pipeline, retopology and validation.
+- **Images:** SVG rasterised with a script (e.g. `rsvg-convert`, `cairosvg`, or the browser), procedural textures with Pillow/numpy, Blender renders.
+- **Audio:** synthesis scripts (numpy/scipy writing WAV), processing with `sox`/`ffmpeg`, MIDI composed as data and rendered with `fluidsynth` + a soundfont.
+- **3D:** Blender Python; kit assets imported and restyled.
+
+An external generation tool (MCP server or CLI) is used only if `MACHINE.md` lists one; its output still goes through validation and critics.
+
+## Capture scripts (owned by Tech Art, built in Tech Spike)
+
+Evidence is produced by scripts, never by the builder, so nobody can cherry-pick a flattering angle:
+
+- `tools/capture.sh <ticket> <round>` - builds, runs the fixed cameras and scripted run, writes screenshots, frame strips and numbers to `studio/evidence/<ticket>/round-<n>/`.
+- `tools/capture.sh <ticket> heldout` - the same with the held-out camera set, seeds and moments for the judge (`gauntlet.md`). Builders never see this set.
+- `tools/audio_report.py <wav>` - spectrogram + waveform PNGs and a JSON of LUFS, peak, onsets, duration.
+- `tools/strip.sh <video> <fps> <from> <to>` - frame strip / contact sheet PNG via ffmpeg.
+
+## Step-play harness (for playtesters)
+
+LLM agents cannot play in real time. The studio builds a turn-based harness during Tech Spike:
+
+- `tools/play_step --session <id> --input "<keys>" --frames <n>` advances the game deterministically by N frames with the given inputs, then writes a screenshot and a JSON state (position, health, objective, events).
+- In Godot and web this is a debug mode in the game itself (paused tree / fixed timestep driven by the harness); in Unreal and Unity an automation/test hook that steps the world.
+- The same harness drives the QA bot and the scripted runs for captures.
 
 ## Determinism
 

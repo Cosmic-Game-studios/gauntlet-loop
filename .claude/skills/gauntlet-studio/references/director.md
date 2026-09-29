@@ -16,7 +16,7 @@ The Director runs one heartbeat per `/loop` iteration. Each heartbeat starts fro
 7. REPORT    Overwrite STATUS.md, append HEARTBEAT.md, regenerate dashboard.html, commit. Rotate files (context.md).
 ```
 
-A heartbeat ends when it has dispatched work and written its report. The next one is started by the heartbeat driver (`SKILL.md`): a scheduled Routine or `/loop`. If a heartbeat starts and dispatched work is still running, it only does SENSE, INTEGRATE and REPORT, then ends.
+A heartbeat ends when it has dispatched work and written its report. The next one is started by the heartbeat driver (`claude-code.md`): `tools/drive.sh`, a scheduled Routine, or `/loop`. The very first heartbeat is **setup**: install the studio subagents, hooks and `CLAUDE.md` into the project (`claude-code.md`), write `STATUS.md` and `TRACKER.md`, then start Tech Spike. If a heartbeat starts and dispatched work is still running, it only does SENSE, INTEGRATE and REPORT, then ends.
 
 Write-through, not write-back: tick a checkbox, log an error, record a decision the moment it happens. If the session dies mid-heartbeat, the files are still right.
 
@@ -87,6 +87,10 @@ Each item is either added as a feature (with its own bar and tickets), marked "a
 
 The Director may also add a feature mid-run when a Playtest or First-time-player critic shows the game needs it - same rule: serves a pillar, costs no more than what it replaces, logged.
 
+## Polish passes
+
+Capped rounds mean some tickets merge as PASSED rather than WON. That is deliberate: the gap is recorded in `DEBT.md`, and the Director comes back to it later, with fresh builders who know more. At Content Alpha and again at Beta, the Director ranks `DEBT.md` by player impact (hero before core, the first 10 minutes before later, pillar-critical first) and dispatches the top items as new tickets with a normal round budget. The Beta gate requires every hero debt item to be WON or explicitly accepted in `DECISIONS.md`.
+
 ## Architecture
 
 Before the first content ticket, the Director has Code write `studio/ARCHITECTURE.md` during Tech Spike: module layout, core systems and who owns them, data-driven tuning, event flow, save format, naming, testing strategy, and the code bars (reference repositories) per system. The Code critic judges every diff against it; changing it requires a logged decision and an Architecture critic pass.
@@ -96,7 +100,7 @@ Before the first content ticket, the Director has Code write `studio/ARCHITECTUR
 The Director's default move is to cut.
 
 - Anything outside the brief goes to `PARKING.md`, not the tracker.
-- A feature with two tickets stalled (`gauntlet.md` - stall rules) triggers a **kill review**: simplify it, replace it with a cheaper version that serves the same pillar, or cut it.
+- A feature with two tickets FAILED after re-scope (`gauntlet.md`) triggers a **kill review**: simplify it, replace it with a cheaper version that serves the same pillar, or cut it.
 - "Not this" in the brief is binding.
 - Adding a feature requires cutting or shrinking one of equal cost.
 
