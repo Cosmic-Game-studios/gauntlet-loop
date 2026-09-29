@@ -2,19 +2,23 @@
 
 Every ticket, in every department, runs the same gauntlet. This is where quality comes from. How much of it a ticket gets depends on its tier (hero / core / bulk, see `endurance.md`); the order and the rules never change.
 
-## Why rounds are capped
+## Why rounds are budgeted, and why up to six
 
-The original gauntlet loop says "loop until it wins". For a single piece that is fine. For a game with hundreds of tickets it fails in two ways:
+The original gauntlet loop says "loop until it wins". For a game with hundreds of tickets that fails two ways: returns diminish after a few rounds, and a builder that keeps receiving one critic's gap starts fixing what *that critic* notices instead of what the player notices (Goodhart's law; LLM judges are exposed to it).
 
-1. **Diminishing returns.** Almost all of the improvement from critique-and-revise happens in the first two or three rounds. After that, rounds mostly shuffle details and burn budget.
-2. **Optimising for the critic.** A builder that keeps receiving one critic's GAP starts fixing what *that critic* notices - its phrasing, its blind spots - instead of making the game better. The longer the loop, the more the work drifts toward the judge and away from the player. This is Goodhart's law, and LLM judges are especially exposed to it.
+The first Arena benchmark showed the other side too: the loop that got 16 visual review rounds produced the best-looking game, and Crucible, with effectively zero useful visual rounds, the weakest. Visible quality needs iteration. So hero pieces get **up to six** review rounds, with four guards that keep the extra rounds honest:
 
-So the gauntlet is short, and quality comes from four other places instead of from more rounds: a **held-out judge** that the builder never optimises against, **keeping the best version** instead of the latest, **debt that gets fixed later with fresh eyes** (polish passes and human feedback), and **lessons** that make the next ticket start better.
+1. **Plateau stop.** If two consecutive rounds fail to beat the champion, the ticket stops early - more rounds would only chase the critic. (This is also the main cost saver.)
+2. **Fresh critics with rotating evidence.** A new critic every round, and the coach sees a different capture set (camera, seed, moment) each round, so no single view can be optimised for.
+3. **Held-out judge.** The outcome is decided on captures neither builder nor coach ever saw.
+4. **Champion, not latest.** A round that made things worse is thrown away.
+
+What does not converge within the budget becomes debt for a later polish pass with fresh eyes, and repeated gaps become `LESSONS.md` rules.
 
 ## The flow
 
 ```
-            round 1..N  (N = hero 3, core 2, bulk 1)
+            round 1..N  (N = hero up to 6, core up to 3, bulk 1; plateau stop after 2 rounds without a new champion)
   +------------------------------------------------------------------+
   |  BUILD/REVISE --> VERIFY --> CODE CRITIC --> COACH CRITIC --> gap  |--+
   +------------------------------------------------------------------+  |
@@ -37,8 +41,8 @@ So the gauntlet is short, and quality comes from four other places instead of fr
 
 | Tier | Critic rounds | Judge | Re-scope allowed |
 |---|---|---|---|
-| Hero | 3 | 2 fresh judges, both orders | once |
-| Core | 2 | 1 fresh judge | once |
+| Hero | up to 6 (plateau stop) | 2 fresh judges, both orders | once |
+| Core | up to 3 (plateau stop) | 1 fresh judge | once |
 | Bulk | 1 (batched Coherence critic) | the batch verdict is the judge | no - replace with a kit asset or cut |
 
 A **round** is one BUILD/REVISE plus its critics. Verify failures inside a round do not spend a critic, but the builder gets at most 3 verify attempts per round; a fourth failure ends the round as a failed round.
@@ -88,15 +92,18 @@ Style nits never block. Correctness and robustness blockers are part of the **fl
 
 A fresh `experience-critic` subagent in **coach mode**. Its job is to find the single biggest gap between ours and the bar, so the builder has one clear thing to fix.
 
-It gets evidence A and B (ours and the bar, labels stripped, order randomised, in a form it can perceive - see below), the one question for this ticket, and the pillars.
+It gets evidence A and B (ours and a reference, labels stripped, order randomised, in a form it can perceive - see below), the one question for this ticket, the pillars, and the craft rubric for this department (`craft.md`).
+
+**The reference is always available.** In order of preference: the external bar in comparable framing (`BARS.md`); the Art Director's look-dev target (for art and UI); the current champion (from round 2 on). If no comparable external bar exists, the coach compares against the other two - a review round never ends without a usable gap.
 
 ```
-PICK:   A or B
-WHY:    two sentences, concrete
-GAP:    the single biggest thing that would flip the pick, as an instruction the builder can act on
+REASONING: a short walk through the evidence against the rubric (what reads, what does not, where the eye goes)
+PICK:      A or B
+WHY:       two sentences, concrete
+GAP:       the single biggest thing that would flip the pick, as an instruction the builder can act on
 ```
 
-Harsh, no scores out of 10, only what is in the evidence. Missing or unclear evidence = `PICK: NONE, GAP: evidence insufficient - capture X`, counted as a loss.
+Reasoning comes before the pick because judgements made after looking carefully are more reliable than a first impression. Harsh, no scores out of 10, only what is in the evidence. If the evidence cannot answer the question, the critic says what capture is missing and still names the biggest gap it *can* see on our side.
 
 **One GAP per round, never a list.** A list invites the builder to tick boxes for the critic; one gap forces the most important fix.
 
@@ -106,7 +113,9 @@ Harsh, no scores out of 10, only what is in the evidence. Missing or unclear evi
 
 ## 5. Champion
 
-The Director keeps the **champion**: the best version so far, not the latest. Round 1's output is the first champion. From round 2 on, a fresh critic compares the new version against the champion on the ticket's question ("which is better?"); the new version only becomes champion if it wins. A revision that made things worse is discarded, not built upon. (Hero only; for core, the last round that passed verify and Code critic is the champion.)
+The Director keeps the **champion**: the best version so far, not the latest. Round 1's output is the first champion. From round 2 on, the coach's comparison is against the champion when no external bar is in play, or a second fresh critic compares new vs champion; the new version only becomes champion if it wins. A revision that made things worse is discarded, not built upon. Two rounds in a row without a new champion = plateau: stop the ticket and send the champion to the judge. (For core tickets, the last round that passed verify and the Code critic is the champion.)
+
+**Review boards, not single reviews.** In a review ritual (`studio.md`) several critics look at the same integrated build at once - art, UX, code, playtester. The Director merges their verdicts into **one gap per department** for the next fix sprint, picking the gap that most affects the pillars. Bugs and code blockers go on a separate fix list and are always fixed first.
 
 ## 6. Judge (held-out, decides the outcome)
 

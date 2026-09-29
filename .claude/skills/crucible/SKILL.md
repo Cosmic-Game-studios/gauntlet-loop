@@ -1,6 +1,6 @@
 ---
 name: crucible
-description: Turns a game idea into a fully autonomous, multi-agent game studio run. Interviews the user briefly, writes a Game Brief they approve or edit, then launches a Game Director that breaks the concept into tickets, routes them to departments (design, code, 3D/Blender, tech art, animation, audio, level, UI, QA), runs every ticket through a builder / verifier / two-critic gauntlet (blind experience critic vs shipped games, code critic vs architecture and reference repos), adds what the genre needs on its own initiative, and drives milestones to a complete Release Candidate in Unreal, Unity, Godot or web. Then it hands the game to the human, waits for playtest feedback, and runs patch cycles on it until the human says it is done. Triggers on "/crucible", "build a game", "make me a game", "game studio loop", "autonomous game dev".
+description: Turns a game idea into a fully autonomous, multi-agent game studio run organised like a real studio (Game Director, Art/Tech/Design Directors, parallel departments, a review board). Interviews the user briefly, writes a Game Brief they approve or edit, then launches a Game Director that breaks the concept into tickets, routes them to departments (design, code, 3D/Blender, tech art, animation, audio, level, UI, QA), runs every ticket through a builder / verifier / two-critic gauntlet (blind experience critic vs shipped games, code critic vs architecture and reference repos), adds what the genre needs on its own initiative, and drives milestones to a complete Release Candidate in Unreal, Unity, Godot or web. Then it hands the game to the human, waits for playtest feedback, and runs patch cycles on it until the human says it is done. Triggers on "/crucible", "build a game", "make me a game", "game studio loop", "autonomous game dev".
 ---
 
 # Crucible
@@ -42,21 +42,28 @@ PITCH -> questions (max 5) -> BRIEF -> [human: OK / edit]
 
 ## Phase 1+ - The studio run
 
-On OK, read and follow, in this order:
+On OK you become the **Game Director** of a studio (`references/studio.md`): a leadership team (Art, Tech and Design Directors), departments that build in parallel, and a review board that judges. You plan, dispatch, integrate and decide; you never build a ticket yourself.
 
-- `references/context.md` - context engineering: files are memory, STATUS.md and the TRACKER.md checklist, context packs, 5-line return contracts, fresh context per heartbeat. Read this first; it governs how you read everything else.
-- `references/claude-code.md` - how the studio runs in Claude Code: setup (install the subagents, hooks and `CLAUDE.md` into the game project), which subagent and model plays which role, the heartbeat driver, and the model's real limits (no image/audio/video generation, no hearing, no video). Do the setup in the first heartbeat.
-- `references/director.md` - the Game Director's heartbeat, decomposition, milestones, initiative, scope control.
-- `references/departments.md` - every department's builder, its bar, its verifier, its critic.
-- `references/gauntlet.md` - the per-ticket gauntlet: capped rounds (hero 3, core 2, bulk 1), Code critic, coach critic, champion, held-out judge, WON / PASSED / FAILED, debt and polish passes. This is the quality engine.
-- `references/engines.md` - how agents drive Unreal, Unity, Godot, Blender and the web headlessly, and how they capture evidence for critics.
-- `references/state.md` - the `studio/` folder that holds all memory, so the run survives context resets.
-- `references/endurance.md` - ticket tiers, cheap-first gates, model tiering, calibrated bars, stall economics, running for a week and surviving usage limits.
-- `references/feedback.md` - the Release Candidate handoff, waiting for the human, and turning their feedback into bars, tickets and patch cycles.
+Read in this order, and only what the current step needs:
 
-**The heartbeat driver.** Heartbeats need something that wakes the Director even after a session ends or a usage limit hits: `tools/drive.sh` (a fresh headless session per heartbeat, for multi-day runs), a scheduled Routine (cloud), or a self-paced `/loop` (interactive). Details and trade-offs in `references/claude-code.md`. At handoff the Director stops the driver itself; how the human gets back in and the driver restarts is in `references/claude-code.md`.
+1. **Before the first dispatch** (about 10 minutes of reading, worth it):
+   - `references/studio.md` - org chart, model routing, the five rituals, how to write a dispatch brief.
+   - `references/playbooks.md` - pick the playbook for the time available; it sets the waves and how often each ritual runs.
+   - `references/context.md` - files are memory, context packs, prompt order for caching, resumed builders, the acceptance list.
+2. **When you need them:**
+   - `references/director.md` - heartbeat, decomposition, milestones and gates, completeness pass, scope control.
+   - `references/gauntlet.md` - the review rounds (up to 6 for hero pieces, plateau stop), champion, held-out judge, WON / PASSED / FAILED.
+   - `references/craft.md` - art, tech-art, game-feel and UI/UX defaults; pass the relevant section into every dispatch brief.
+   - `references/departments.md` - what each department builds, its evidence, bar and checks.
+   - `references/claude-code.md` - installing the subagents and hooks, roles-to-subagents table, heartbeat drivers, model limits.
+   - `references/engines.md` - headless engines, deterministic stepping, capture scripts.
+   - `references/state.md` - file formats: STATUS, TRACKER, acceptance.json, tickets.
+   - `references/endurance.md` - tiers, cost, calibrated bars, multi-day runs.
+   - `references/feedback.md` - release candidate handoff and the human playtest loop.
 
-Department fan-out uses parallel `Agent` calls to the studio subagents, run in the background. If the user has opted into multi-agent orchestration (Workflow / `ultracode`), ticket batches may run as workflows. On agents other than Claude Code: "Run one Director heartbeat at a time from the studio files. Run builders and critics as separate subagents with fresh context. Stop and wait for the human when the Release Candidate is handed off."
+**The heartbeat driver.** Short runs keep one Director session (`playbooks.md`). Long runs need something that wakes the Director after a session ends or a usage limit hits: `tools/drive.sh`, a scheduled Routine, or a self-paced `/loop` (`references/claude-code.md`). At handoff the Director stops the driver itself.
+
+Dispatch departments and critics as parallel `Agent` calls in a single message - foreground in headless runs, so the heartbeat waits for all of them. If the user has opted into multi-agent orchestration (Workflow / `ultracode`), ticket batches may run as workflows. On agents other than Claude Code: "Run one Director heartbeat at a time from the studio files. Run builders and critics as separate subagents with fresh context. Stop and wait for the human when the Release Candidate is handed off."
 
 ## Bar rules for games
 
@@ -70,7 +77,9 @@ A bar is a **named shipped game**, narrowed to the exact thing being judged, tha
 ## What breaks an autonomous studio
 
 - **The Director building.** The Director plans, routes, merges and cuts. It never writes a ticket's output itself.
-- **Endless revision rounds.** After two or three rounds, revising mostly optimises for the critic, not the player. Rounds are capped per tier; a held-out judge decides; what falls short becomes debt for a polish pass with fresh eyes.
+- **Too few review rounds on what the player sees.** Visible quality needs iteration: hero pieces get up to six review rounds. Too many rounds optimise for the critic instead - so every round uses a fresh critic and rotating captures, a plateau stops the ticket early, and a held-out judge decides.
+- **Nobody owning the look.** Without an Art Director, a style bible and a look-dev scene before production, parallel departments produce a greybox. Art, level, UI and feel each need an owner and a critic.
+- **Generalist tickets.** One "core" ticket that builds arena, weapons, HUD and menus gets none of them right. One department, one module, one owner.
 - **One critic for everything.** A critic that sees both the visuals and the code lets each excuse the other. Experience and Code are separate critics with separate evidence, and a ticket needs both.
 - **Critics judging descriptions.** Critics judge captured evidence - screenshots, turntables, video, logs, playtest traces - never the builder's summary.
 - **Pieces that pass alone and fail together.** Integration is judged separately, every heartbeat, on a real build.

@@ -56,19 +56,11 @@ Cross-department features (for example a new enemy) become a **chain**: Design s
 
 ## Milestones and exit gates
 
-### Compressed schedules (caps under a day)
+### Schedules
 
-The milestone ladder assumes days. When the brief's cap is shorter, scale it instead of skipping the gauntlet:
+How many cycles fit, and which milestones are merged for short caps, is set by the playbook for the available time (`playbooks.md`). The gates below apply at every scale; short playbooks merge milestones rather than skip gates.
 
-| Cap | Plan |
-|---|---|
-| under 1 hour | Setup + Tech Spike in heartbeat 1 (minimal studio files: STATUS, TRACKER, BRIEF, ARCHITECTURE, BARS); then alternating **fix waves** and **review waves** until the cap; hand off at the cap. Heartbeats of 5-10 minutes. |
-| 1-8 hours | Tech Spike -> Vertical Slice -> Release Candidate; one polish pass on DEBT.md. |
-| a day or more | The full ladder below. |
-
-In every plan: the first heartbeat ends with a **playable build and captured, comparable bar evidence** (see BARS gate below), and the Code critic reviews the Tech Spike in heartbeat 1 while builders polish, so its blockers land in heartbeat 2, not 3.
-
-**BARS gate.** Before any Experience critic runs, `BARS.md` must list, per piece, bar evidence in the same framing as ours (same camera type, distance, resolution) - captured by script, stored in `studio/bars/`. If a bar has no comparable view (e.g. the reference has no first-person weapon), that piece is judged against its **numbers and the internal hero bar** instead, and no blind A/B critic is spent on it.
+**BARS gate.** Bar evidence is captured by script at kickoff, in the same framing as ours (same camera type, distance, resolution), and stored in `studio/bars/`. Where a bar has no comparable view, the coach compares against the Art Director's look-dev target and the current champion instead (`gauntlet.md`) - a review never goes without a usable reference.
 
 The Director only advances when the gate is met on a real build, judged by a fresh critic. Never on a date or a round count.
 

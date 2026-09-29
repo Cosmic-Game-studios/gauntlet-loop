@@ -56,11 +56,25 @@ The Director never reads a critic transcript or a build log unless a return line
 
 **Lessons, not repetition.** When the same GAP or BLOCKER appears on two different tickets (e.g. "unscaled delta time", "pivot not at feet", "UI text overflows in German"), the Director writes it to `LESSONS.md` as a rule with the fix. Every later builder in that department gets the matching lessons in its pack. The studio should make each mistake twice at most.
 
+## Rule 4 - Order prompts for the cache
+
+Every dispatch is built stable-first (`studio.md` - dispatch brief): role file, department brief and craft notes, then studio file paths, then the ticket and round. Identical prefixes across the many builders and critics of a run are cached and cost a fraction of fresh input; a changing timestamp or ticket id near the top breaks that for everything after it. Keep variable content at the end.
+
+## Rule 5 - Continuity where it is cheap, freshness where it matters
+
+- **Builders are resumed** for their own revision rounds (for example `SendMessage` to the builder agent): the ticket's context is already loaded and cached, so a revision costs a fraction of a fresh builder and keeps what it learned about the code.
+- **Critics and judges are always new agents**, so they never know how hard the builder tried or what the last critic said.
+- A builder that has been resumed many times, or whose ticket changed shape, is replaced by a fresh one with a clean pack.
+
+## Rule 6 - The acceptance list is the definition of done
+
+`studio/acceptance.json` lists every requirement of the brief as a machine-checkable check with a `passes` flag (see `state.md`). It is written at kickoff from the brief and the completeness list, run by QA after every integration, and never edited to make a check pass - only to add checks. A ticket is not done while one of its checks fails, and the Release Candidate gate requires all of them. This keeps the studio from declaring victory early and gives every heartbeat an objective progress number.
+
 ## Fresh context by design
 
-- **Every heartbeat starts from files.** The Director does not rely on remembering the previous heartbeat. Step 1 of the heartbeat (LOAD) reads `STATUS.md` and `TRACKER.md`; if the context was compacted or the session restarted, nothing changes.
-- **Long runs use fresh sessions.** When the Director's own context passes roughly half its window, or after a set number of heartbeats, it finishes the heartbeat, writes `STATUS.md`, commits, and continues in a fresh session (new `/loop`, a new session via a scheduled Routine, or simply the next heartbeat after a reset). The files make the handover lossless.
-- **Builders and critics are always fresh.** One ticket round = one new subagent. Their context never accumulates.
+- **Every heartbeat starts from files.** The Director does not rely on remembering the previous heartbeat. The first thing it reads is `STATUS.md` and `TRACKER.md`; if the context was compacted or the session restarted, nothing changes.
+- **Session length follows the playbook** (`playbooks.md`). Under about two hours the Director keeps one session - reloading state every few minutes costs more than it saves, and the context stays small because it only reads 5-line returns. For longer runs, the Director finishes the heartbeat, writes `STATUS.md`, commits, and continues in a fresh session (the heartbeat driver, a scheduled Routine, or the next heartbeat after a reset) whenever its context passes roughly half the window or after a set number of heartbeats.
+- **Builders and critics are always scoped.** One ticket per builder, one question per critic; their contexts never accumulate project history.
 
 ## File hygiene
 

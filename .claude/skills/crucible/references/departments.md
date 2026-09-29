@@ -1,10 +1,12 @@
 # Departments
 
-Each department is a builder role plus what it is judged on. Builders are spawned per ticket with fresh context; a department is a role, not a long-lived agent. Every department inherits the brief's pillars, the style bible and the gauntlet in `gauntlet.md`.
+Each department is a builder role plus what it is judged on. Builders are spawned per ticket with fresh context (and resumed for their own revision rounds); a department is a role, not a long-lived agent. Every department inherits the pillars, the style bible, the architecture contract and the gauntlet in `gauntlet.md`. How departments fit into the studio, and which model each uses, is in `studio.md`; the craft defaults each department starts from are in `craft.md`.
 
-For each: **Builds** - what it produces. **Evidence** - what the critic sees. **Bar** - what it is compared to. **Verify** - machine checks before the critic.
+For each: **Model** - default routing. **Builds** - what it produces. **Evidence** - what the critic sees. **Bar** - what it is compared to. **Verify** - machine checks before the critic.
 
 ## Design
+
+- **Model:** Opus (Design Director: feel numbers, tuning, UX flow). Tuning-table edits with a known target: Sonnet.
 
 - **Builds:** feature specs (one page), tuning tables (data files, never hard-coded), progression curves, economy.
 - **Evidence:** the spec plus a playtest trace after Code implements it. A spec is APPROVED (unblocks its chain) when complete and testable; the Design ticket is only WON once the implemented version wins (`director.md` - chains).
@@ -12,6 +14,8 @@ For each: **Builds** - what it produces. **Evidence** - what the critic sees. **
 - **Verify:** every number lives in a data file; every rule is testable.
 
 ## Code
+
+- **Model:** Sonnet for systems, AI logic, tools and fixes with a known cause; Opus for player controller and weapon feel, and for the Lead Engineer's skeleton.
 
 - **Builds:** gameplay systems, AI, physics, save/load, input, camera, tools that make other departments faster.
 - **Evidence:** tests passing, a scripted scenario video, frame timing.
@@ -21,6 +25,8 @@ For each: **Builds** - what it produces. **Evidence** - what the critic sees. **
 - **Rule:** Code builds tools first when a department is blocked on manual work (importers, validators, capture scripts, level generators).
 
 ## Art (2D)
+
+- **Model:** Opus (the Art Director owns the style bible - `agents/art-director.md`).
 
 - **Builds:** style bible, colour script, style frames, 2D textures, icons, UI art. Claude cannot generate images, so art is made with code and tools: SVG (UI, icons, logos, 2D sprites), procedural textures (noise, gradients, masks, in Python or Blender nodes), style frames as blocked-out Blender scenes rendered with target lighting and palette, and fetched reference images from the bar games as mood boards. An external image generator is used only if the probe found one (`MACHINE.md`).
 - **Evidence:** the image at final use size, plus in-engine screenshot once integrated.
@@ -41,6 +47,8 @@ Every sourced asset has its licence recorded in `studio/ASSETS.md`. No asset of 
 
 ## 3D (Blender)
 
+- **Model:** Opus.
+
 - **Builds:** blockouts, hero meshes, props, environment kits, UVs, bakes, PBR textures. Works through Blender Python in background mode (`engines.md`).
 - **Pipeline per asset:** reference sheet -> blockout -> silhouette check -> high/low poly -> UV -> bake -> texture -> LODs -> export -> engine import.
 - **Evidence:** an automated turntable (8 angles, fixed studio lighting), silhouette at game distance, wireframe, and an in-engine shot under game lighting.
@@ -53,6 +61,8 @@ Every sourced asset has its licence recorded in `studio/ASSETS.md`. No asset of 
 
 ## Animation
 
+- **Model:** Opus.
+
 - **Builds:** rigs, skinning, locomotion sets, attacks, reactions, retargeting, blend trees / state machines with Code.
 - **Evidence:** clip on the in-engine character, side view and game camera view, plus a slowed 0.25x version.
 - **Bar:** the reference game's equivalent move, frame-stepped.
@@ -62,6 +72,8 @@ Every sourced asset has its licence recorded in `studio/ASSETS.md`. No asset of 
 
 ## Tech Art
 
+- **Model:** Opus for lighting, post and VFX look; Sonnet for pure performance work with a profiler target.
+
 - **Builds:** shaders, materials, VFX, lighting, post-processing, LODs, import presets, perf fixes.
 - **Evidence:** before/after in-engine shots from fixed cameras, profiler capture.
 - **Bar:** reference game's look at the matching scene, plus the frame-time budget.
@@ -70,12 +82,16 @@ Every sourced asset has its licence recorded in `studio/ASSETS.md`. No asset of 
 
 ## Audio
 
+- **Model:** Sonnet (synthesis code against the audio direction).
+
 - **Builds:** SFX, music, ambience, mix, adaptive layers. Claude can neither generate nor hear audio, so audio is made as code and judged as data: SFX by synthesis scripts (oscillators, noise, envelopes, filters, layering - sfxr-style for retro, physical-modelling-style layers for impacts) and CC0 libraries processed by script; music composed as MIDI and rendered with a soundfont or synth; mixing by measured loudness targets. An external audio generator is used only if the probe found one. Audio is always flagged for the human playtest in `PLAY.md`.
 - **Evidence:** spectrogram and waveform images, LUFS / peak / onset timing, and which gameplay event (frame) it plays on - never "listen to it".
 - **Bar:** the reference game's equivalent sound or track.
 - **Verify:** loudness target, no clipping, loop points, correct format, triggers wired.
 
 ## Level Design
+
+- **Model:** Opus.
 
 - **Builds:** blockouts, layouts, encounter placement, pacing graphs, then dressing once the kit exists.
 - **Evidence:** top-down map, playtest bot route and death heatmap, walkthrough video.
@@ -86,6 +102,8 @@ Every sourced asset has its licence recorded in `studio/ASSETS.md`. No asset of 
 
 ## UI/UX
 
+- **Model:** Opus.
+
 - **Builds:** HUD, menus, onboarding, settings, accessibility (remapping, subtitles, colour-blind modes, text scale).
 - **Evidence:** screenshots at every supported resolution, a navigation video with gamepad and keyboard.
 - **Bar:** the reference game's equivalent screen.
@@ -93,12 +111,16 @@ Every sourced asset has its licence recorded in `studio/ASSETS.md`. No asset of 
 
 ## QA
 
+- **Model:** Sonnet for tools and playtests; Haiku for running suites and summarising.
+
 - **Builds:** test plans, automated playtest bots, fuzzers (random input, random state), regression suites, bug tickets.
 - **Evidence:** reproducible bug reports: steps, build, video, log.
 - **Runs:** after every integration, the playtest bot on the current slice; nightly-equivalent (every N heartbeats), the full game.
 - **Rule:** every bug becomes a ticket routed to the owning department. Blockers jump the board.
 
 ## Build
+
+- **Model:** Sonnet.
 
 - **Builds:** one-command build, headless CI, packaging for the target platform, crash capture, versioning.
 - **Evidence:** a clean-checkout build log and a packaged build that launches.

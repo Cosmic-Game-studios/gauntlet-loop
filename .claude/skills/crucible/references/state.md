@@ -7,6 +7,7 @@ studio/
 ├── MACHINE.md        # probe result: GPU/rendering, engines, disk, licences, capture paths, tools
 ├── ASSETS.md         # every sourced asset + licence
 ├── KNOWN_GAPS.md     # only at an early handoff: what did not reach its bar and why
+├── acceptance.json   # every requirement as a runnable check with a passes flag - the definition of done
 ├── STATUS.md         # ONE SCREEN. Where we are, what runs, what blocks, next 5 actions. Read first, always.
 ├── TRACKER.md        # the Director's checklist: every ticket as a checkbox + errors section
 ├── BRIEF.md          # locked Game Brief. Changed only by the user, or by human feedback (## Amendments)
@@ -30,6 +31,21 @@ studio/
 ├── archive/          # closed milestones' tickets, old heartbeats
 └── dashboard.html    # regenerated every heartbeat for the user
 ```
+
+## acceptance.json (definition of done)
+
+```json
+[
+  { "id": "A-01", "area": "weapons", "check": "rifle fires automatically while fire is held; ammo decreases",
+    "how": "node tools/accept.mjs weapons.auto", "passes": true,  "last_run": "HB-004" },
+  { "id": "A-02", "area": "weapons", "check": "recoil recovers to within 1 degree of the aim point 0.5 s after a burst",
+    "how": "node tools/accept.mjs weapons.recoil", "passes": false, "last_run": "HB-004" },
+  { "id": "A-17", "area": "ux", "check": "from page load to playing in at most two clicks",
+    "how": "node tools/accept.mjs ux.start", "passes": true, "last_run": "HB-004" }
+]
+```
+
+Checks are added, never weakened. `passes` is only set by running `how`.
 
 ## STATUS.md (overwritten every heartbeat, max ~40 lines)
 
@@ -99,7 +115,7 @@ last gap:    Experience: "Startup has 3 dead frames before motion; the bar moves
 ## HB-023  milestone: Vertical Slice  gate: 2/4
 merged:   T-042, T-047
 won:      T-051 (awaiting merge)
-failed:   T-039 (3/3 rounds, floor missed: open robustness blocker) -> re-scoped: split into T-060, T-061
+failed:   T-039 (4/6 rounds, plateau, floor missed: open robustness blocker) -> re-scoped: split into T-060, T-061
 cut:      -
 lessons:  L-007 [3D] pivot at feet, +Y forward on export
 top gap:  Coherence critic: "Enemy VFX are saturated neon, rest of the world is muted - breaks pillar 1."

@@ -23,12 +23,14 @@ New subagent files are picked up when a session starts. If the current session d
 
 | Role | Subagent | Model | Tools | Notes |
 |---|---|---|---|---|
-| Game Director | the main session | the session's model (Opus recommended) | all | Plans, routes, merges, decides. Never builds. |
-| Builder | `studio-builder` | `inherit`; the Director passes `model` per ticket: `opus` for hero, `sonnet` for core and bulk | all | `isolation: worktree` - each builder works in its own git worktree, so parallel builders never collide. The Director merges the builder's branch after the ticket is WON or PASSED. |
-| Coach / judge / coherence critic | `experience-critic` | `opus` (the Director may pass `sonnet` for core coach rounds and bulk coherence batches) | `Read, Glob` | Read-only. `Read` opens images, which is how it sees evidence. |
+| Game Director | the main session | Opus | all | Plans, routes, merges, decides. Never builds. |
+| Art Director (lead) | `art-director` | `opus` | all except spawning agents | Style bible, look-dev scene, palette constants; later art-coherence reviews of whole builds. |
+| Tech Director / Design Director (leads) | `studio-builder` with the lead's department brief | `opus` | all except spawning agents | Architecture contract; design numbers, tuning tables, UX flow. |
+| Builder | `studio-builder` | `inherit`; the Director passes `model` per ticket from the routing table in `studio.md` (Opus for visual, spatial and feel work; Sonnet for implementation) | all except spawning agents | Works on the files its ticket owns. Worktree isolation only when files could overlap. |
+| Art / UX / coach / judge / coherence critic | `experience-critic` | `opus` | `Read, Glob` | Read-only. `Read` opens images, which is how it sees evidence. |
 | Code / architecture / audit critic | `code-critic` | `opus` | `Read, Grep, Glob, Bash`; `Edit, Write` disallowed | Can run tests and the profiler, cannot change code. |
-| Playtester / first-time player | `playtester` | `sonnet` (opus for the Release Candidate gate) | `Read, Glob, Bash`; `Edit, Write` disallowed | Plays through the step-play harness. |
-| Clerk work (renaming evidence, rotating files, dashboard) | general-purpose | `haiku` | all | Only for mechanical work. |
+| Playtester / first-time player | `playtester` | `sonnet` (opus at a release gate) | `Read, Glob, Bash`; `Edit, Write` disallowed | Plays through the step-play harness. |
+| QA runs, clerk work | general-purpose | `haiku` | all | Running the acceptance suite and summarising, renaming evidence, dashboard. |
 
 **Check that you can spawn agents - before the first ticket.** Blindness and fresh context depend on real, separate agents. The first real dispatch is the check (no separate trivial agent needed): if the `Agent` tool is present and the first builders return, spawning works. If the `Agent` tool is missing (for example because the Director itself runs as a subagent, and subagents may not be able to spawn further agents in some environments), **do not role-play builder and critics yourself** - that silently removes the fresh context and blindness the whole loop depends on. Use headless processes instead: run each builder or critic as `claude -p "<role file body + ticket prompt>" --model <model> --allowedTools <the role's tools> --output-format json` from Bash. Each is a real, separate Claude Code session with a fresh context; the JSON result reports tokens and cost for `STATUS.md`. If neither works, stop and tell the human - do not continue in a degraded mode.
 
