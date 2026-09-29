@@ -19,7 +19,7 @@ The first Arena benchmark showed what happens without them: flat greybox lightin
 
 General: correct colour management, a filmic tone mapper, image-based ambient light, a small post chain, tight shadows, and a quality setting so it scales.
 
-**Web / three.js** (all of this ships inside the `three` package, so it is not an extra dependency):
+**Web / three.js** (all of this ships inside the `three` package, so it is not an extra dependency; `templates/web/lookdev.js`, copied into the game at kickoff, implements the renderer, post chain, toon ramp, ink outlines, merge-by-material and canvas textures as a tested starting point):
 - `renderer.outputColorSpace = THREE.SRGBColorSpace`; `renderer.toneMapping = THREE.ACESFilmicToneMapping` (or `AgXToneMapping`), exposure tuned on the look-dev scene.
 - Image-based light without assets: `scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture` (`three/examples/jsm/environments/RoomEnvironment.js`). This alone lifts standard materials out of the "flat" look.
 - Post: `EffectComposer` -> `RenderPass` -> `UnrealBloomPass` at half resolution (threshold high enough that only emissives and flashes bloom) -> `OutputPass`; FXAA (cheaper) or SMAA for edges; optional vignette / colour correction. Post costs little on a GPU but a lot under software rendering - keep the chain short and offer a quality setting rather than silently downgrading.
@@ -56,7 +56,7 @@ When assets are authored in code or through a DCC tool driven by script, the dif
 - **Layered effects.** A muzzle flash is a short core, a few sparks, a brief light and smoke; an impact is a flash, sparks, a decal and dust; an explosion adds a shockwave and debris. Particles via instanced meshes or `Points` with custom shaders, additive or premultiplied blending, texture atlases drawn in canvas.
 - **Effects serve readability, never hide it.** No effect may cover the crosshair region or wash out the target: cap flash size and brightness, keep bloom thresholds above gameplay colours, cap post-exposure. The first benchmark round's weakest visual score came from a muzzle flash plus bloom that blanked the screen centre on every shot.
 - **Feedback effects.** Hit sparks in the target's colour, floating damage numbers (style-matched, critical hits bigger), hit markers, dissolve or break-apart deaths, shield hit ripples.
-- **Visible at every frame rate.** Minimum lifetime in rendered frames; the capture tool freezes effect timers so reviews see them.
+- **Visible at every frame rate.** Minimum lifetime in rendered frames, and every effect advances on the simulation clock (the hook's `step`), never on wall-clock timers - so a paused game freezes effects and a capture of "fire, step 1, shot" shows the flash, the tracer and the impact exactly as a player sees them in that frame. Effects that run on `setTimeout` or `performance.now()` vanish from captures and cannot be reviewed.
 
 ## Stylised and comic rendering (Art Director, Tech Art)
 

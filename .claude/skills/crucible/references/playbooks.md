@@ -20,6 +20,13 @@ Everything from sprint mode applies, compressed, and **pipelined**: each piece g
 
 About 14-18 dispatches. Builders in blitz mode render at most twice per round.
 
+Blitz rules that decide the result:
+- **Dispatch at minute 1.5, not minute 4.** The Director writes only what builders cannot invent consistently: the owner table, the hook, the cross-module signatures, the palette and the three look words. Everything else goes into tickets.
+- **Absolute paths and absolute deadlines** in every brief (`deadline 12:07 UTC`, `/abs/path/game/src/enemies.js`); builders check `date -u` before each render.
+- **Visual pieces are Opus and get the craft sections pasted by path** (`craft.md` sections for models, animation, VFX, comic rendering), plus the one bar frame that matters for them.
+- **The bar recipe is per question**: one capture command per question the coaches will ask (gameplay framing, enemy close-up, weapon in hand, HUD), written once by QA or the Director in minute 0-1.5 and reused by every coach, so no coach spends minutes getting the bar running.
+- **Background notifications**: if the Agent tool can run builders in the background and notify on return, use it and integrate each return at once; otherwise dispatch each wave as parallel foreground calls in one message and plan one fewer fix round.
+
 ## Under 1 hour (sprint mode)
 
 The Director runs as **one session** for the whole cap - reloading state every few minutes would cost more than it saves - and still writes through to `STATUS.md` and `TRACKER.md`, so a crash can resume. Leads are folded into builders (the look+arena builder *is* the Art Director for this run; the Director writes the contract itself). Every dispatch carries a **deadline** (`studio.md`), because a wave that waits for its slowest builder loses a whole review round.
