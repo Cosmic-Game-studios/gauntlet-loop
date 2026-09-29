@@ -1,0 +1,42 @@
+{
+  "checks": {
+    "hook_complete": true,
+    "start_playing": true,
+    "moves": true,
+    "sprint_faster": true,
+    "jump_and_land": true,
+    "collision_bounded": true,
+    "shoot_hits_enemy": true,
+    "ammo_decreases": true,
+    "reload": true,
+    "weapon_switch": true,
+    "enemies_damage_player": true,
+    "enemies_move": true,
+    "game_over": true,
+    "waves_spawn": true,
+    "pause_menu": true
+  },
+  "notes": [
+    "hook_complete: missing: ",
+    "start_playing: {\"mode\":\"playing\",\"wave\":0,\"health\":100,\"weapon\":\"rifle\",\"ammo\":30,\"reserve\":90,\"score\":0,\"enemiesAlive\":0,\"playerPos\":[0,1.5,2],\"yaw\":0,\"pitch\":0}",
+    "moves: moved 8.15m",
+    "sprint_faster: best 1s walk 5.11 vs 1s sprint 8.68",
+    "jump_and_land: y 1.50 -> 2.52 -> 1.50",
+    "collision_bounded: max radius 19.3m, min y 0.00 (start y 1.50)",
+    "shoot_hits_enemy: yaw 0.00 pitch 0",
+    "ammo_decreases: ammo 30 -> 11, reserve 90 -> 100",
+    "reload: mag 11->30 reserve 100->81",
+    "weapon_switch: shotgun, rifle",
+    "enemies_damage_player: health 100 -> 20",
+    "enemies_move: some enemy closed in or dealt damage",
+    "game_over: gameover",
+    "waves_spawn: wave 1, alive 5",
+    "pause_menu: paused"
+  ],
+  "errors": [
+    "console: Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "fps_idle": 12.6,
+  "fps_combat": 20,
+  "score": "15/15"
+}

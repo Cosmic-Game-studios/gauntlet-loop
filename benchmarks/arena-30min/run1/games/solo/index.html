@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arena</title>
+<link rel="icon" href="data:,">
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0d1119; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #e8eef7; user-select: none; }
+  canvas { display: block; }
+  .hidden { display: none !important; }
+  #hud { position: fixed; inset: 0; pointer-events: none; }
+  #crosshair { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+  #crosshair i { position: absolute; background: #fff; box-shadow: 0 0 2px #000; }
+  #crosshair .h { width: 8px; height: 2px; top: -1px; }
+  #crosshair .v { width: 2px; height: 8px; left: -1px; }
+  #crosshair .dot { width: 2px; height: 2px; left: -1px; top: -1px; }
+  #hitmarker { position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; opacity: 0; }
+  #hitmarker::before, #hitmarker::after { content: ""; position: absolute; left: 10px; top: -2px; width: 2px; height: 26px; background: #fff;
+    -webkit-mask: linear-gradient(#000 0 35%, transparent 35% 65%, #000 65%); mask: linear-gradient(#000 0 35%, transparent 35% 65%, #000 65%); }
+  #hitmarker::before { transform: rotate(45deg); } #hitmarker::after { transform: rotate(-45deg); }
+  #hitmarker.kill::before, #hitmarker.kill::after { background: #ff4a3d; }
+  .panel { position: absolute; background: rgba(10,16,28,.55); border: 1px solid rgba(140,190,255,.18); border-radius: 6px; padding: 10px 14px; backdrop-filter: blur(3px); }
+  #hp { left: 20px; bottom: 20px; width: 240px; }
+  #hp .label { font-size: 12px; letter-spacing: .15em; opacity: .7; }
+  #hp .num { font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  #hpbar { height: 6px; background: rgba(255,255,255,.12); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+  #hpfill { height: 100%; width: 100%; background: linear-gradient(90deg,#3de0a0,#6af0ff); transition: width .15s; }
+  #ammo { right: 20px; bottom: 20px; text-align: right; min-width: 170px; }
+  #ammo .wname { font-size: 12px; letter-spacing: .15em; opacity: .7; text-transform: uppercase; }
+  #ammo .num { font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  #ammo .num small { font-size: 18px; opacity: .6; }
+  #ammo .slots { font-size: 12px; opacity: .8; margin-top: 2px; }
+  #ammo .slots b { color: #6af0ff; }
+  #reloadMsg { font-size: 12px; color: #ffcf4a; height: 14px; }
+  #wave { left: 50%; top: 16px; transform: translateX(-50%); text-align: center; min-width: 160px; }
+  #wave .t { font-size: 20px; font-weight: 700; letter-spacing: .08em; }
+  #wave .s { font-size: 12px; opacity: .75; }
+  #score { right: 20px; top: 16px; text-align: right; }
+  #score .t { font-size: 12px; letter-spacing: .15em; opacity: .7; }
+  #score .n { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  #banner { position: absolute; left: 0; right: 0; top: 28%; text-align: center; font-size: 44px; font-weight: 800; letter-spacing: .12em; text-shadow: 0 2px 12px rgba(0,0,0,.7); opacity: 0; transition: opacity .3s; }
+  #banner small { display: block; font-size: 16px; font-weight: 500; letter-spacing: .2em; opacity: .8; }
+  #vignette { position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 45%, rgba(220,20,20,.65)); opacity: 0; }
+  #dmgRing { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+  .dmg { position: absolute; left: -60px; top: -170px; width: 120px; height: 40px; transform-origin: 60px 170px; opacity: 0;
+    background: radial-gradient(ellipse at 50% 100%, rgba(255,40,30,.95), rgba(255,40,30,0) 70%); border-top: 3px solid rgba(255,70,50,.9); border-radius: 50% 50% 0 0 / 100% 100% 0 0; }
+  .screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse at center, rgba(12,20,36,.78), rgba(4,6,12,.94)); z-index: 10; }
+  .box { text-align: center; min-width: 320px; padding: 32px 40px; }
+  .box h1 { font-size: 64px; margin: 0 0 4px; letter-spacing: .25em; font-weight: 900; background: linear-gradient(#fff,#6af0ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .box h2 { font-size: 40px; margin: 0 0 8px; letter-spacing: .15em; }
+  .box p { opacity: .75; margin: 6px 0 20px; }
+  .btn { display: block; width: 240px; margin: 10px auto; padding: 12px; font-size: 16px; font-weight: 700; letter-spacing: .15em; color: #e8eef7; background: rgba(106,240,255,.08);
+    border: 1px solid rgba(106,240,255,.45); border-radius: 4px; cursor: pointer; text-transform: uppercase; }
+  .btn:hover { background: rgba(106,240,255,.25); }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 320px; margin: 14px auto; text-align: left; }
+  .row input { width: 160px; }
+  .controls { font-size: 13px; opacity: .6; line-height: 1.6; margin-top: 18px; }
+  #gameover h2 { color: #ff5a4a; } #victory h2 { color: #6af0a0; }
+</style>
+</head>
+<body>
+<div id="hud" class="hidden">
+  <div id="vignette"></div>
+  <div id="dmgRing"><div class="dmg"></div><div class="dmg"></div><div class="dmg"></div><div class="dmg"></div></div>
+  <div id="crosshair"><i class="h" id="chL"></i><i class="h" id="chR"></i><i class="v" id="chU"></i><i class="v" id="chD"></i><i class="dot"></i></div>
+  <div id="hitmarker"></div>
+  <div id="banner"></div>
+  <div class="panel" id="wave"><div class="t" id="waveT">WAVE 1</div><div class="s" id="waveS"></div></div>
+  <div class="panel" id="score"><div class="t">SCORE</div><div class="n" id="scoreN">0</div></div>
+  <div class="panel" id="hp"><div class="label">HEALTH</div><div class="num" id="hpN">100</div><div id="hpbar"><div id="hpfill"></div></div></div>
+  <div class="panel" id="ammo"><div class="wname" id="wName">Rifle</div><div class="num" id="ammoN">30 <small>/ 90</small></div><div id="reloadMsg"></div><div class="slots" id="slots"></div></div>
+</div>
+
+<div class="screen" id="menu">
+  <div class="box">
+    <h1>ARENA</h1>
+    <p>Survive five waves.</p>
+    <button class="btn" data-act="play">Play</button>
+    <button class="btn" data-act="settings">Settings</button>
+    <div class="controls">WASD move · Shift sprint · Space jump · Mouse aim/fire<br>1/2 or wheel switch weapon · R reload · Esc pause</div>
+  </div>
+</div>
+<div class="screen hidden" id="settings">
+  <div class="box">
+    <h2>SETTINGS</h2>
+    <div class="row"><label for="sens">Mouse sensitivity <span id="sensV"></span></label><input type="range" id="sens" min="0.1" max="3" step="0.05"></div>
+    <div class="row"><label for="vol">Master volume <span id="volV"></span></label><input type="range" id="vol" min="0" max="1" step="0.01"></div>
+    <button class="btn" data-act="back">Back</button>
+  </div>
+</div>
+<div class="screen hidden" id="pause">
+  <div class="box">
+    <h2>PAUSED</h2>
+    <button class="btn" data-act="resume">Resume</button>
+    <button class="btn" data-act="settings">Settings</button>
+    <button class="btn" data-act="restart">Restart</button>
+    <button class="btn" data-act="quit">Main Menu</button>
+  </div>
+</div>
+<div class="screen hidden" id="gameover">
+  <div class="box">
+    <h2>YOU DIED</h2>
+    <p id="goText"></p>
+    <button class="btn" data-act="restart">Restart</button>
+    <button class="btn" data-act="quit">Main Menu</button>
+  </div>
+</div>
+<div class="screen hidden" id="victory">
+  <div class="box">
+    <h2>VICTORY</h2>
+    <p id="vicText"></p>
+    <button class="btn" data-act="restart">Restart</button>
+    <button class="btn" data-act="quit">Main Menu</button>
+  </div>
+</div>
+<script type="module" src="./main.js"></script>
+</body>
+</html>

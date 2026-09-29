@@ -1,0 +1,40 @@
+{
+  "checks": {
+    "hook_complete": true,
+    "start_playing": true,
+    "moves": true,
+    "sprint_faster": true,
+    "jump_and_land": true,
+    "collision_bounded": true,
+    "shoot_hits_enemy": true,
+    "ammo_decreases": true,
+    "reload": true,
+    "weapon_switch": true,
+    "enemies_damage_player": true,
+    "enemies_move": true,
+    "game_over": true,
+    "waves_spawn": true,
+    "pause_menu": true
+  },
+  "notes": [
+    "hook_complete: missing: ",
+    "start_playing: {\"mode\":\"playing\",\"wave\":1,\"health\":100,\"weapon\":\"rifle\",\"ammo\":30,\"reserve\":90,\"score\":0,\"enemiesAlive\":1,\"playerPos\":[0,0,20],\"yaw\":0,\"pitch\":0}",
+    "moves: moved 5.15m",
+    "sprint_faster: best 1s walk 5.62 vs 1s sprint 9.21",
+    "jump_and_land: y 0.00 -> 0.96 -> 0.00",
+    "collision_bounded: max radius 28.8m, min y 0.00 (start y 0.00)",
+    "shoot_hits_enemy: yaw 0.00 pitch -0.1",
+    "ammo_decreases: ammo 30 -> 16, reserve 90 -> 81",
+    "reload: mag 16->30 reserve 81->67",
+    "weapon_switch: shotgun, rifle",
+    "enemies_damage_player: health 100 -> 0",
+    "enemies_move: some enemy closed in or dealt damage",
+    "game_over: gameover",
+    "waves_spawn: wave 1, alive 4",
+    "pause_menu: paused"
+  ],
+  "errors": [],
+  "fps_idle": 19.8,
+  "fps_combat": 35.6,
+  "score": "15/15"
+}

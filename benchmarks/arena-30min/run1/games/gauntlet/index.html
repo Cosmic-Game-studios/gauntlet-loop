@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Arena</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="hud" class="hidden">
+  <div id="crosshair"><i></i><i></i><i></i><i></i></div>
+  <div id="hitmarker"></div>
+  <div id="dmgdirs"></div>
+  <div id="vignette"></div>
+  <div id="topbar"><div><span class="lbl">WAVE</span><b id="wave">1</b><span class="dim">/5</span></div><div><span class="lbl">SCORE</span><b id="score">0</b></div><div><span class="lbl">HOSTILES</span><b id="alive">0</b></div></div>
+  <div id="banner"></div>
+  <div id="healthbox"><span class="lbl">HEALTH</span><div id="hpnum">100</div><div class="bar"><div id="hpbar"></div></div></div>
+  <div id="ammobox" data-w="rifle"><div class="arow"><svg class="wicon wi-rifle" viewBox="0 0 64 20"><path d="M2 8h34l4-3h14v3h8v3h-8l-4 2H34l-3 6h-6l2-6H14l-3 4H4l2-5H2z"/></svg><svg class="wicon wi-shotgun" viewBox="0 0 64 20"><path d="M2 7h44v2h16v3H40l-3 2H24l-3 5h-7l3-5H6l-4 4z"/></svg><div id="wname">RIFLE</div></div><div><b id="mag">30</b><span class="dim"> / </span><span id="reserve">90</span></div><div id="reloadbar"><div></div></div><div id="slots"><span id="s1">1 RIFLE</span><span id="s2">2 SHOTGUN</span></div></div>
+</div>
+<div id="menu" class="screen">
+  <div class="panel">
+    <div class="tag">// COMBAT SIMULATION</div><h1>ARENA</h1><p class="sub">SURVIVE FIVE WAVES</p>
+    <button id="btnPlay">PLAY</button>
+    <button id="btnSettings">SETTINGS</button>
+    <div class="keys"><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> MOVE</span><span><kbd>SPACE</kbd> JUMP</span><span><kbd>LMB</kbd> FIRE</span><span><kbd>R</kbd> RELOAD</span><span><kbd>1</kbd><kbd>2</kbd> WEAPON</span><span><kbd>ESC</kbd> PAUSE</span></div>
+  </div>
+</div>
+<div id="pause" class="screen hidden">
+  <div class="panel"><h2>PAUSED</h2>
+    <button id="btnResume">RESUME</button>
+    <button id="btnSettings2">SETTINGS</button>
+    <button id="btnQuit">QUIT TO MENU</button></div>
+</div>
+<div id="settings" class="screen hidden">
+  <div class="panel"><h2>SETTINGS</h2>
+    <label>Mouse sensitivity <span id="sensVal"></span><input id="sens" type="range" min="0.2" max="3" step="0.05" value="1"></label>
+    <label>Master volume <span id="volVal"></span><input id="vol" type="range" min="0" max="1" step="0.01" value="0.6"></label>
+    <button id="btnBack">BACK</button></div>
+</div>
+<div id="over" class="screen hidden">
+  <div class="panel"><h2 id="overTitle">YOU DIED</h2><p id="overText"></p>
+    <button id="btnRestart">RESTART</button>
+    <button id="btnMenu">MAIN MENU</button></div>
+</div>
+<script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+<script type="module" src="main.js"></script>
+</body>
+</html>

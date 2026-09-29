@@ -1,0 +1,9 @@
+# STYLE BIBLE - ARENA (Art Director, sprint round 1)
+**Look:** stylised low-poly industrial sci-fi arena at dusk - warm sodium key vs cool teal fill, textured flat-ish surfaces, glowing trim lines. Bars: Dive (Mugen87) frames via shared/bars/run_dive_fps.mjs; three.js games_fps.
+**Values:** sky darkest at zenith, bright warm band at horizon; environment mid-dark (floor/walls 25-45% value); threats brightest saturated things in frame (emissive); interactables/pickups cool-bright; UI high-contrast light on dark.
+**Palette (config.js PALETTE):** env base floor #4a4d55, wall #6b6f7a, concrete #9a948a tint, crates #5a5347; secondary hazard stripes = trim #d98c3a on #2b2d33; accent #38e0d0 (teal) = navigation/structure glow. Threat hues RESERVED: rusher #ff4a2a, shooter #b84aff, projectile #ff5cf0 - never used in environment. Player-friendly: #ffe08a (muzzle/tracers), teal accent for pickups.
+**Silhouettes:** rusher low, forward-leaning, spiky; shooter tall, upright, glowing core/eye; both readable at 20 m against mid-grey walls via emissive.
+**Materials:** (1) metal wall panels - panel seams, vertical gradient, grime, rough 0.75 metal 0.2; (2) concrete - warm tint, rough 0.9; (3) crates - dark wood-metal X-brace; (4) hazard stripes on low cover; (5) emissive trims (orange=warm structure, teal=accent). World-space UVs, 1 tile ~3-4 m.
+**Lighting:** key directional #ffc38a 2.6 from low west with PCFSoft 2048 shadows; fill #6fb7c9 0.9 from opposite; hemisphere sky/ground ambient; Fog #3a4052 28-95 m; ACES tone mapping, sRGB out. No post by default (SwiftShader cost); emissive does the glow.
+**UI:** condensed sans (system-ui/Rajdhani-like), dark translucent panels with 1px teal edge, accent #38e0d0, warnings in threat red, motion 120-200 ms ease-out.
+**Not:** photoreal, greybox, neon cyberpunk overload, pure black shadows, threat colours on props, busy textures that hide enemies.

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arena</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0f14; font-family: "Segoe UI", system-ui, sans-serif; color: #e8eef4; user-select: none; }
+  canvas { display: block; }
+  .hidden { display: none !important; }
+  #hud { position: fixed; inset: 0; pointer-events: none; }
+  #crosshair { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+  #crosshair i { position: absolute; background: rgba(255,255,255,.9); box-shadow: 0 0 2px #000; }
+  #crosshair .h { width: 8px; height: 2px; top: -1px; }
+  #crosshair .v { width: 2px; height: 8px; left: -1px; }
+  #hitmarker { position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; opacity: 0; transition: opacity .12s; }
+  #hitmarker::before, #hitmarker::after { content: ""; position: absolute; left: 10px; top: -2px; width: 2px; height: 26px; background: #fff; transform: rotate(45deg); box-shadow: 0 0 3px #f33; }
+  #hitmarker::after { transform: rotate(-45deg); }
+  #hitmarker.kill::before, #hitmarker.kill::after { background: #ff4a3a; }
+  .panel { position: absolute; background: rgba(8,14,20,.55); border: 1px solid rgba(120,200,220,.25); border-radius: 6px; padding: 10px 14px; backdrop-filter: blur(2px); }
+  #hp { left: 20px; bottom: 20px; width: 240px; }
+  #hpbar { height: 10px; background: #1b2530; border-radius: 3px; margin-top: 6px; overflow: hidden; }
+  #hpfill { height: 100%; width: 100%; background: linear-gradient(90deg,#32d38a,#7cf0b9); transition: width .15s; }
+  #hpfill.low { background: linear-gradient(90deg,#e23b3b,#ff8a5a); }
+  .big { font-size: 30px; font-weight: 700; letter-spacing: 1px; }
+  .lbl { font-size: 11px; opacity: .65; text-transform: uppercase; letter-spacing: 2px; }
+  #ammo { right: 20px; bottom: 20px; text-align: right; min-width: 170px; }
+  #ammo .res { font-size: 18px; opacity: .7; }
+  #reloadTxt { color: #ffcf5a; font-size: 13px; letter-spacing: 2px; }
+  #top { left: 50%; top: 14px; transform: translateX(-50%); text-align: center; min-width: 260px; }
+  #banner { position: absolute; left: 50%; top: 28%; transform: translateX(-50%); font-size: 44px; font-weight: 800; letter-spacing: 6px; text-shadow: 0 0 20px rgba(0,200,255,.6); opacity: 0; transition: opacity .4s; text-align: center; }
+  #banner small { display: block; font-size: 16px; letter-spacing: 3px; opacity: .8; }
+  #dmg { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+  #dmg div { position: absolute; left: -60px; top: -170px; width: 120px; height: 40px; transform-origin: 60px 170px; opacity: 0;
+    background: radial-gradient(ellipse at 50% 100%, rgba(255,40,30,.9), rgba(255,40,30,0) 70%); border-top: 3px solid rgba(255,60,40,.9); border-radius: 50% 50% 0 0; }
+  #vignette { position: absolute; inset: 0; box-shadow: inset 0 0 160px rgba(255,0,0,.8); opacity: 0; }
+  .screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(ellipse at center, rgba(10,20,30,.75), rgba(0,0,0,.92)); z-index: 10; }
+  .screen h1 { font-size: 72px; margin: 0 0 6px; letter-spacing: 16px; background: linear-gradient(180deg,#fff,#5fd4ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .screen h2 { font-size: 46px; margin: 0 0 10px; letter-spacing: 8px; }
+  .screen p { opacity: .75; margin: 4px 0 18px; }
+  .btn { pointer-events: auto; min-width: 220px; margin: 6px; padding: 12px 20px; font-size: 18px; letter-spacing: 3px; color: #e8f6ff; background: rgba(30,60,80,.7); border: 1px solid #4fc3e8; border-radius: 4px; cursor: pointer; text-transform: uppercase; }
+  .btn:hover { background: #2b87a8; }
+  .row { display: flex; align-items: center; gap: 12px; margin: 10px 0; width: 380px; justify-content: space-between; }
+  .row input { width: 200px; }
+  .controls { font-size: 13px; opacity: .6; margin-top: 20px; text-align: center; line-height: 1.7; }
+  #wlist span { margin: 0 6px; opacity: .45; }
+  #wlist span.on { opacity: 1; color: #5fd4ff; }
+</style>
+</head>
+<body>
+<div id="hud" class="hidden">
+  <div id="vignette"></div>
+  <div id="dmg"><div></div><div></div><div></div><div></div></div>
+  <div id="crosshair"><i class="h" style="left:4px"></i><i class="h" style="left:-12px"></i><i class="v" style="top:4px"></i><i class="v" style="top:-12px"></i></div>
+  <div id="hitmarker"></div>
+  <div id="top" class="panel"><div class="lbl">Wave</div><div class="big" id="waveTxt">1 / 5</div><div><span class="lbl">Score</span> <b id="scoreTxt">0</b> &nbsp; <span class="lbl">Enemies</span> <b id="enemyTxt">0</b></div></div>
+  <div id="hp" class="panel"><div class="lbl">Health</div><div class="big" id="hpTxt">100</div><div id="hpbar"><div id="hpfill"></div></div></div>
+  <div id="ammo" class="panel"><div id="wlist"><span id="w1">1 RIFLE</span><span id="w2">2 SHOTGUN</span></div><div><span class="big" id="magTxt">30</span> <span class="res">/ <span id="resTxt">90</span></span></div><div id="reloadTxt"></div></div>
+  <div id="banner"></div>
+</div>
+
+<div id="menu" class="screen">
+  <h1>ARENA</h1>
+  <p>Survive five waves.</p>
+  <button class="btn" id="btnPlay">Play</button>
+  <button class="btn" id="btnSettings">Settings</button>
+  <div class="controls">WASD move · Shift sprint · Space jump · Mouse aim/fire<br>1/2 or wheel switch weapon · R reload · Esc pause</div>
+</div>
+<div id="settings" class="screen hidden">
+  <h2>SETTINGS</h2>
+  <div class="row"><label>Mouse sensitivity <b id="sensVal"></b></label><input type="range" id="sens" min="0.1" max="3" step="0.05"></div>
+  <div class="row"><label>Master volume <b id="volVal"></b></label><input type="range" id="vol" min="0" max="1" step="0.01"></div>
+  <button class="btn" id="btnBack">Back</button>
+</div>
+<div id="pause" class="screen hidden">
+  <h2>PAUSED</h2>
+  <button class="btn" id="btnResume">Resume</button>
+  <button class="btn" id="btnPauseSettings">Settings</button>
+  <button class="btn" id="btnQuit">Main Menu</button>
+</div>
+<div id="gameover" class="screen hidden">
+  <h2 style="color:#ff5a4a">YOU DIED</h2>
+  <p id="goStats"></p>
+  <button class="btn" id="btnRestart1">Restart</button>
+  <button class="btn" id="btnMenu1">Main Menu</button>
+</div>
+<div id="victory" class="screen hidden">
+  <h2 style="color:#5fffb0">VICTORY</h2>
+  <p id="vicStats"></p>
+  <button class="btn" id="btnRestart2">Restart</button>
+  <button class="btn" id="btnMenu2">Main Menu</button>
+</div>
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.js" } }</script>
+<script type="module" src="./main.js"></script>
+</body>
+</html>

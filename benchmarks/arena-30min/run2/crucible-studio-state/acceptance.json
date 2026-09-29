@@ -1,0 +1,104 @@
+[
+  {
+    "id": "A-01",
+    "area": "boot",
+    "desc": "page loads with no console errors; window.__game exists with all 13 SPEC methods + step",
+    "how": "node tools/check.mjs A-01",
+    "passes": true,
+    "last_run": "RC1"
+  },
+  {
+    "id": "A-02",
+    "area": "flow",
+    "desc": "start() -> mode playing, wave>=1, health 100, weapon rifle, ammo 30 reserve 90",
+    "how": "node tools/check.mjs A-02",
+    "passes": true,
+    "failure": "A-02 FAIL: wave 0\n",
+    "last_run": "RC1"
+  },
+  {
+    "id": "A-03",
+    "area": "move",
+    "desc": "setInput forward for 60 steps moves player; sprint moves faster; jump raises y then lands on floor",
+    "how": "node tools/check.mjs A-03",
+    "passes": true,
+    "failure": "A-03 FAIL: sprint 5.15 not faster than walk 5.15\n",
+    "last_run": "RC1"
+  },
+  {
+    "id": "A-04",
+    "area": "collision",
+    "desc": "walking into an arena wall/cover for 180 steps never passes through it; y never < 0",
+    "how": "node tools/check.mjs A-04",
+    "passes": true,
+    "last_run": "RC1"
+  },
+  {
+    "id": "A-05",
+    "area": "weapons",
+    "desc": "rifle auto fire decreases ammo; reload R restores mag from reserve after reload time; 2 switches to shotgun (6/24); wheel/1 back",
+    "how": "node tools/check.mjs A-05",
+    "passes": true,
+    "last_run": "RC1"
+  },
+  {
+    "id": "A-06",
+    "area": "combat",
+    "desc": "spawnEnemy rusher in front, aim + fire kills it; score increases; enemy alive false",
+    "how": "node tools/check.mjs A-06",
+    "passes": true,
+    "last_run": "RC1"
+  },
+  {
+    "id": "A-07",
+    "area": "enemies",
+    "desc": "rusher approaches and damages player (health drops); shooter spawns visible projectiles and keeps distance",
+    "how": "node tools/check.mjs A-07",
+    "passes": true,
+    "last_run": "RC1"
+  },
+  {
+    "id": "A-08",
+    "area": "nav",
+    "desc": "rusher spawned behind cover reaches the player without passing through colliders",
+    "how": "node tools/check.mjs A-08",
+    "passes": true,
+    "last_run": "RC1"
+  },
+  {
+    "id": "A-09",
+    "area": "waves",
+    "desc": "killing all enemies advances wave after break; after wave 5 mode victory; health 0 -> gameover",
+    "how": "node tools/check.mjs A-09",
+    "passes": false,
+    "failure": "A-09 FAIL: timeout 28s\nA-09 FAIL: exception: page.evaluate: Target page, context or browser has been closed\n",
+    "last_run": "RC1"
+  },
+  {
+    "id": "A-10",
+    "area": "menus",
+    "desc": "Escape -> paused, pause menu visible; setPaused freezes enemies; settings sliders change sensitivity/volume live",
+    "how": "node tools/check.mjs A-10",
+    "passes": true,
+    "failure": "A-10 FAIL: Escape again -> paused\n",
+    "last_run": "RC1"
+  },
+  {
+    "id": "A-11",
+    "area": "hud",
+    "desc": "HUD shows health, ammo mag/reserve, weapon, wave, score, crosshair elements in DOM",
+    "how": "node tools/check.mjs A-11",
+    "passes": true,
+    "failure": "A-11 FAIL: crosshair element not found/visible\n",
+    "last_run": "RC1"
+  },
+  {
+    "id": "A-12",
+    "area": "perf",
+    "desc": "draw calls < 200 with 10 enemies; no errors over 600 steps",
+    "how": "node tools/check.mjs A-12",
+    "passes": true,
+    "last_run": "RC1",
+    "failure": "A-12 FAIL: draw calls 386\n"
+  }
+]

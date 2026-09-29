@@ -1,0 +1,106 @@
+# Context engineering
+
+A game takes days to weeks. No context window survives that, and compaction silently drops details. So the studio treats context as a cache and files as the truth:
+
+> **If it matters, it is in a file. If it is only in context, it is already lost.**
+
+Three rules follow from that, and every agent in the studio obeys them.
+
+## Rule 1 - Files are the memory, context is a scratchpad
+
+Everything important lives in `studio/` (see `state.md`), written the moment it happens, not at the end of a heartbeat:
+
+| What | Where | Written when |
+|---|---|---|
+| Where are we, what is next | `STATUS.md` | End of every heartbeat (overwritten) |
+| Every ticket, checkbox, owner, round, last gap, errors | `TRACKER.md` | Every state change |
+| Every non-obvious decision | `DECISIONS.md` | Immediately |
+| Every bug and build error | `TRACKER.md` → `## Errors` | Immediately, with log path |
+| What the studio learned | `LESSONS.md` | When a gap repeats (see Rule 3) |
+| Captures and logs | `evidence/<ticket>/round-<n>/` | By the capture scripts |
+| Critic and playtester verdicts | `evidence/<ticket>/round-<n>/verdicts.md` | By the Director, from their returns (critics are read-only) |
+
+`STATUS.md` and `TRACKER.md` belong to the **Director alone**. They are its overview of the whole studio; no builder, critic or playtester reads them, because the big picture would only distract them from their one job (and would break a critic's blindness). Everyone else gets a context pack (Rule 2).
+
+`STATUS.md` is the first file the Director reads and it must fit on one screen (max ~40 lines). It answers: milestone, gate progress, what is running, what is blocked, top risk, next 5 actions, budget used.
+
+`TRACKER.md` is the Director's checklist. Every ticket is one checkbox line, grouped by feature; details live under the ticket's heading, not in the list. See the format in `state.md`.
+
+## Rule 2 - Every agent gets a context pack, not the project
+
+Nobody reads "everything". A model given more than its job needs does worse, not better: it spends attention on the irrelevant parts, copies patterns from code it should only call, and runs out of room for the work. So each agent gets the smallest context that lets it do one job well - and nothing it could be distracted by.
+
+**Packs are built by a tool, not by hand.** The Director writes each ticket as a short file, `studio/tickets/<id>.md`: a header naming what the ticket needs (craft and department sections, style-bible and architecture sections, owned files, files it calls into, lesson tags, evidence to open), then the ticket body. `node tools/pack.mjs build <id>` turns it into `studio/packs/<id>.md`:
+
+- only the named **sections** of `craft.md`, `departments.md`, `STYLE_BIBLE.md` and `ARCHITECTURE.md`, never whole files;
+- the architecture table rows for the files the ticket owns or uses;
+- for every file the ticket **calls into, only its public interface** (exports, signatures, doc comments) - builders call other modules through their interface, they do not read them;
+- only the `LESSONS.md` lines tagged for this ticket;
+- evidence as paths the agent opens itself (images cost the most context of anything, so only the ones this job needs);
+- the ticket last.
+
+The tool prints the pack's size and any section it could not find. The dispatch prompt is then three lines - role file, pack file, deadline - identical in shape for every agent, which also keeps the prompt cache warm.
+
+| Agent | Context | Budget at start | Never gets |
+|---|---|---|---|
+| **Director** | `STATUS.md`, `TRACKER.md` (open section), last 10 `DECISIONS.md`, `MILESTONE.md`, pillars, return lines, contact sheets | the skill sections the current step needs (below) | Code, assets, full logs, critic transcripts, single captures when a sheet exists |
+| **Builder** | Role file + its pack | pack under ~6k tokens (`pack.mjs` flags larger ones: split the ticket) | Other tickets, the board, previous rounds' reasoning, other modules' source, the skill |
+| **Fix builder** | Role file + the ticket's pack + the one gap + the blocker lines | same pack, plus a few lines | The critic's reasoning, the history of the ticket |
+| **Experience critic** | Evidence A/B (one sheet or pair per question), the question, pillars | a few images, under ~1k tokens of text | Code, builder notes, round number, history, the studio |
+| **Code critic** | Diff, touched files, the architecture sections for them, `BUDGETS.md`, test and profiler output (summaries), code bar | the diff plus touched files | Visuals, builder notes, history |
+| **Integration / Coherence critic** | Build contact sheets, style bible, bars | one sheet per view | Tickets, code |
+| **Playtester** | The build and the controls | - | Everything about how it was made |
+
+**The skill is context too.** Builders and critics never read the skill: their role file and pack hold everything. The Director reads the skill by section, not by file, with `node tools/pack.mjs section <file> "<heading>"` - in blitz and sprint mode only the playbook section for the cap, the model routing table and the dispatch brief; in longer runs `context.md` and `director.md` once per session, other references only for the step that needs them (`feedback.md` at handoff, `endurance.md` at a process review). Paperwork serves the game: if a heartbeat spends more effort on tracking than on dispatched work, cut the tracking back to STATUS + TRACKER.
+
+**Tool output is context too.** Every tool prints one short JSON line and writes details to files (`tools/*.mjs` and the adapter verbs already do). Agents read logs with `tail` and `grep`, never whole; a failing check is reported by id and reason, not by stack dump; a render is looked at as one contact sheet, not as ten separate images. A builder that pastes a 400-line log into its own context has spent its round on the log.
+
+**Context audit.** At every progress review (`director.md`) the Director runs `node tools/pack.mjs sizes` and looks at its own context use: packs that grew, lessons that no longer apply (archive them), sections that tickets keep asking for (lift them into the role file, where they are cached), and whether the Director itself read anything it did not act on.
+
+## Rule 3 - Return contracts keep the Director small
+
+Builders write their full output to files and return **at most 5 lines**; critics and playtesters return only their verdict block. Either way, nothing long reaches the Director:
+
+```
+T-042 round 3: JUDGE ours x2 (both orders) | CODE PASS
+evidence: studio/evidence/T-042/round-4/
+next: WON - ready to merge
+```
+
+The Director never reads a critic transcript or a build log unless a return line says it must. It works from return lines, `TRACKER.md` and `STATUS.md`. That is what lets it run hundreds of heartbeats without its own context filling with detail.
+
+**Lessons, not repetition.** When the same GAP or BLOCKER appears on two different tickets (e.g. "unscaled delta time", "pivot not at feet", "UI text overflows in German"), the Director writes it to `LESSONS.md` as a rule with the fix. Every later builder in that department gets the matching lessons in its pack. The studio should make each mistake twice at most.
+
+## Rule 4 - Order prompts for the cache
+
+Every dispatch is built stable-first (`studio.md` - dispatch brief): role file, department brief and craft notes, then studio file paths, then the ticket and round. Identical prefixes across the many builders and critics of a run are cached and cost a fraction of fresh input; a changing timestamp or ticket id near the top breaks that for everything after it. Keep variable content at the end.
+
+## Rule 5 - Continuity where it is cheap, freshness where it matters
+
+- **Builders are resumed** for their own revision rounds where the runtime lets the Director wait for the resumed agent (for example `SendMessage` in an interactive session): the ticket's context is already loaded and cached, so a revision costs a fraction of a fresh builder. In headless sprint runs, where a resumed agent may run in the background and die with the session, a fix round is a fresh foreground builder with the ticket, the one gap and the list of files - still small, because it reads only those.
+- **Critics and judges are always new agents**, so they never know how hard the builder tried or what the last critic said.
+- A builder that has been resumed many times, or whose ticket changed shape, is replaced by a fresh one with a clean pack.
+
+## Rule 6 - The acceptance list is the definition of done
+
+`studio/acceptance.json` lists every requirement of the brief as a registered, machine-checkable check with a `passes` flag (see `state.md`). QA owns it - not the builders whose work it judges: it is written at kickoff from the brief and the completeness list, implemented in the check registry, run after every integration, and never edited to make a check pass - only to add checks. A small **held-out QA suite** that builders never see checks the same requirements from other angles, so passing the visible list by overfitting to it shows up. **Craft rules become checks:** at kickoff QA turns every measurable rule from `craft.md` and the genre checklist that applies to this game into acceptance ids - e.g. "a level shot from eye height hits a standing enemy at mid range", "muzzle flash never covers the crosshair region", "recoil recovers", "enemy draw calls do not grow per enemy". A rule that is only written down in craft notes gets forgotten under time pressure; a failing check does not. A ticket is not done while one of its checks fails, and the Release Candidate gate requires all of them. This keeps the studio from declaring victory early and gives every heartbeat an objective progress number.
+
+## Fresh context by design
+
+- **Every heartbeat starts from files.** The Director does not rely on remembering the previous heartbeat. The first thing it reads is `STATUS.md` and `TRACKER.md`; if the context was compacted or the session restarted, nothing changes.
+- **Session length follows the playbook** (`playbooks.md`). Under about two hours the Director keeps one session - reloading state every few minutes costs more than it saves, and the context stays small because it only reads 5-line returns. For longer runs, the Director finishes the heartbeat, writes `STATUS.md`, commits, and continues in a fresh session (the heartbeat driver, a scheduled Routine, or the next heartbeat after a reset) whenever its context passes roughly half the window or after a set number of heartbeats.
+- **Builders and critics are always scoped.** One ticket per builder, one question per critic; their contexts never accumulate project history.
+
+## Commits never sweep in other work
+
+The Director commits by path - `studio/` and the files the integrated tickets changed (`git add -- <paths>` then `git commit -- <paths>`), never `git add -A` or a bare `git commit` that could include changes someone else staged. Automatic snapshots (the PreCompact hook) go to a side ref through a temporary index and never touch the branch or the staging area.
+
+## File hygiene
+
+Files that grow forever become context problems of their own.
+
+- `HEARTBEAT.md`: keep the last 20 entries; older ones move to `archive/heartbeats-<n>.md`.
+- `TRACKER.md`: when a milestone closes, its merged tickets move to `archive/tracker-<milestone>.md`, leaving one summary line per feature.
+- `DECISIONS.md` stays append-only, but agents only read the last 10 plus any it references.
+- Logs and captures stay in `evidence/`; files point to them, never paste them.
+- Every file in `studio/` except the archives should be readable in one go (target < 300 lines).

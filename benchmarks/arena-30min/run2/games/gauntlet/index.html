@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arena</title>
+<link rel="icon" href="data:,">
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.js" } }</script>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #000; font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #fff; user-select: none; }
+  canvas { display: block; }
+  .panel { background: rgba(10, 12, 18, 0.45); border: 1px solid rgba(255,255,255,0.12); border-radius: 4px; padding: 8px 14px; backdrop-filter: blur(2px); }
+  #hud { position: fixed; inset: 0; pointer-events: none; display: none; }
+  #h-top { position: absolute; top: 14px; width: 100%; display: flex; justify-content: center; }
+  #h-top .panel { font-size: 16px; letter-spacing: 2px; font-weight: 600; }
+  #h-top .sep { opacity: 0.35; margin: 0 12px; }
+  #h-health { position: absolute; left: 20px; bottom: 20px; min-width: 240px; }
+  .lbl { font-size: 11px; letter-spacing: 3px; opacity: 0.7; }
+  #h-health .row { display: flex; align-items: center; gap: 12px; }
+  #h-hpnum { font-size: 34px; font-weight: 700; min-width: 64px; }
+  #h-hpbar { flex: 1; height: 8px; background: rgba(255,255,255,0.15); border-radius: 2px; overflow: hidden; }
+  #h-hpfill { height: 100%; width: 100%; background: #f4f4f8; transition: width .15s; }
+  #h-ammo { position: absolute; right: 20px; bottom: 20px; text-align: right; min-width: 150px; }
+  #h-mag { font-size: 34px; font-weight: 700; }
+  #h-res { font-size: 18px; opacity: 0.7; }
+  #h-cross { position: absolute; left: 50%; top: 50%; --gap: 6px; }
+  #h-cross i { position: absolute; background: #fff; box-shadow: 0 0 2px rgba(0,0,0,.8); }
+  #h-cross .t, #h-cross .b { width: 2px; height: 9px; left: -1px; }
+  #h-cross .l, #h-cross .r { height: 2px; width: 9px; top: -1px; }
+  #h-cross .t { bottom: var(--gap); } #h-cross .b { top: var(--gap); }
+  #h-cross .l { right: var(--gap); } #h-cross .r { left: var(--gap); }
+  #h-cross .dot { width: 2px; height: 2px; left: -1px; top: -1px; }
+  #h-hit { position: absolute; left: 50%; top: 50%; opacity: 0; transition: opacity .1s; }
+  #h-hit i { position: absolute; width: 2px; height: 10px; background: #fff; left: -1px; top: -5px; }
+  #h-hit i:nth-child(1) { transform: rotate(45deg) translateY(-11px); } #h-hit i:nth-child(2) { transform: rotate(135deg) translateY(-11px); }
+  #h-hit i:nth-child(3) { transform: rotate(225deg) translateY(-11px); } #h-hit i:nth-child(4) { transform: rotate(315deg) translateY(-11px); }
+  #h-hit.kill i { background: #ff2a3a; }
+  #h-dmgdir { position: absolute; left: 50%; top: 50%; }
+  .dmgarc { position: absolute; left: 0; top: 0; width: 260px; height: 260px; border-radius: 50%; border: 6px solid transparent; border-top-color: rgba(255, 30, 40, 0.85); opacity: 0; filter: drop-shadow(0 0 6px rgba(255,0,0,.6)); }
+  #h-flash { position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(255,0,0,0) 40%, rgba(220,0,20,1) 100%); opacity: 0; }
+  #h-banner { position: absolute; top: 28%; width: 100%; text-align: center; font-size: 44px; font-weight: 800; letter-spacing: 8px; text-shadow: 0 2px 12px rgba(0,0,0,.5); opacity: 0; }
+  #h-reload { position: absolute; top: 58%; width: 100%; text-align: center; font-size: 14px; letter-spacing: 4px; display: none; text-shadow: 0 1px 4px #000; }
+  .screen { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; flex-direction: column; background: rgba(12, 14, 22, 0.55); backdrop-filter: blur(3px); }
+  .screen.on { display: flex; }
+  .screen h1 { font-size: 64px; letter-spacing: 16px; margin: 0 0 6px; font-weight: 800; }
+  .screen h1 span { color: #d0142e; }
+  .screen p { opacity: .75; letter-spacing: 2px; margin: 4px 0 26px; }
+  .btn { pointer-events: auto; min-width: 220px; padding: 12px 20px; margin: 6px; font-size: 16px; letter-spacing: 4px; font-weight: 700; color: #fff; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.4); border-radius: 3px; cursor: pointer; }
+  .btn:hover { background: #d0142e; border-color: #d0142e; }
+  .setting { display: flex; gap: 14px; align-items: center; margin: 10px; letter-spacing: 2px; }
+  .setting label { width: 170px; text-align: right; } .setting input { width: 220px; accent-color: #d0142e; } .setting span { width: 40px; }
+  .hint { font-size: 12px; opacity: .6; margin-top: 18px; letter-spacing: 1px; }
+</style>
+</head>
+<body>
+<div id="hud"></div>
+<div id="menu" class="screen on">
+  <h1>ARE<span>N</span>A</h1><p>SURVIVE FIVE WAVES</p>
+  <button class="btn" id="b-play">PLAY</button>
+  <button class="btn" data-settings>SETTINGS</button>
+  <div class="hint">WASD move · SHIFT sprint · SPACE jump · MOUSE fire · R reload · 1/2/WHEEL switch · ESC pause</div>
+</div>
+<div id="pause" class="screen">
+  <h1>PAUSED</h1><p>&nbsp;</p>
+  <button class="btn" id="b-resume">RESUME</button>
+  <button class="btn" data-settings>SETTINGS</button>
+  <button class="btn" id="b-quit">MAIN MENU</button>
+</div>
+<div id="settings" class="screen">
+  <h1>SETTINGS</h1><p>&nbsp;</p>
+  <div class="setting"><label>SENSITIVITY</label><input type="range" id="s-sens" min="0.1" max="3" step="0.05" value="1"><span id="s-sens-v">1.00</span></div>
+  <div class="setting"><label>MASTER VOLUME</label><input type="range" id="s-vol" min="0" max="1" step="0.01" value="0.7"><span id="s-vol-v">70</span></div>
+  <button class="btn" id="b-back">BACK</button>
+</div>
+<div id="gameover" class="screen">
+  <h1>GAME <span>OVER</span></h1><p id="go-info"></p>
+  <button class="btn" data-restart>RESTART</button>
+</div>
+<div id="victory" class="screen">
+  <h1>VICTORY</h1><p id="vi-info"></p>
+  <button class="btn" data-restart>RESTART</button>
+</div>
+<script type="module" src="./js/main.js"></script>
+</body>
+</html>

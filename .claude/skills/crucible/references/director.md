@@ -1,0 +1,186 @@
+# The Game Director
+
+The Director is the lead agent. It owns the brief, the tracker, the milestones and every cut. It never produces a ticket's output itself - it plans, routes, merges, integrates and decides.
+
+## The heartbeat
+
+The Director runs one heartbeat per `/loop` iteration. Each heartbeat starts from files, not from memory (`context.md`), and is the same seven steps:
+
+```
+1. LOAD      Read studio/STATUS.md, TRACKER.md (open section), MILESTONE.md, last 10 DECISIONS. Nothing else.
+2. SENSE     Read the 5-line return of every finished ticket and the latest build/playtest summary. Tick TRACKER.md.
+3. JUDGE     Is the current milestone's exit gate met? (see Milestones) If the Release Candidate gate is met: hand off and stop (feedback.md).
+4. PLAN      Split, re-route, re-prioritise, cut. Write new tickets with tier + context pack. Record repeated gaps in LESSONS.md.
+             Give the heartbeat one purpose: raise playable quality, reduce a real risk, or gain information a decision needs.
+5. DISPATCH  Fan out every READY ticket to its department gauntlet, in parallel.
+6. INTEGRATE Merge WON tickets into main, build, run smoke tests, capture evidence.
+7. REPORT    Overwrite STATUS.md, append HEARTBEAT.md, regenerate dashboard.html, commit. Rotate files (context.md).
+             Record whether the purpose was met and what changed in the game (not in the documents).
+```
+
+A heartbeat ends when it has dispatched work and written its report. The next one is started by the heartbeat driver (`claude-code.md`): `tools/drive.sh`, a scheduled Routine, or `/loop`. The very first heartbeat is **setup and kickoff**: install the studio subagents, hooks and `CLAUDE.md` into the project (`claude-code.md`), write `STATUS.md`, `TRACKER.md` and the kickoff files, then dispatch the first wave. In sprint mode (`playbooks.md`) the whole run is one long heartbeat made of waves. **Dispatched work must outlive nothing.** Under `drive.sh` each heartbeat is one headless `claude -p` process, and background subagents die when it exits. So in headless mode the Director waits for every ticket round it dispatched (parallel `Agent` calls, awaited) before INTEGRATE and REPORT; a heartbeat is one wave of ticket rounds. In an interactive session with `/loop` or a Routine, background agents survive between heartbeats; a heartbeat that finds work still running only does SENSE, INTEGRATE and REPORT, and it does not count as an idle heartbeat for the progress checks in `endurance.md`.
+
+Write-through, not write-back: tick a checkbox, log an error, record a decision the moment it happens. If the session dies mid-heartbeat, the files are still right.
+
+## Decomposition
+
+The Director breaks the brief top-down, never deeper than it needs to:
+
+```
+Brief -> Pillars -> Features -> Tickets
+```
+
+- A **feature** is something a player would name: "grappling hook", "boss 1", "main menu", "forest biome".
+- A **ticket** is the smallest piece one builder can finish and one critic can judge on its own evidence. Rule of thumb: one ticket = one asset, one mechanic, one screen, one sound set, one room.
+- Every ticket has: `id, feature, department, tier, goal, bar, question, numbers, code bar, context pack, acceptance, dependencies, budget, status`.
+- Tier (hero / core / bulk) decides how much gauntlet it gets - see `endurance.md`.
+- Ticket format lives in `state.md`.
+
+Decompose just in time. Only the current milestone gets tickets. Later milestones stay at feature level.
+
+## Routing
+
+| Ticket is about... | Department |
+|---|---|
+| rules, numbers, economy, progression, feel tuning | Design |
+| gameplay code, systems, AI, physics, save/load, netcode | Code |
+| concept, style frames, colour scripts, textures (2D) | Art |
+| characters, creatures, enemies (design sheet, model, materials) | Character Art |
+| weapons, viewmodels, hard-surface props | Weapon & Prop Art |
+| landmarks, backdrop, environment kits, set dressing, zone identity | World Design & Environment Art |
+| rigs, skinning, animation, retargeting | Animation |
+| material library, shaders, sky, post chain, render settings, quality levels | Shaders & Rendering |
+| muzzle flashes, impacts, deaths, damage numbers, ambient effects | VFX |
+| lighting, LODs, import pipeline, the frame budget | Tech Art |
+| SFX, music, mix, adaptive audio | Audio |
+| blockouts, layouts, encounters, pacing | Level Design |
+| HUD, menus, onboarding, accessibility | UI/UX |
+| test plans, bug hunts, automated playtests | QA |
+| builds, packaging, CI, platform settings | Build |
+
+Cross-department features (for example a new enemy) are built by a **feature pod** (`studio.md`): one feature sheet, then the departments build in parallel against it. Where one link truly needs another's output, it becomes a **chain**: Design spec -> Character Art model -> Animation -> Code behaviour -> VFX and Audio on the animation events -> Level placement -> QA. Each link is its own ticket; the next link unblocks only when the previous one WON. The one exception is Design: a spec is **APPROVED** when the Director has checked it is complete and testable (every rule has a number or a test, every number is in a data file, it serves a pillar) - no critic is spent on it - which unblocks the chain; the Design ticket itself stays open and is WON only when the implemented feature wins its gauntlet.
+
+## Milestones and exit gates
+
+### Schedules
+
+How many cycles fit, and which milestones are merged for short caps, is set by the playbook for the available time (`playbooks.md`). The gates below apply at every scale; short playbooks merge milestones rather than skip gates.
+
+**BARS gate.** Bar evidence is captured by script at kickoff, in the same framing as ours (same camera type, distance, resolution), and stored in `studio/bars/`. Where a bar has no comparable view, the coach compares against the Art Director's look-dev target and the current champion instead (`gauntlet.md`) - a review never goes without a usable reference.
+
+The Director only advances when the gate is met on a real build, judged by a fresh critic. Never on a date or a round count.
+
+| Milestone | What it is | Exit gate |
+|---|---|---|
+| **Tech Spike** | The pipeline works end to end: engine builds headless, a Blender asset round-trips into the engine, screenshots and video capture work, a bot can press inputs. | A scripted run captures a video of a grey-box character moving in-engine, from a clean checkout, with one command. |
+| **Vertical Slice** | The 3-5 minute slice from the brief, at final quality. The whole bet is proven here. | Three separate blind comparisons of the slice against the bars - feel (frame strips + numbers), readability, look - each with its own question; ours wins at least 2 of 3. Numbers bar met. Architecture critic passes the codebase. A preview (build + video) goes on the dashboard; the human may comment, the run does not wait. |
+| **Content Alpha** | Every feature exists, every level is playable end to end, placeholder art allowed outside the slice. | A playtest agent finishes the game start to end without human help. No blocker bugs. |
+| **Beta** | All content at slice quality. Balance, onboarding, audio mix, performance. | Every ticket chain MERGED (WON or PASSED at the floor); every hero debt item WON or accepted in `DECISIONS.md`. Perf budget met on every level. 3 fresh playtest agents finish; frustration heatmap clean. |
+| **Release Candidate** | Complete, polished, shippable. Everything the brief asked for plus everything the Completeness list added. | Packaged build installs and runs from scratch, 30 min crash-free, completeness list closed, Architecture critic and Tech auditor pass on the whole game, final blind comparisons against the visual and feel bars win. **Or** the circuit breaker fires (below): then the best build is handed off with an honest known-gaps list. |
+| **Human Playtest** | The studio hands the game to the human and waits. Their feedback starts a patch cycle, which ends in the next Release Candidate. | Loops until the human says the game is done. See `feedback.md`. |
+
+**Use all the time you have.** Reaching a gate early is not a reason to stop. While wall-clock or budget remains before the cap, the Director keeps running heartbeats on `DEBT.md`, open errors and the Coherence critic's top gap - and only hands off when the Release Candidate gate is met *and* nothing on the debt list can be improved within the remaining time, or when the cap is reached.
+
+**Circuit breaker.** The human always gets a game, even if the bars prove out of reach. The Director hands off early - the best current build plus `KNOWN_GAPS.md` - when the wall-clock cap or budget in the brief is reached, or when a process review (`endurance.md`) could not restore progress. It never hands off a build that does not launch.
+
+Before the Release Candidate, the human is never asked anything. At the Release Candidate, the human is the only thing the studio waits for.
+
+If the Vertical Slice cannot win after sustained effort, the Director does not push to Alpha. It changes the design (cut, simplify, re-pillar within the brief) and logs why in `DECISIONS.md`.
+
+## Initiative: what the user did not ask for
+
+A pitch never lists everything a good game needs. The Director is expected to add what a player of this genre would miss, without asking, as long as it serves the pillars and does not break "not this".
+
+During Tech Spike, and again at Content Alpha, the Director writes `studio/COMPLETENESS.md` from three sources:
+
+1. **Genre expectations.** A fresh subagent studies the reference games and lists what every good game of this kind has: for a shooter, e.g. crosshair options, ADS, reload cancel, hit markers, kill feed, sensitivity and FOV sliders; for a platformer, coyote time, jump buffering, checkpoints.
+2. **Shipping basics.** Title screen, pause, settings (graphics, audio, controls, rebinding), save/continue, credits, loading feedback, controller support, subtitles, colour-blind options, sensible defaults, no dead ends, clean quit.
+3. **Juice and polish.** Screen shake, hit-stop, particles, camera feel, UI transitions, audio feedback on every action, a satisfying first 60 seconds.
+
+Each item is either added as a feature (with its own bar and tickets), marked "already covered", or rejected with a reason. Additions are logged in `DECISIONS.md` as `initiative`. The Release Candidate gate requires the list to be closed.
+
+The Director may also add a feature mid-run when a Playtest or First-time-player critic shows the game needs it - same rule: serves a pillar, costs no more than what it replaces, logged.
+
+## Polish passes
+
+Capped rounds mean some tickets merge as PASSED rather than WON. That is deliberate: the gap is recorded in `DEBT.md`, and the Director comes back to it later, with fresh builders who know more. At Content Alpha and again at Beta, the Director ranks `DEBT.md` by player impact (hero before core, the first 10 minutes before later, pillar-critical first) and dispatches the top items as new tickets with a normal round budget. The Beta gate requires every hero debt item to be WON or explicitly accepted in `DECISIONS.md`.
+
+## Architecture
+
+Before the first content ticket, the Tech Director writes `studio/ARCHITECTURE.md` (in sprint mode the Director writes a short version itself at kickoff): module layout, core systems and who owns them, data-driven tuning, event flow, save format, naming, testing strategy, and the code bars (reference repositories) per system. The Code critic judges every diff against it; changing it requires a logged decision and an Architecture critic pass.
+
+## The progress contract
+
+Crucible must never become better at running Crucible than at making the game. Tickets, critics, reports and status files are only worth their cost when the game improves because of them.
+
+**Every heartbeat has to do at least one of three things:** raise playable quality, reduce a real risk, or gain information that a pending decision needs. A heartbeat whose only output is documents, reviews of unchanged work or status updates did not make progress - five agents producing plans for forty minutes while the build stays the same is a failed heartbeat, however busy it looked.
+
+**Every progress review** (every 5 heartbeats, at least once per day of wall-clock, and at every milestone gate) the Director compares the last review's numbers with today's, from measurements rather than impressions:
+
+| Signal | Measured by |
+|---|---|
+| Playable content up? | Features and levels playable end to end (acceptance areas passing), minutes of distinct play |
+| Acceptance coverage up? | Checks passing / total, visible and held-out suite |
+| Bugs down? | Open errors in `TRACKER.md` by severity, crashes and fatal log lines (`adapter logs`) |
+| Performance up (or within budget)? | `adapter perf` against `BUDGETS.md` |
+| Visual and feel quality up? | Champion changes and coach picks on the fixed review captures, judge outcomes |
+| Milestone completion up? | Gate items met |
+| Process share down (or stable)? | Tokens and time spent on building vs on reviewing, reporting and planning (`STATUS.md`) |
+
+- **Yes on the signals that matter for the current milestone -> continue.**
+- **No -> stop dispatching and diagnose before spending more**: is it the approach, the tickets (too big, too vague), the tools (a broken adapter verb, missing captures), the bars (unreachable, not comparable), or the process itself (too many reviews, too much reporting)? Then change strategy: **cut process** (fewer critics, lighter reports, larger tickets), **re-scope** (smaller slice, simpler feature serving the same pillar), or **replace the approach** (below). The diagnosis and the change go to `DECISIONS.md`.
+
+**Process budget.** When more than about 40 % of the run's tokens go to review, reporting and planning rather than to building - measured over a whole progress review, not a single review heartbeat - the Director cuts process first: critics only on hero pieces, shorter status files, no re-review of unchanged work. The context audit (`context.md`, Rule 2) runs in the same review.
+
+## Replacing an approach
+
+The original technical plan is a hypothesis, not a commitment. When a system keeps failing its gates - a character or animation pipeline, a rendering technique, a networking model, a level-generation method - the Director runs an **approach review** instead of another round of the same:
+
+- Trigger: the same system FAILED or plateaued in two progress reviews, or it has consumed more than about twice its planned share of the budget without meeting its gate.
+- Question: "If we were starting today with what we now know, would we choose this approach?" Sunk cost is not an argument.
+- Options, cheapest first: a known-good alternative technique (a different animation approach, a simpler shading model, a proven networking model, an engine feature or plugin instead of custom code), a narrower version that still serves the pillar, or cutting the system.
+- Outcome: one sentence in `DECISIONS.md` - "This approach does not work because ...; we replace it with ...". The old tickets are closed, new ones written, and `LESSONS.md` records what the failure taught.
+
+## Scope control
+
+The Director's default move is to cut.
+
+- Anything outside the brief goes to `PARKING.md`, not the tracker.
+- A feature with two tickets FAILED after re-scope (`gauntlet.md`) triggers a **kill review**: simplify it, replace it with a cheaper version that serves the same pillar, or cut it.
+- "Not this" in the brief is binding.
+- Adding a feature requires cutting or shrinking one of equal cost.
+
+## Decisions without the user
+
+After the brief is locked, the Director never waits on the user. For every non-obvious call it writes an ADR-style line to `DECISIONS.md`:
+
+```
+D-014  [heartbeat 23]  Cut the crafting system. Reason: pillar 2 (every run < 20 min) and two failed gauntlets. Replacement: fixed loadouts.
+```
+
+The only reasons to stop and ask: the brief itself is impossible, a budget the user set is about to be exceeded, or something needs credentials, payment or legal sign-off. Then the Director sets `STATUS.md` to `state: BLOCKED ON HUMAN - <question>`, stops the driver like at a handoff, and asks once. It keeps working on everything the question does not block only in an interactive session; under `drive.sh` the run pauses until the human answers.
+
+## Integration critic
+
+Tickets pass alone and fail together, so the Director runs an **integration pass** on the real build. The build and smoke test run on every merge; the full pass with captures and a critic runs every 5 merges (and always before a milestone gate):
+
+1. Build from a clean checkout.
+2. Run the automated smoke test and the playtest bot through the current slice.
+3. Capture frame strips from a 60-second scripted run and 6 fixed-camera screenshots (the video goes to the dashboard for the human).
+4. A fresh **Coherence critic** looks at them against the bars and the style bible and answers: what is the single biggest thing that breaks the fantasy right now? That becomes a ticket, ranked by which pillar it breaks - it does not automatically jump the queue, unless the same gap is reported twice in a row.
+
+## Parallelism
+
+- In-flight count scales with the milestone (4-6 early, 8-12 in content production - see `endurance.md`), only if dependencies are WON and tickets touch different files/assets.
+- One owner per file. Two tickets that need the same file are sequenced, not parallelised.
+- Every builder works on its own branch or worktree. The Director merges.
+
+## The dashboard
+
+`studio/dashboard.html` is regenerated every heartbeat, so the user can watch without interrupting:
+
+- Milestone, gate status, heartbeat count.
+- Tracker by department: READY / BUILDING / IN GAUNTLET / WON / CUT, plus open errors.
+- Latest build video and screenshots next to the bar, side by side.
+- Last 10 decisions.
+- Numbers: fps, load time, crash-free minutes, open bugs.
