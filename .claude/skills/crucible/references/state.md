@@ -17,7 +17,7 @@ studio/
 ├── BUDGETS.md        # fps, frame ms, memory, polycount, texel density, draw calls, LUFS
 ├── ARCHITECTURE.md   # modules, core systems, data flow, conventions, code bars per system
 ├── COMPLETENESS.md   # genre expectations + shipping basics + juice, each added / covered / rejected
-├── LESSONS.md        # repeated gaps turned into rules, per department - injected into builder packs
+├── LESSONS.md        # repeated gaps as rules, one line each, tagged: "- [enemies, art] Pivot at the feet." - pack.mjs injects them by tag
 ├── MILESTONE.md      # current milestone, its gate, gate status
 ├── DECISIONS.md      # append-only decision log (D-001 ...)
 ├── PARKING.md        # ideas outside scope, never on the tracker without a cut
@@ -27,6 +27,8 @@ studio/
 ├── feedback/         # RC-<n>.md: human feedback, interpretation, new bars, tickets, status
 ├── handoff/          # RC-<n>/: build, PLAY.md, CHANGES.md, highlight video, screenshots
 ├── bars/             # fetched reference material (clips, screenshots, audio, reference repos)
+├── tickets/          # <ticket-id>.md: header (sections, owns, uses, lesson tags, evidence) + ticket body - written by the Director
+├── packs/            # <ticket-id>.md: context pack built by tools/pack.mjs - the only studio file a builder reads
 ├── evidence/         # <ticket-id>/round-<n>/ captures + critic verdicts + logs
 ├── archive/          # closed milestones' tickets, old heartbeats
 └── dashboard.html    # regenerated every heartbeat for the user

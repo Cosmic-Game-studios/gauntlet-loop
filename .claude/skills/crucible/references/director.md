@@ -126,7 +126,7 @@ Crucible must never become better at running Crucible than at making the game. T
 - **Yes on the signals that matter for the current milestone -> continue.**
 - **No -> stop dispatching and diagnose before spending more**: is it the approach, the tickets (too big, too vague), the tools (a broken adapter verb, missing captures), the bars (unreachable, not comparable), or the process itself (too many reviews, too much reporting)? Then change strategy: **cut process** (fewer critics, lighter reports, larger tickets), **re-scope** (smaller slice, simpler feature serving the same pillar), or **replace the approach** (below). The diagnosis and the change go to `DECISIONS.md`.
 
-**Process budget.** When more than about 40 % of the run's tokens go to review, reporting and planning rather than to building - measured over a whole progress review, not a single review heartbeat - the Director cuts process first: critics only on hero pieces, shorter status files, no re-review of unchanged work.
+**Process budget.** When more than about 40 % of the run's tokens go to review, reporting and planning rather than to building - measured over a whole progress review, not a single review heartbeat - the Director cuts process first: critics only on hero pieces, shorter status files, no re-review of unchanged work. The context audit (`context.md`, Rule 2) runs in the same review.
 
 ## Replacing an approach
 

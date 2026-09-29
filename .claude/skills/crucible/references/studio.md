@@ -56,30 +56,41 @@ A studio has rhythms. Crucible has five, and the playbook (`playbooks.md`) sets 
 
 ## Writing a dispatch brief
 
-Every subagent starts from nothing. The brief is the only thing it knows, so a vague brief produces duplicated, off-target or incompatible work. Every dispatch follows this shape - stable parts first, the ticket last (this also keeps prompt caching effective):
+Every subagent starts from nothing. The brief is the only thing it knows, so a vague brief produces duplicated, off-target or incompatible work - and an overloaded one buries the job under context it does not need (`context.md`, Rule 2). The Director writes the brief as a **ticket file** and lets `tools/pack.mjs` assemble the pack:
 
 ```
-<role>            "Read studio/prompts/<role>.md first - it is your role." (a file path, not pasted text: the
-                  Director's output tokens are the most expensive tokens in the run)
-<department>      the department's section from departments.md and the matching craft.md section - only the
-                  parts for this engine (a three.js ticket does not need Blender turntable instructions)
-<studio_context>  paths to read: pillars, STYLE_BIBLE section, ARCHITECTURE section and the file-owner table,
-                  LESSONS for this department
-<ticket>
-  goal:          what the player will experience when this is done, in one or two sentences
-  deliverable:   exactly which files/assets change; which interface they implement
-  boundaries:    what not to touch (other owners' files, the brief, shared contracts); do not commit - the
-                 Director commits after integration, so parallel builders never collide in git
-  bar:           what it is compared against and on which question
-  done when:     the acceptance checks and numbers that must pass, and how to run them
-  tools:         the render/capture tool and the acceptance runner, with the exact commands
-  deadline:      absolute UTC time; check `date -u` as you work and return by deadline minus 60 s
-  round:         n of budget; the one gap from the last review, if any
-</ticket>
-<return>          the 5-line return format
+studio/tickets/T-07.md
+role: studio-builder
+craft: 3D models built in code; Animation; Stylised and comic rendering
+department: Animation
+style: Palette; Characters
+arch: Hook; Signatures
+owns: game/src/enemies.js
+uses: game/src/world.js; game/src/lookdev.js
+lessons: enemies; art
+evidence: studio/bars/enemy_closeup.png
+
+goal:         what the player will experience when this is done, in one or two sentences - and why
+              ("rushers read at 20 m because the pillar is 'every threat is readable at a glance'")
+deliverable:  exactly which files/assets change; which interface they implement
+boundaries:   other owners' files, the brief and shared contracts stay untouched; do not commit - the
+              Director commits after integration, so parallel builders never collide in git
+bar:          what it is compared against and on which question
+done when:    the acceptance ids and numbers that must pass, and the exact commands to run them
+tools:        the render/capture tool and the acceptance runner, with the exact commands
+deadline:     absolute UTC time; check `date -u` as you work and return by deadline minus 60 s
+round:        n of budget; the one gap from the last review, if any
 ```
 
-Tell the builder why, not only what: "rushers must be readable at 20 m because the pillar is 'every threat is readable in a glance'" produces better work than "make rushers brighter".
+Then `node tools/pack.mjs build T-07` and a three-line dispatch, the same shape for every agent (stable text first, so the prompt cache holds across the whole run):
+
+```
+Read /abs/studio/prompts/studio-builder.md first - it is your role.
+Then read /abs/studio/packs/T-07.md - it is your whole context; do not open other studio files or the skill.
+Deadline 14:32:00 UTC. Return the 5-line format from your role.
+```
+
+Choose the sections by the question "what would a senior in this department look up for this job?" - not "what might be related". A three.js ticket does not need Blender turntable instructions; a UI ticket does not need the enemy architecture. If the pack comes out over its budget, the ticket is too big: split it.
 
 ## Size of the studio
 

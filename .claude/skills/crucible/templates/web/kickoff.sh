@@ -6,11 +6,11 @@
 #   for 'three' and 'three/addons/' (only the Director edits index.html afterwards)
 # - writes one stub per module in <game-dir>/src/, so half-built modules never break another builder's render
 # - copies src/lookdev.js (renderer, post, toon ramp, ink outlines, merge-by-material, canvas textures) as a starting point
-# - copies the shared tools into tools/, generates studio/prompts/ from the role files, creates the studio/ files
+# - copies the shared tools (incl. pack.mjs for context packs) into tools/, generates studio/prompts/ from the role files, creates the studio/ files
 set -eu
 SKILL="$(cd "$(dirname "$0")/../.." && pwd)"; GAME="$1"; shift
 THREE="$(node -e "console.log(require('path').dirname(require.resolve('three/package.json')))" 2>/dev/null || echo node_modules/three)"
-mkdir -p "$GAME/vendor/addons" "$GAME/src" tools studio/prompts studio/evidence studio/bars
+mkdir -p "$GAME/vendor/addons" "$GAME/src" tools studio/prompts studio/evidence studio/bars studio/tickets studio/packs
 cp "$THREE/build/three.module.js" "$THREE/build/three.core.js" "$GAME/vendor/"
 cp -r "$THREE/examples/jsm/." "$GAME/vendor/addons/"
 [ -f "$GAME/index.html" ] || cat > "$GAME/index.html" <<HTML
@@ -31,6 +31,7 @@ for m in "$@"; do
 done
 [ -f "$GAME/src/lookdev.js" ] || cp "$SKILL/templates/web/lookdev.js" "$GAME/src/lookdev.js"
 for t in shot.mjs perf.mjs accept.mjs check.mjs blind.sh; do [ -f "tools/$t" ] || cp "$SKILL/templates/web/$t" tools/; done
+[ -f tools/pack.mjs ] || cp "$SKILL/templates/pack.mjs" tools/
 [ -f tools/checks.mjs ] || printf '%s\n' "// Check registry - QA owns this file. export default { 'A-01': async ({ page, hook, step }) => { ... } }" "export default {};" > tools/checks.mjs
 for f in "$SKILL"/agents/*.md; do awk 'c>=2; /^---$/{c++}' "$f" > "studio/prompts/$(basename "$f")"; done
 for f in STATUS.md TRACKER.md DECISIONS.md LESSONS.md DEBT.md; do [ -f "studio/$f" ] || echo "# ${f%.md}" > "studio/$f"; done

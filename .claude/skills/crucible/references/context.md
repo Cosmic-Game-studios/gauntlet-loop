@@ -28,19 +28,34 @@ Everything important lives in `studio/` (see `state.md`), written the moment it 
 
 ## Rule 2 - Every agent gets a context pack, not the project
 
-Nobody reads "everything". Each agent gets the smallest set of files that lets it do one job, assembled by the Director into the ticket:
+Nobody reads "everything". A model given more than its job needs does worse, not better: it spends attention on the irrelevant parts, copies patterns from code it should only call, and runs out of room for the work. So each agent gets the smallest context that lets it do one job well - and nothing it could be distracted by.
 
-| Agent | Context pack | Never gets |
-|---|---|---|
-| **Director** | `STATUS.md`, `TRACKER.md` (open section), last 10 `DECISIONS.md`, `MILESTONE.md`, `BRIEF.md` pillars | Code, assets, full logs, critic transcripts |
-| **Builder** | Ticket, pillars, the bar file, relevant `STYLE_BIBLE` / `ARCHITECTURE` section, relevant `LESSONS.md` entries, last GAP/BLOCKERS | Other tickets, the board, previous rounds' reasoning |
-| **Experience critic** | Evidence A/B, the question, pillars | Code, builder notes, round number, history |
-| **Code critic** | Diff, touched files, `ARCHITECTURE.md`, `BUDGETS.md`, test and profiler output, code bar | Visuals, builder notes, history |
-| **Integration / Coherence critic** | Build captures, style bible, bars | Tickets, code |
+**Packs are built by a tool, not by hand.** The Director writes each ticket as a short file, `studio/tickets/<id>.md`: a header naming what the ticket needs (craft and department sections, style-bible and architecture sections, owned files, files it calls into, lesson tags, evidence to open), then the ticket body. `node tools/pack.mjs build <id>` turns it into `studio/packs/<id>.md`:
 
-Packs are lists of file paths plus line ranges, not pasted content. The agent reads them itself.
+- only the named **sections** of `craft.md`, `departments.md`, `STYLE_BIBLE.md` and `ARCHITECTURE.md`, never whole files;
+- the architecture table rows for the files the ticket owns or uses;
+- for every file the ticket **calls into, only its public interface** (exports, signatures, doc comments) - builders call other modules through their interface, they do not read them;
+- only the `LESSONS.md` lines tagged for this ticket;
+- evidence as paths the agent opens itself (images cost the most context of anything, so only the ones this job needs);
+- the ticket last.
 
-The skill files themselves are part of this budget. Builders and critics never read them - the ticket and their role's section (`gauntlet.md` 3a or 3b, or the department's entry) are copied into their prompt. The Director reads `context.md` and `director.md` once per session and opens the other references only for the step that needs them (`feedback.md` at handoff, `endurance.md` at a process review). Paperwork serves the game: if a heartbeat spends more effort on tracking than on dispatched work, cut the tracking back to STATUS + TRACKER.
+The tool prints the pack's size and any section it could not find. The dispatch prompt is then three lines - role file, pack file, deadline - identical in shape for every agent, which also keeps the prompt cache warm.
+
+| Agent | Context | Budget at start | Never gets |
+|---|---|---|---|
+| **Director** | `STATUS.md`, `TRACKER.md` (open section), last 10 `DECISIONS.md`, `MILESTONE.md`, pillars, return lines, contact sheets | the skill sections the current step needs (below) | Code, assets, full logs, critic transcripts, single captures when a sheet exists |
+| **Builder** | Role file + its pack | pack under ~6k tokens (`pack.mjs` flags larger ones: split the ticket) | Other tickets, the board, previous rounds' reasoning, other modules' source, the skill |
+| **Fix builder** | Role file + the ticket's pack + the one gap + the blocker lines | same pack, plus a few lines | The critic's reasoning, the history of the ticket |
+| **Experience critic** | Evidence A/B (one sheet or pair per question), the question, pillars | a few images, under ~1k tokens of text | Code, builder notes, round number, history, the studio |
+| **Code critic** | Diff, touched files, the architecture sections for them, `BUDGETS.md`, test and profiler output (summaries), code bar | the diff plus touched files | Visuals, builder notes, history |
+| **Integration / Coherence critic** | Build contact sheets, style bible, bars | one sheet per view | Tickets, code |
+| **Playtester** | The build and the controls | - | Everything about how it was made |
+
+**The skill is context too.** Builders and critics never read the skill: their role file and pack hold everything. The Director reads the skill by section, not by file, with `node tools/pack.mjs section <file> "<heading>"` - in blitz and sprint mode only the playbook section for the cap, the model routing table and the dispatch brief; in longer runs `context.md` and `director.md` once per session, other references only for the step that needs them (`feedback.md` at handoff, `endurance.md` at a process review). Paperwork serves the game: if a heartbeat spends more effort on tracking than on dispatched work, cut the tracking back to STATUS + TRACKER.
+
+**Tool output is context too.** Every tool prints one short JSON line and writes details to files (`tools/*.mjs` and the adapter verbs already do). Agents read logs with `tail` and `grep`, never whole; a failing check is reported by id and reason, not by stack dump; a render is looked at as one contact sheet, not as ten separate images. A builder that pastes a 400-line log into its own context has spent its round on the log.
+
+**Context audit.** At every progress review (`director.md`) the Director runs `node tools/pack.mjs sizes` and looks at its own context use: packs that grew, lessons that no longer apply (archive them), sections that tickets keep asking for (lift them into the role file, where they are cached), and whether the Director itself read anything it did not act on.
 
 ## Rule 3 - Return contracts keep the Director small
 

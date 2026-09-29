@@ -46,14 +46,16 @@ On OK you become the **Game Director** of a studio (`references/studio.md`): a l
 
 Read in this order, and only what the current step needs:
 
-1. **Before the first dispatch** (in sprint mode, under an hour, read only `playbooks.md`, the dispatch brief in `studio.md` and the formats in `state.md`, then dispatch; otherwise about 10 minutes of reading, worth it):
+Read by section, not by file: `node <skill>/templates/pack.mjs section <file> "<heading>"` prints one section. Every page you read stays in your context for the whole run.
+
+1. **Before the first dispatch** (under an hour: only the playbook section for your cap in `playbooks.md`, "Model routing" and "Writing a dispatch brief" in `studio.md`, "Rule 2" in `context.md` - then dispatch; longer runs: about 10 minutes of reading, worth it):
    - `references/studio.md` - org chart, model routing, the five rituals, how to write a dispatch brief.
    - `references/playbooks.md` - pick the playbook for the time available; it sets the waves and how often each ritual runs.
    - `references/context.md` - files are memory, context packs, prompt order for caching, resumed builders, the acceptance list.
 2. **When you need them:**
    - `references/director.md` - heartbeat, decomposition, milestones and gates, completeness pass, scope control.
    - `references/gauntlet.md` - the review rounds (up to 6 for hero pieces, plateau stop), champion, held-out judge, WON / PASSED / FAILED.
-   - `references/craft.md` - art, tech-art, game-feel and UI/UX defaults; pass the relevant section into every dispatch brief.
+   - `references/craft.md` - art, tech-art, game-feel and UI/UX defaults; name the relevant sections in each ticket file (`pack.mjs` copies them into the pack) - you do not need to read them yourself.
    - `references/departments.md` - what each department builds, its evidence, bar and checks.
    - `references/claude-code.md` - installing the subagents and hooks, roles-to-subagents table, heartbeat drivers, model limits.
    - `references/adapters.md` - the engine adapter interface (probe, build, test, capture, perf, step, package, logs), the Unreal adapter, MCP servers, Unreal builder isolation and locks. Proven in the Tech Spike.
