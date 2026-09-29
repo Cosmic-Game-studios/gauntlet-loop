@@ -27,7 +27,7 @@
 
 ---
 
-**Crucible** is a Claude Code skill that runs a complete game studio of agents. You pitch a game and approve a one-page brief. From there a **Game Director** agent breaks the game into tickets, sends them to departments (design, code, 3D in Blender, animation, tech art, audio, levels, UI, QA), and drives it from a first tech spike to a release candidate. It does all of that without asking you anything. When the game is done, you play it and say what you think, and Crucible turns your feedback into the next build.
+**Crucible** is a Claude Code skill that runs a complete game studio of agents. You pitch a game and approve a one-page brief. From there a **Game Director** agent breaks the game into tickets, sends them to departments (design, code, character art, weapons and props, world and level design, shaders and rendering, animation, VFX, tech art, audio, UI, QA), and drives it from a first tech spike to a release candidate. It does all of that without asking you anything. When the game is done, you play it and say what you think, and Crucible turns your feedback into the next build.
 
 > [!NOTE]
 > Crucible is an evolution of the **Gauntlet Loop**, a technique by [Matt Shumer](https://github.com/mshumer) in which a builder and a separate harsh critic loop against a real reference until the work wins. Crucible keeps that core. It adds what building a whole game needs: a studio organisation with leads and departments, budgeted review rounds with a held-out judge, engine adapters, context engineering for multi-day runs, and a human playtest loop. See [Credits](#credits).
@@ -44,7 +44,9 @@ Crucible is built for exactly those failure modes:
 | "Good enough" output | Every ticket faces a **Code critic** and a blind **Experience critic** that compares it with a real shipped game. |
 | Too little iteration on what players see, or endless iteration that chases the critic | Hero pieces get **up to 6** review rounds with **plateau stop**, fresh critics and rotating captures; a **held-out judge** decides. Work that falls short becomes debt for later polish passes. |
 | Busy process, unchanged game | A **progress contract**: every heartbeat must raise playable quality, reduce a real risk or gain needed information. Progress reviews measure the game and cut process or **replace the approach** when it stops improving. |
-| Context loss on long runs | **Files are the memory.** A one-screen `STATUS.md` and a checkbox `TRACKER.md` belong to the Director. Every other agent gets a small context pack and returns at most 5 lines. |
+| Context loss on long runs, or agents drowning in context | **Files are the memory.** A one-screen `STATUS.md` and a checkbox `TRACKER.md` belong to the Director. Every other agent gets a **context pack built by a tool** - only the sections and interfaces its ticket needs, about 1-6k tokens - and returns at most 5 lines. |
+| Games that look like prototypes | Art departments like a real studio - **Character Art, Weapon & Prop Art, World Design, Level Design, Shaders & Rendering**, Animation, VFX - working towards one **hero frame**. A **Visual QA inspector** plays every build and hunts defects up close, in motion and in combat; turntables and filmstrips go to blind critics. Tested starters for modelled assets, a shared material library and a graded post chain. |
+| Beautiful but slow | **Performance budgets** from kickoff (draw calls, triangles, shader programs, frame time), measured at every integration; a visual gain that breaks the budget goes back to its owner. |
 | The pitch never lists everything a game needs | A **completeness pass** adds what the genre expects: settings, rebinding, hit feedback, checkpoints, juice. |
 | Taste the model cannot judge | **You** play the release candidate. Fun, feel and sound are yours to judge, and every piece of feedback becomes a new bar and new tickets. |
 
@@ -90,7 +92,7 @@ flowchart LR
     Q --> B[/Game Brief/]
     B -->|you: OK| D{{Game Director}}
     D --> L[Leads<br/>Art · Tech · Design]
-    L --> DEP[Departments<br/>Character · Environment · Level · Animation<br/>VFX · Tech Art · Gameplay · AI · UI · Audio · QA]
+    L --> DEP[Departments<br/>Character · Weapons & Props · World · Level<br/>Shaders & Rendering · Animation · VFX · Tech Art<br/>Gameplay · AI · UI · Audio · QA]
     DEP --> G[[Ticket gauntlet]]
     G -->|WON / PASSED| D
     D --> M[Milestones<br/>Tech Spike → Vertical Slice →<br/>Content Alpha → Beta → RC]
@@ -213,7 +215,7 @@ Milestones only advance when their gate is met on a real build: **Tech Spike →
 
 - **Files are the memory, context is a scratchpad.** Anything that matters is written the moment it happens.
 - **`STATUS.md` and `TRACKER.md` belong to the Director alone.** They hold a one-screen status and a checkbox list of every ticket and error.
-- **Context packs.** Every builder and critic gets only the files for its one job, never the project state. This also keeps the critics blind.
+- **Context packs, built by a tool.** The Director writes a short ticket file; `pack.mjs` assembles only the craft, department, style and architecture sections it names, the public interfaces of the modules it calls (never their source) and the lessons tagged for it. Every role has a context budget, and the Director reads the skill by section. This also keeps the critics blind.
 - **Return contracts.** Subagents return at most 5 lines. Details go to files, so the Director stays small over hundreds of heartbeats.
 - **`LESSONS.md`.** A mistake that repeats becomes a rule for every later builder.
 - **Hooks.** `SessionStart` re-injects the state after every compaction, and `PreCompact` snapshots it first.
@@ -231,6 +233,7 @@ Milestones only advance when their gate is met on a real build: **Tech Spike →
 | Builder | `studio-builder` | Opus for visual, spatial and feel work; Sonnet for implementation | all except spawning agents |
 | Art, UX, coach, judge, coherence | `experience-critic` | Opus | `Read` only (blind pairs in isolated folders; keys behind a deny rule) |
 | Code, architecture, audit | `code-critic` | Opus | `Read, Grep, Glob, Bash` (no edits) |
+| Visual QA inspector | `visual-qa` | Opus | `Read, Bash` (no edits) - plays the build via `play.mjs` |
 | Playtester | `playtester` | Sonnet | `Read, Glob, Bash` (no edits) |
 
 Heartbeat drivers: `tools/drive.sh` (a fresh headless session per heartbeat, for multi-day runs), a scheduled Routine (cloud), or a self-paced `/loop`. The Director verifies that it can really spawn agents before the first ticket. If it can't, it falls back to separate headless sessions and never role-plays the critics itself.
@@ -250,9 +253,9 @@ Heartbeat drivers: `tools/drive.sh` (a fresh headless session per heartbeat, for
   - package: `BuildCookRun`
   - multiplayer: dedicated-server smoke tests, and Gauntlet for larger multiplayer suites
 
-  Builders are isolated, merged through an integration queue, and share engine resources through locks. **Web** (three.js) ships ready-made tools, including a kickoff script. Godot and Unity follow the same interface.
+  Builders are isolated, merged through an integration queue, and share engine resources through locks. **Web** (three.js) ships ready-made tools: a kickoff script, capture with filmstrips, a step-play tool, a perf probe, acceptance runner, blind pairs, and starters for rendering (`lookdev.js`), the material library (`materials.js`) and modelled assets (`shapes.js`). Godot and Unity follow the same interface.
 - **Tools are not prescribed.** Builders use whatever gives the best result, including MCP servers connected to the session, for example an Unreal Editor or Blender MCP server, as well as DCC tools and generators. What is fixed is the engine named in the brief, evidence captured through the adapter, and the model's real limits.
-- **Craft built in:** 3D modelling in code, skeletal animation, VFX that never hide the target, comic and cel rendering, performance budgets and game feel. Measurable craft rules become acceptance checks.
+- **Craft built in:** the AAA look layer by layer, world and level design, character and weapon design, shaders, 3D modelling in code, skeletal animation, VFX that never hide the target, comic and cel rendering, optimization budgets and game feel. Measurable craft rules become acceptance checks.
 
 → [`references/adapters.md`](.claude/skills/crucible/references/adapters.md) · [`references/craft.md`](.claude/skills/crucible/references/craft.md) · [`references/engines.md`](.claude/skills/crucible/references/engines.md)
 </details>
@@ -294,14 +297,15 @@ The cycle repeats until you say the game is done.
 │   ├── experience-critic.md   coach / judge / coherence, read-only
 │   ├── code-critic.md         ticket / architecture / audit, read-only
 │   ├── playtester.md          plays via the step-play harness
-│   └── art-director.md        style bible, look-dev scene, coherence reviews
-├── templates/                 CLAUDE.md, hooks, settings.json, drive.sh
-│   ├── web/                   kickoff, shot, perf, accept/check, blind tools
+│   ├── visual-qa.md           plays the build, hunts visual defects with screenshots
+│   └── art-director.md        style bible, hero frame, coherence reviews
+├── templates/                 CLAUDE.md, hooks, settings.json, drive.sh, pack.mjs (context packs)
+│   ├── web/                   kickoff, shot, play, perf, accept/check, blind; lookdev, materials, shapes starters
 │   └── unreal/                crucible_ue.py engine adapter
 └── references/
     ├── studio.md              org chart, model routing, rituals, dispatch brief
     ├── playbooks.md           how to spend 15 minutes, 30 minutes, hours or weeks
-    ├── craft.md               art, 3D, animation, VFX, comic style, feel, UI, performance
+    ├── craft.md               AAA look, world, level, characters, weapons, shaders, animation, VFX, optimization, feel, UI
     ├── adapters.md            engine adapter interface, Unreal, MCP, isolation, locks
     ├── brief-template.md      the one page you approve
     ├── claude-code.md         setup, roles, models, hooks, drivers, model limits

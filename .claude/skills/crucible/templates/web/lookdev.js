@@ -1,6 +1,7 @@
 // Crucible look-dev starter for three.js (copied to <game>/src/lookdev.js by kickoff.sh).
 // A known-good starting point for the Tech Art defaults in craft.md - the Art Director replaces or tunes anything here.
-//   import { createRenderer, createPost, toonMaterial, addOutline, mergeByMaterial, canvasTexture } from './lookdev.js';
+//   import { createRenderer, createPost, createAutoScale, precompile, toonMaterial, addOutline, mergeByMaterial, canvasTexture } from './lookdev.js';
+// createPost is async (it loads the AO pass only when quality is 'high'): const post = await createPost(renderer, scene, camera, { quality: 'medium' });
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
@@ -27,24 +28,83 @@ export function createRenderer({ canvas, exposure = 1.0, pixelRatioCap = 1.5 } =
   return { renderer, envMap };
 }
 
-// Post chain: bloom at half resolution with a threshold above gameplay colours (effects must never wash out the target), FXAA, output.
-export function createPost(renderer, scene, camera, { bloom = 0.35, radius = 0.4, threshold = 0.85 } = {}) {
+// Colour grade + vignette after tone mapping: the cheapest single step from "rendered" to "shot". One full-screen pass.
+export const GradeShader = {
+  uniforms: { tDiffuse: { value: null }, uSat: { value: 1.12 }, uContrast: { value: 1.08 }, uLift: { value: new THREE.Color(0x020308) },
+    uGain: { value: new THREE.Color(0xfff6ea) }, uVignette: { value: 0.28 } },
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader: `uniform sampler2D tDiffuse; uniform float uSat, uContrast, uVignette; uniform vec3 uLift, uGain; varying vec2 vUv;
+    void main(){
+      vec4 c = texture2D(tDiffuse, vUv);
+      vec3 col = (c.rgb - 0.5) * uContrast + 0.5;
+      float l = dot(col, vec3(0.2126, 0.7152, 0.0722));
+      col = mix(vec3(l), col, uSat);
+      col = uLift + col * (uGain - uLift);
+      vec2 d = vUv - 0.5; col *= 1.0 - uVignette * smoothstep(0.35, 0.85, length(d * vec2(1.0, 0.8)) * 1.4);
+      gl_FragColor = vec4(clamp(col, 0.0, 1.0), c.a);
+    }`,
+};
+
+// Post chain by quality level - one setting the player can change, never a silent downgrade:
+//   'low'    render + output + FXAA                      (weak GPUs, software rendering)
+//   'medium' + bloom at half resolution + grade          (default)
+//   'high'   + ambient occlusion (GTAO, half resolution) (desktop GPUs; measure it)
+// Bloom threshold stays above gameplay colours so effects never wash out the target.
+export async function createPost(renderer, scene, camera, { quality = 'medium', bloom = 0.35, radius = 0.4, threshold = 0.85, grade = {} } = {}) {
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
   const size = renderer.getSize(new THREE.Vector2());
-  const bloomPass = new UnrealBloomPass(new THREE.Vector2(size.x / 2, size.y / 2), bloom, radius, threshold);
-  composer.addPass(bloomPass);
+  let aoPass = null, bloomPass = null, gradePass = null;
+  if (quality === 'high') {
+    const { GTAOPass } = await import('three/addons/postprocessing/GTAOPass.js');
+    aoPass = new GTAOPass(scene, camera, size.x / 2, size.y / 2);
+    aoPass.updateGtaoMaterial({ radius: 0.6, distanceExponent: 1.5, thickness: 1.0, scale: 1.0, samples: 12 });
+    aoPass.blendIntensity = 0.8;
+    composer.addPass(aoPass);
+  }
+  if (quality !== 'low') {
+    bloomPass = new UnrealBloomPass(new THREE.Vector2(size.x / 2, size.y / 2), bloom, radius, threshold);
+    composer.addPass(bloomPass);
+  }
   composer.addPass(new OutputPass());
+  if (quality !== 'low') {
+    gradePass = new ShaderPass(GradeShader);
+    for (const [k, v] of Object.entries(grade)) { const u = gradePass.uniforms[k]; if (!u) continue; if (u.value && u.value.isColor) u.value.set(v); else u.value = v; }
+    composer.addPass(gradePass);
+  }
   const fxaa = new ShaderPass(FXAAShader);
   composer.addPass(fxaa);
   const resize = () => {
     const pr = renderer.getPixelRatio();
-    composer.setSize(innerWidth, innerHeight);
-    bloomPass.resolution.set(innerWidth / 2, innerHeight / 2);
+    composer.setPixelRatio(pr); composer.setSize(innerWidth, innerHeight);
+    if (bloomPass) bloomPass.resolution.set(innerWidth / 2, innerHeight / 2);
+    if (aoPass) aoPass.setSize(innerWidth / 2, innerHeight / 2);
     fxaa.material.uniforms.resolution.value.set(1 / (innerWidth * pr), 1 / (innerHeight * pr));
   };
   resize();
-  return { composer, bloomPass, resize };
+  return { composer, bloomPass, gradePass, aoPass, resize };
+}
+
+// Dynamic resolution: keeps the frame time near the target by scaling the pixel ratio between min and max.
+// Call update(frameMs) once per rendered frame; set .enabled = false while capturing so review images are comparable.
+export function createAutoScale(renderer, onResize, { targetMs = 16.7, min = 0.6, max = Math.min(devicePixelRatio, 1.5), every = 45 } = {}) {
+  let acc = 0, n = 0;
+  return {
+    enabled: true,
+    update(frameMs) {
+      if (!this.enabled) return;
+      acc += frameMs; if (++n < every) return;
+      const avg = acc / n; acc = 0; n = 0;
+      const pr = renderer.getPixelRatio();
+      const next = avg > targetMs * 1.15 ? Math.max(min, pr * 0.85) : avg < targetMs * 0.7 ? Math.min(max, pr * 1.1) : pr;
+      if (Math.abs(next - pr) > 0.01) { renderer.setPixelRatio(next); onResize && onResize(); }
+    },
+  };
+}
+
+// Compile every material in the scene before the first frame, so shaders never hitch mid-fight. Await it behind the loading screen.
+export async function precompile(renderer, scene, camera) {
+  if (renderer.compileAsync) await renderer.compileAsync(scene, camera); else renderer.compile(scene, camera);
 }
 
 // Cel shading: a 2-4 band ramp shared by every toon material, so characters and world light the same way.

@@ -45,19 +45,60 @@ Build less, choose more. Source in this order, per the brief's `Assets` line:
 
 Every sourced asset has its licence recorded in `studio/ASSETS.md`. No asset of unknown licence ships.
 
-## 3D (Blender)
+## 3D modelling (shared by Character Art, Weapon & Prop Art, World Design)
 
 - **Model:** Opus.
 
-- **Builds:** blockouts, hero meshes, props, environment kits, UVs, bakes, PBR textures. Any capable tool - a Blender MCP server, Blender Python, the engine's modelling tools, generators as a starting point (`engines.md`).
-- **Pipeline per asset:** reference sheet -> blockout -> silhouette check -> high/low poly -> UV -> bake -> texture -> LODs -> export -> engine import.
-- **Evidence:** an automated turntable (8 angles, fixed studio lighting), silhouette at game distance, wireframe, and an in-engine shot under game lighting.
+- **Tools:** whatever gives the best result (`engines.md` - making content): a Blender MCP server or Blender Python, the engine's modelling tools, generators as a starting point, or - on the web without a DCC tool - modelling in code with `src/shapes.js` (bevelled profiles, lathes, tubes, mirrored halves, baked occlusion, instanced scatter) and `src/materials.js`.
+- **Pipeline per asset:** design sheet -> blockout -> silhouette and turntable check -> detail pass -> materials -> optimise (merge, LOD, budget) -> in-game check under game lighting -> Visual QA.
+- **Design sheet first** (5-10 lines in the builder notes, before any geometry): function and fantasy, shape language, proportions, primary/secondary/tertiary forms, colour zones (60/30/10), focal points where the detail goes, the one exaggerated feature, the bar asset it answers.
+- **Evidence:** turntable strip (8 angles at game distance, fixed studio lighting), black silhouette, close-up, wireframe or triangle count, and an in-game shot under game lighting.
 - **Bar:** the reference game's equivalent asset, same angle, same distance.
-- **Verify:** scale in metres, pivot, applied transforms, naming convention, polycount and texel density budget, clean export and import.
-- **Rule:** get the silhouette critic's WON on the blockout before spending on detail.
-- **Custom hero characters are allowed and expected** where the game's identity needs them - but only through the full quality gates below. A kit character that passes beats a custom one that does not.
-- **Character quality gates (verify, scripted):** quad-dominant topology with edge loops at every deforming joint (shoulders, elbows, hips, knees, mouth/eyes if animated); no non-manifold geometry; triangle budget per LOD; UV texel density within 10% across the body; mirrored symmetry check; normals and smoothing correct.
-- **Character evidence:** turntable, silhouette, wireframe close-ups of joints, and a **deformation test**: the rigged mesh rendered in 8 stress poses (arms up, arms forward, deep crouch, full twist, knee raise, lunge, head turn, fist) - the critic checks for collapsing volume, candy-wrapper twists and interpenetration.
+- **Verify:** scale in metres, pivot at the feet/grip, applied transforms, naming, triangle and draw-call budget per asset (`BUDGETS.md`), clean import.
+- **Rule:** get the silhouette right on the blockout before spending on detail - detail never rescues a weak silhouette.
+- **Kits and sourced assets** follow the same gates (Asset sourcing above). A kit asset that passes beats a custom one that does not.
+- **Character quality gates (DCC-built characters, scripted):** quad-dominant topology with edge loops at every deforming joint; no non-manifold geometry; triangle budget per LOD; UV texel density within 10% across the body; normals and smoothing correct; **deformation test** in 8 stress poses (arms up, arms forward, deep crouch, full twist, knee raise, lunge, head turn, fist) - checked for collapsing volume, candy-wrapper twists and interpenetration.
+
+## Character Art
+
+- **Model:** Opus.
+- **Builds:** player character, enemies, NPCs, creatures - design sheet, model, materials, outline/rim setup, LODs - handed to Animation with named pivots or a skeleton.
+- **Craft:** `craft.md` - "Character design", "3D models built in code", "The AAA look".
+- **Evidence:** lineup of all characters side by side at the same scale and at game distance, turntable strips, silhouettes, close-up of the face/mask and hands, in-game shot in the level's lighting.
+- **Bar:** the reference game's characters in the same framing.
+- **Verify:** every type readable and distinct as a black silhouette at game distance; enemy hue family not used by the level; triangle and draw-call budget; pivots at joints; nothing floats or intersects in the bind pose.
+
+## Weapon & Prop Art
+
+- **Model:** Opus.
+- **Builds:** first-person viewmodels and their world models, hard-surface props (crates, barrels, terminals, machines, pickups) - design sheet, model, materials, moving parts kept separate for animation (bolt, pump, magazine, trigger).
+- **Craft:** `craft.md` - "Weapon design", "3D models built in code", "The AAA look".
+- **Evidence:** the viewmodel in first-person framing at the game's viewmodel FOV (idle, firing, reloading frames), a turntable strip, a close-up of the receiver; props as a lineup and in the level.
+- **Bar:** the reference game's weapon in the same first-person framing.
+- **Verify:** reads in the bottom-right quarter without covering the crosshair; every edge bevelled; at least three materials; moving parts pivot correctly; triangle budget; one draw call per material.
+- **Other engines:** Unreal - hard-surface in Blender (MCP or bpy) or Unreal's modelling tools, weighted normals or bevels baked to normal maps, sockets for muzzle, eject port and magazine, a separate first-person mesh with its own FOV.
+
+## World Design & Environment Art
+
+- **Model:** Opus.
+- **Builds:** the world around the play space: landmarks, skyline and backdrop layers, terrain shaping, architecture and environment kits (modular pieces with variation), set dressing at three scales, environmental storytelling, zone colour and lighting identity. Works on the level layout Level Design owns - it never moves cover or lanes.
+- **Craft:** `craft.md` - "World design", "The AAA look", "3D models built in code".
+- **Pipeline:** (after the level blockout passes) kit and landmark blockout -> composition check from the player's eye at 4 fixed poses -> art pass (kits, trims, decals, variation) -> set dressing pass (macro, meso, micro) -> lighting and atmosphere pass with Shaders & Rendering -> Visual QA.
+- **Evidence:** gameplay frames at eye height from 4 fixed poses, one elevated overview, a skyline strip (turn 360 degrees in 8 frames), and a greyscale version of one frame for value structure.
+- **Bar:** the reference game's environment in the same framing.
+- **Verify:** a landmark visible from most of the play space; no empty horizon; no untextured or single-colour surface larger than a door; props sit on the ground (no floating, no sinking); within the environment's draw-call and triangle budget (merged, instanced).
+- **Other engines:** Unreal - modular kits as static meshes with Nanite where it pays, PCG graphs and the foliage tool for scatter, Landscape with layered materials, HISM/ISM for repeats, World Partition and HLODs for large worlds, decals and vertex paint for variation; Godot - GridMap/MultiMesh; Unity - prefabs, GPU instancing, terrain tools.
+
+## Shaders & Rendering
+
+- **Model:** Opus.
+- **Builds:** the material library every art department uses (`src/materials.js` on the web: stylised surface with rim light, world-space variation and ground grime; micro-detail normal maps; dissolve; hit flash; sky), special shaders (water, foliage wind, energy shields, holograms, outlines, halftone, heat haze), the post chain and its quality levels (`src/lookdev.js`: grade, bloom, AO, anti-aliasing), and render settings (tone mapping, exposure, shadows, fog).
+- **Craft:** `craft.md` - "Shaders", "Tech art defaults", "The AAA look", "Optimization".
+- **Evidence:** a material ball sheet (every library material on a sphere and a bevelled cube under game lighting), before/after gameplay frames from fixed poses, the perf probe before and after.
+- **Bar:** the reference game's surfaces and image in the same framing, plus the frame-time budget.
+- **Verify:** no shader errors or warnings; programs compiled before the first frame (`precompile`); shader program count, frame time and draw calls within `BUDGETS.md`; every quality level renders correctly; effects and grade never wash out the target.
+- **Rule:** one library, used by everyone. A department that needs a new surface asks for it in its return line instead of writing its own shader, so the game keeps one look and a small number of programs.
+- **Other engines:** Unreal - master materials with material instances and material functions, a material parameter collection for global values (time, wetness, hit flash), post-process volumes and the Lumen/Nanite/shadow settings, custom stencil for outlines; Godot - `ShaderMaterial` with shared includes and `global uniforms`, `WorldEnvironment`; Unity - Shader Graph subgraphs on URP/HDRP, volume profiles.
 
 ## Animation
 
@@ -80,12 +121,13 @@ Every sourced asset has its licence recorded in `studio/ASSETS.md`. No asset of 
 
 ## Tech Art
 
-- **Model:** Opus for lighting, post and VFX look; Sonnet for pure performance work with a profiler target.
+- **Model:** Opus for lighting and the look of a scene; Sonnet for pure performance work with a profiler target.
 
-- **Builds:** shaders, materials, VFX, lighting, post-processing, LODs, import presets, perf fixes.
+- **Builds:** lighting (key, fill, accents, light placement that leads the eye), baked or faked occlusion, LODs, import presets, performance fixes, the asset pipeline. Shaders, materials and post belong to Shaders & Rendering; VFX to VFX.
+- **Owns the frame budget.** Runs the perf probe after every integration and keeps `BUDGETS.md` (frame time, draw calls, triangles, shader programs, memory) true for the whole game. A change that breaks a budget goes back to its owner with the numbers, or Tech Art optimises it before anything else is merged.
 - **Evidence:** before/after in-engine shots from fixed cameras, profiler capture.
 - **Bar:** reference game's look at the matching scene, plus the frame-time budget.
-- **Verify:** compiles on target, within draw-call and frame-time budget, no shader errors.
+- **Verify:** within draw-call and frame-time budget, no shader errors.
 - **Owns** the asset pipeline: every automated import, validator and capture rig.
 
 ## Audio
@@ -101,10 +143,11 @@ Every sourced asset has its licence recorded in `studio/ASSETS.md`. No asset of 
 
 - **Model:** Opus.
 
-- **Builds:** blockouts, layouts, encounter placement, pacing graphs, then dressing once the kit exists.
-- **Evidence:** top-down map, playtest bot route and death heatmap, walkthrough video.
+- **Builds:** the playable layout: blockouts, lanes and loops, sightlines, cover placement and heights, verticality, spawn and pickup placement, encounter placement, pacing graphs. World Design dresses it afterwards; Level Design keeps owning what the player can walk on and hide behind.
+- **Craft:** `craft.md` - "Level design".
+- **Evidence:** top-down map with lanes, sightlines and spawns drawn on it, eye-height frames from each spawn and each major position, playtest bot route and death heatmap.
 - **Bar:** a named level from the reference game (its layout, pacing and teaching beats).
-- **Verify:** navmesh, every objective reachable, pacing within the target time.
+- **Verify:** navmesh or bot route reaches everything; no dead ends without a reason; every spawn out of the player's direct view; cover at consistent heights; pacing within the target time.
 - **Rule:** grey-box first. Art only after the blockout passes the `playtester` against the ticket's pass criteria (target time to objective, max stuck points, max dead time - taken from the bar level's pacing).
 - **Level judging:** the `playtester` report with `CRITERIA: PASS` is the floor; the Experience judge compares top-down map and frame strips of the walkthrough against the bar level for WON.
 

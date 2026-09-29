@@ -19,7 +19,8 @@ Why this shape: in the first Arena benchmark, a studio with three generalist bui
    visual reviews    reviews, integration       UX flows, onboarding    playtests, tracker hygiene
         |                  |                          |                    |
    ----- DEPARTMENTS (builders, one ticket each, own files) -------------------------------
-   Character & Creature Art · Environment Art · Level Design · Animation · VFX · Tech Art (lighting, post, perf)
+   Character Art · Weapon & Prop Art · World Design & Environment Art · Level Design · Animation · VFX
+   Shaders & Rendering (material library, post, render settings) · Tech Art (lighting, frame budget, pipeline)
    Gameplay Engineering · AI Engineering · UI/UX · Audio · Tools & Build
                                         |
    ----- REVIEW BOARD (always fresh, never builds) ----------------------------------------
@@ -36,7 +37,7 @@ Route by the kind of thinking the ticket needs, not by the department's name.
 |---|---|---|
 | Game Director, all leads (art, tech, design direction) | **Opus** | Judgement, taste, planning across the whole game |
 | Every critic and judge (art, UX, code, held-out) and the Visual QA inspector | **Opus** | A weak critic lets everything through; critic quality sets the ceiling |
-| Visual and spatial building: 3D models, characters, environment art, level layout, lighting and post, VFX, animation, UI/HUD design, weapon feel and viewmodels - the look of a 3D world is where the studio is judged hardest, so these tickets get the strongest model and the most review rounds | **Opus** | Visual design, spatial reasoning and "feel" are where the stronger model makes the visible difference |
+| Visual and spatial building: characters, weapons and props, world design and environment art, level layout, shaders and post, lighting, VFX, animation, UI/HUD design, weapon feel and viewmodels - the look of a 3D world is where the studio is judged hardest, so these tickets get the strongest model and the most review rounds | **Opus** | Visual design, spatial reasoning and "feel" are where the stronger model makes the visible difference |
 | Implementation against a clear spec: systems, AI/navigation logic, save/load, tools, audio synthesis code, build scripts, bug fixes with a known cause | **Sonnet** | Strong, fast and cheaper for well-scoped code |
 | Playtesting (plays and reports) | **Sonnet** (Opus at a release gate) | Many steps, simple judgement per step |
 | Re-checking a fix diff against the named blockers and the acceptance list | **Sonnet** | Verification against explicit criteria, not taste |
@@ -94,4 +95,4 @@ Choose the sections by the question "what would a senior in this department look
 
 ## Size of the studio
 
-Parallelism is the studio's main advantage over a single agent - use it, within two limits: the number of files that can have a single owner at the same time, and the machine (headless renders are CPU-heavy; about one builder per CPU core plus one - `playbooks.md`). Critics in a review run in parallel too. In sprint mode the leads are folded into builders; in longer runs they are separate lead tickets.
+Parallelism is the studio's main advantage over a single agent - use it, within two limits: the number of files that can have a single owner at the same time, and the machine (headless renders are CPU-heavy and go through a render lock; builders mostly wait for the model, so seven or eight fit on a 4-core machine - `playbooks.md`). Critics in a review run in parallel too. In sprint mode the leads are folded into builders; in longer runs they are separate lead tickets.
