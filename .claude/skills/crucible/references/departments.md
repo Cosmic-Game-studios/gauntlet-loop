@@ -70,6 +70,14 @@ Every sourced asset has its licence recorded in `studio/ASSETS.md`. No asset of 
 - **Animation quality evidence:** frame strips at game fps from side and game camera, plus **motion-arc overlays** (the path of hands, feet, head and weapon traced across frames onto one image) and **spacing charts** (per-frame distance of key bones). The critic judges the principles it can see in stills: clear key poses and silhouettes, arcs instead of straight lines, ease-in/out in the spacing, anticipation before and follow-through after big moves, weight shift and contact frames. It compares against the bar move frame-stepped at the same fps.
 - **Rule:** block the key poses first and get them judged as a pose strip before splining and polishing - a bad pose cannot be fixed by smoothing.
 
+## VFX
+
+- **Model:** Opus.
+- **Builds:** muzzle flashes, impacts, tracers, explosions, shield hits, deaths, damage numbers, ambient effects - layered, pooled, style-matched (`craft.md` - visual effects).
+- **Evidence:** frame strips of each effect at the capture frame rate with effect timers frozen, plus a gameplay frame showing the effect in context.
+- **Bar:** the reference game's equivalent effect, frame-stepped.
+- **Verify:** every effect visible for at least 2 rendered frames; nothing covers the crosshair region or washes out the target; particle counts and overdraw within budget.
+
 ## Tech Art
 
 - **Model:** Opus for lighting, post and VFX look; Sonnet for pure performance work with a profiler target.

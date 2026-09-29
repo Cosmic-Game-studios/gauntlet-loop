@@ -19,7 +19,7 @@ Why this shape: in the first Arena benchmark, a studio with three generalist bui
    visual reviews    reviews, integration       UX flows, onboarding    playtests, tracker hygiene
         |                  |                          |                    |
    ----- DEPARTMENTS (builders, one ticket each, own files) -------------------------------
-   Environment & Level Art · Character & Creature Art · Animation · Tech Art (lighting, post, VFX, perf)
+   Character & Creature Art · Environment Art · Level Design · Animation · VFX · Tech Art (lighting, post, perf)
    Gameplay Engineering · AI Engineering · UI/UX · Audio · Tools & Build
                                         |
    ----- REVIEW BOARD (always fresh, never builds) ----------------------------------------
@@ -36,7 +36,7 @@ Route by the kind of thinking the ticket needs, not by the department's name.
 |---|---|---|
 | Game Director, all leads (art, tech, design direction) | **Opus** | Judgement, taste, planning across the whole game |
 | Every critic and judge (art, UX, code, held-out) | **Opus** | A weak critic lets everything through; critic quality sets the ceiling |
-| Visual and spatial building: 3D models, characters, environment art, level layout, lighting and post, VFX, animation, UI/HUD design, weapon feel and viewmodels | **Opus** | Visual design, spatial reasoning and "feel" are where the stronger model makes the visible difference |
+| Visual and spatial building: 3D models, characters, environment art, level layout, lighting and post, VFX, animation, UI/HUD design, weapon feel and viewmodels - the look of a 3D world is where the studio is judged hardest, so these tickets get the strongest model and the most review rounds | **Opus** | Visual design, spatial reasoning and "feel" are where the stronger model makes the visible difference |
 | Implementation against a clear spec: systems, AI/navigation logic, save/load, tools, audio synthesis code, build scripts, bug fixes with a known cause | **Sonnet** | Strong, fast and cheaper for well-scoped code |
 | Playtesting (plays and reports) | **Sonnet** (Opus at a release gate) | Many steps, simple judgement per step |
 | Re-checking a fix diff against the named blockers and the acceptance list | **Sonnet** | Verification against explicit criteria, not taste |

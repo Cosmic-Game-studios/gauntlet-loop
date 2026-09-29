@@ -5,6 +5,21 @@ The rituals are the same at every scale; what changes is how many cycles fit. Pi
 - **A playable build is committed at all times** after the first production sprint. Every later sprint must leave it playable.
 - **Use all of the time.** Hand off at the cap (minus the time the handoff itself needs), not when a gate is first met. Remaining time goes to the next review-fix cycle on the most visible gap.
 
+## Under 20 minutes (blitz mode)
+
+Everything from sprint mode applies, compressed, and **pipelined**: each piece goes to review the moment its builder returns, instead of waiting for a wave. Dispatch builders so their notifications reach you while you keep working (background with notifications, or foreground calls in one message if notifications are unavailable - check at minute 0).
+
+| Minutes (15-min cap) | What happens |
+|---|---|
+| 0-1.5 | Web: `templates/web/kickoff.sh` (vendor, import map, module stubs, tools, prompts, studio files). Director writes brief, pillars, a short `ARCHITECTURE.md` (owners, hook, cross-module signatures) and `acceptance.json` ids including the craft checks. |
+| 1.5-7 | 6-7 builders at once, deadline dispatch + 5 min: gameplay core + controller + hook (Opus); weapons + viewmodel animation (Opus); characters: enemy models (Opus); animation: enemy rigs and clips (Opus) - or characters+animation as one Opus ticket if the machine is small; VFX (Opus); world: look-dev, style, arena, lighting (Opus, Art Director role); UI + audio + QA checks (Sonnet). |
+| as each returns | Director integrates it, runs its acceptance ids and one capture; if a coach is warranted (visible piece), dispatch the coach immediately with that piece's capture. |
+| 7-12 | Fix builders launched per piece as each coach verdict arrives (deadline + 3 min); code blockers first. Visual pieces get a second coach+fix if they return before minute 11. |
+| 12-13.5 | Re-check fix diffs against their blockers (Sonnet); final acceptance and perf run. |
+| 13.5-15 | Commit, `KNOWN_GAPS.md`, `PLAY.md`, last contact sheet, `state: WAITING FOR HUMAN RC-1`. |
+
+About 14-18 dispatches. Builders in blitz mode render at most twice per round.
+
 ## Under 1 hour (sprint mode)
 
 The Director runs as **one session** for the whole cap - reloading state every few minutes would cost more than it saves - and still writes through to `STATUS.md` and `TRACKER.md`, so a crash can resume. Leads are folded into builders (the look+arena builder *is* the Art Director for this run; the Director writes the contract itself). Every dispatch carries a **deadline** (`studio.md`), because a wave that waits for its slowest builder loses a whole review round.

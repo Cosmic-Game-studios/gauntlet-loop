@@ -33,6 +33,38 @@ General: correct colour management, a filmic tone mapper, image-based ambient li
 
 **Effects must be visible at the capture frame rate.** Flashes, hit sparks and hit markers last a minimum number of *rendered* frames (e.g. 2-3), not a fixed number of milliseconds, or they vanish at low frame rates and in captures.
 
+## 3D models built in code (Character Art, Environment Art)
+
+When assets are authored in code or through a DCC tool driven by script, the difference between "greybox" and "finished" is craft, not polycount:
+
+- **Shape language first.** Block the silhouette from a few big forms, then add medium forms, then small details - never start with details. Each character has one exaggerated feature (oversized shoulder, visor, claw, backpack) that reads at game distance.
+- **Real geometry, not boxes.** Bevelled edges (`RoundedBoxGeometry`, chamfered custom geometry), extrusions of 2D profiles (`ExtrudeGeometry` with bevel), lathed profiles (`LatheGeometry`) for barrels, helmets and limbs, tubes along curves for cables and pipes, smooth normals where surfaces should read as soft. Panel lines, bolts, vents and trims as small geometry or normal detail.
+- **Detail without cost.** Build a model from many parts, then merge static parts per material (`BufferGeometryUtils.mergeGeometries`) - one draw call per material per model - and instance repeated models. Keep a per-type triangle budget in `BUDGETS.md` (e.g. hero character 5-15k, standard enemy 2-6k, prop < 1k on the web).
+- **Surfaces that look painted, not flat.** Procedural textures in canvas or shaders: base colour with large-scale variation, edge highlights, cavity/grime darkening, wear on edges, a few decals (stencils, numbers, warning stripes). Vertex colours for cheap gradients and ambient occlusion baked per vertex.
+- **Check the turntable.** Every hero model is rendered from 8 angles at game distance and close up, plus a black silhouette, before it is merged into the game.
+
+## Animation (Animation department)
+
+- **Rigs, not wobbling boxes.** A bone hierarchy (`THREE.Bone`/`Skeleton` with a `SkinnedMesh`, or a clean hierarchy of pivoted parts for mechanical characters), with pivots at real joints.
+- **Clips and a state machine.** Keyframed clips (`AnimationClip` + `AnimationMixer`) for idle, locomotion, attack windup/strike/recover, hit reaction, death; cross-fades between states driven by gameplay; root motion or speed-matched locomotion so feet do not slide.
+- **Principles you can see in stills.** Clear key poses, anticipation before big actions, follow-through and overlap after them, arcs instead of straight lines, ease-in/out spacing, weight shifts. Telegraph every enemy attack with a readable windup pose.
+- **Secondary motion.** Springs and damped oscillators for antennae, cables, cloth strips, weapon sway; procedural additive layers (breathing, head look-at, recoil).
+- **First-person weapons.** Idle sway, movement bob, a recoil spring (kick + recovery), reload with a readable sequence (mag out, mag in, charge), switch animation - timed to the gameplay numbers.
+
+## Visual effects (VFX department)
+
+- **Layered effects.** A muzzle flash is a short core, a few sparks, a brief light and smoke; an impact is a flash, sparks, a decal and dust; an explosion adds a shockwave and debris. Particles via instanced meshes or `Points` with custom shaders, additive or premultiplied blending, texture atlases drawn in canvas.
+- **Effects serve readability, never hide it.** No effect may cover the crosshair region or wash out the target: cap flash size and brightness, keep bloom thresholds above gameplay colours, cap post-exposure. The first benchmark round's weakest visual score came from a muzzle flash plus bloom that blanked the screen centre on every shot.
+- **Feedback effects.** Hit sparks in the target's colour, floating damage numbers (style-matched, critical hits bigger), hit markers, dissolve or break-apart deaths, shield hit ripples.
+- **Visible at every frame rate.** Minimum lifetime in rendered frames; the capture tool freezes effect timers so reviews see them.
+
+## Stylised and comic rendering (Art Director, Tech Art)
+
+- **Cel shading** with a 2-4 band ramp (`MeshToonMaterial` with a gradient map, or a custom lighting ramp), consistent across characters and world.
+- **Ink outlines**: inverted-hull outlines per mesh (cheap, controllable thickness) or a screen-space edge pass on depth/normals; thicker outlines on characters than on the world, so they pop.
+- **Comic surface detail**: hand-drawn-looking hatching or halftone in shadows, bold flat colour areas, strong rim light, painted gradients on the sky.
+- **Stylised is not simple.** A comic style still needs value structure, readable silhouettes, material separation and lighting mood - it only draws them with fewer, bolder strokes.
+
 ## Game feel (Design Director, Gameplay Engineering)
 
 Numbers live in tuning tables; the Design Director sets them from the bar where possible.
