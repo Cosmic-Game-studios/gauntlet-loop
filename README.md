@@ -59,22 +59,25 @@ The loop exits when your work wins the blind comparison, or when you stop the ru
 ```
 
 1. **Intake.** It asks at most 5 questions (engine, scope, reference games, art direction, must-haves), only if the pitch leaves them open.
-2. **Game Brief.** It writes a one-screen brief: pillars, "not this", core loop, bars per department, vertical slice. You say OK or ask for changes. This is the only human gate.
+2. **Game Brief.** It writes a one-screen brief: pillars, "not this", core loop, bars per department, vertical slice. You say OK or ask for changes. After that it never asks you anything until the game is done.
 3. **Game Director.** A lead agent breaks the brief into features and tickets, routes them to departments (Design, Code, Art, 3D/Blender, Animation, Tech Art, Audio, Level, UI/UX, QA, Build), and runs a heartbeat loop: load state, sense, judge the milestone gate, plan and cut, dispatch, integrate, report.
-4. **Every ticket runs the gauntlet.** Builder -> machine verify -> fresh blind critic against a real shipped game -> two independent wins to merge. Stalls get a new builder, a split, or a kill review. Never a round count.
-5. **Milestones with hard gates.** Tech Spike -> Vertical Slice -> Content Alpha -> Beta -> Gold, each judged on a real build.
-6. **Everything headless.** Blender, Unreal, Unity, Godot and web are driven from scripts, with screenshots, turntables and video as the critic's evidence. All memory lives in a `studio/` folder so the run survives context resets, and a dashboard shows progress live.
+4. **Every ticket runs the gauntlet with two separate critics.** Builder -> machine verify -> an **Experience critic** judges blind against a real shipped game (two independent wins), and a **Code critic** reviews the diff against the architecture and a named reference repo (correctness, robustness, performance, architecture). Both must pass. Stalls get a new builder, a split, or a kill review. Never a round count.
+5. **It adds what you did not ask for.** A completeness pass lists what the genre expects (settings, rebinding, hit feedback, checkpoints, juice) and builds it.
+6. **Milestones with hard gates.** Tech Spike -> Vertical Slice -> Content Alpha -> Beta -> Release Candidate, each judged on a real build.
+7. **You play, it improves.** At the Release Candidate it hands you the game and waits. You play and write feedback in your own words ("gunplay should feel like CS2", "more borderless comic art", "I want smooth frame rates"). It turns each item into a diagnosis, a new bar and tickets, protects what you liked with regression bars, runs a patch cycle, and hands you the next build. Until you say it is done.
+8. **Everything headless.** Blender, Unreal, Unity, Godot and web are driven from scripts, with screenshots, turntables and video as the critic's evidence. All memory lives in a `studio/` folder so the run survives context resets, and a dashboard shows progress live.
 
 ```
 .claude/skills/gauntlet-studio/
 ├── SKILL.md                     # intake flow, bar rules, entry point
 └── references/
     ├── brief-template.md        # the Game Brief the user approves
-    ├── director.md              # heartbeat, decomposition, routing, milestones, scope control
-    ├── gauntlet.md              # builder / verify / blind critic protocol, critic roster, stalls
+    ├── director.md              # heartbeat, decomposition, routing, milestones, initiative, scope control
+    ├── gauntlet.md              # builder / verify / Experience + Code critic protocol, critic roster, stalls
     ├── departments.md           # every department: builds, evidence, bar, verify
     ├── engines.md               # headless Blender, Unreal, Unity, Godot, web + capture
-    └── state.md                 # the studio/ folder, ticket and heartbeat formats, resume
+    ├── state.md                 # the studio/ folder, ticket and heartbeat formats, resume
+    └── feedback.md              # Release Candidate handoff, human playtest, feedback -> patch cycles
 ```
 
 ## Why a bar and not a rubric

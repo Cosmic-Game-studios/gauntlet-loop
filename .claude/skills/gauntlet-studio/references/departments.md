@@ -17,6 +17,7 @@ For each: **Builds** - what it produces. **Evidence** - what the critic sees. **
 - **Evidence:** tests passing, a scripted scenario video, frame timing.
 - **Bar:** the reference game's behaviour in the same scenario, plus the numbers bar.
 - **Verify:** compiles headless, unit and functional tests, smoke test, no new warnings, perf budget.
+- **Code bar:** a named reference implementation per system, from `ARCHITECTURE.md` (e.g. Lyra for Unreal abilities/input, Unity's Boss Room, Godot demo projects). Every Code ticket also needs a Code critic `PASS` (see `gauntlet.md`).
 - **Rule:** Code builds tools first when a department is blocked on manual work (importers, validators, capture scripts, level generators).
 
 ## Art (2D)

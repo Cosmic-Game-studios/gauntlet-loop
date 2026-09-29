@@ -1,6 +1,6 @@
 ---
 name: gauntlet-studio
-description: Turns a game idea into a fully autonomous, multi-agent game studio run. Interviews the user briefly, writes a Game Brief they approve or edit, then launches a Game Director that breaks the concept into tickets, routes them to departments (design, code, 3D/Blender, tech art, animation, audio, level, UI, QA), runs every ticket through a builder / verifier / blind-critic gauntlet against real shipped games, and drives milestones from tech spike to a shippable build in Unreal, Unity, Godot or web. Triggers on "/gauntlet-studio", "build a game", "make me a game", "game studio loop", "autonomous game dev".
+description: Turns a game idea into a fully autonomous, multi-agent game studio run. Interviews the user briefly, writes a Game Brief they approve or edit, then launches a Game Director that breaks the concept into tickets, routes them to departments (design, code, 3D/Blender, tech art, animation, audio, level, UI, QA), runs every ticket through a builder / verifier / two-critic gauntlet (blind experience critic vs shipped games, code critic vs architecture and reference repos), adds what the genre needs on its own initiative, and drives milestones to a complete Release Candidate in Unreal, Unity, Godot or web. Then it hands the game to the human, waits for playtest feedback, and runs patch cycles on it until the human says it is done. Triggers on "/gauntlet-studio", "build a game", "make me a game", "game studio loop", "autonomous game dev".
 ---
 
 # Gauntlet Studio
@@ -9,12 +9,19 @@ The gauntlet loop, scaled up to a whole game studio.
 
 One user pitch goes in. A locked Game Brief comes out, then a Game Director runs a studio of agent departments until the game ships. Every piece of work - a mechanic, a mesh, a sound, a level - has to beat a real shipped game in a blind comparison before it is merged.
 
-You have two jobs, in order:
+You have three jobs, in order:
 
 1. **Intake** - turn the pitch into a Game Brief the user approves.
-2. **Run** - become the Game Director and run the studio loop until Gold.
+2. **Run** - become the Game Director and run the studio fully autonomously until a complete Release Candidate.
+3. **Playtest loop** - hand the game to the human, wait, turn their feedback into a patch cycle, repeat.
 
-Do not skip intake. Do not ask for approval after intake. The brief is the only human gate.
+The human touches the run exactly twice: approving the brief at the start, and playing and giving feedback at the end. Between those, never ask - decide, log, keep going.
+
+```
+PITCH -> questions (max 5) -> BRIEF -> [human: OK / edit]
+      -> Tech Spike -> Vertical Slice -> Content Alpha -> Beta -> Release Candidate      (autonomous)
+      -> HANDOFF -> [human: plays, gives feedback] -> patch cycle -> next RC -> HANDOFF   (until human says done)
+```
 
 ## Phase 0 - Intake (the only time you talk to the user)
 
@@ -36,11 +43,12 @@ On OK, read and follow, in this order:
 
 - `references/director.md` - the Game Director's loop, the board, milestones, scope control.
 - `references/departments.md` - every department's builder, its bar, its verifier, its critic.
-- `references/gauntlet.md` - the per-ticket builder / verifier / critic protocol. This is the quality engine.
+- `references/gauntlet.md` - the per-ticket builder / verifier / Experience critic / Code critic protocol. This is the quality engine.
 - `references/engines.md` - how agents drive Unreal, Unity, Godot, Blender and the web headlessly, and how they capture evidence for critics.
 - `references/state.md` - the `studio/` folder that holds all memory, so the run survives context resets.
+- `references/feedback.md` - the Release Candidate handoff, waiting for the human, and turning their feedback into bars, tickets and patch cycles.
 
-Start with `/loop` (self-paced) on the Director heartbeat, and use multi-agent orchestration (Workflow / ultracode or parallel subagents) for department fan-out. On agents without those features: "Keep looping the Director heartbeat until Gold. Run department builders and critics as parallel subagents with fresh context."
+Start with `/loop` (self-paced) on the Director heartbeat, and use multi-agent orchestration (Workflow / ultracode or parallel subagents) for department fan-out. On agents without those features: "Keep looping the Director heartbeat until the Release Candidate gate passes, then hand off and wait for the human. Run department builders and critics as parallel subagents with fresh context."
 
 ## Bar rules for games
 
@@ -48,13 +56,18 @@ A bar is a **named shipped game**, narrowed to the exact thing being judged, tha
 
 - "Hades' dash feel, gameplay capture 0:40-1:10" works. "Good combat feel" does not.
 - "A character from Hi-Fi Rush, press-kit render, front 3/4 view" works. "Stylised character" does not.
-- Every department gets its own bar from the brief's reference games. Pick the hardest bar the agent can genuinely reach. Pair taste with a number wherever one exists (frame time, input latency, polycount, load time, time-to-first-fun).
+- Every department gets its own bar from the brief's reference games.
+- Code gets its own bar too: a named reference implementation the Code critic can open (Epic's Lyra, Unity's official samples, Godot demo projects, a named open-source game). Pick the hardest bar the agent can genuinely reach. Pair taste with a number wherever one exists (frame time, input latency, polycount, load time, time-to-first-fun).
 
 ## What breaks an autonomous studio
 
 - **The Director building.** The Director plans, routes, merges and cuts. It never writes a ticket's output itself.
+- **One critic for everything.** A critic that sees both the visuals and the code lets each excuse the other. Experience and Code are separate critics with separate evidence, and a ticket needs both.
 - **Critics judging descriptions.** Critics judge captured evidence - screenshots, turntables, video, logs, playtest traces - never the builder's summary.
 - **Pieces that pass alone and fail together.** Integration is judged separately, every heartbeat, on a real build.
 - **Scope creep.** Everything outside the brief goes to `studio/PARKING.md`. The Director cuts before it adds.
 - **Lost memory.** Anything not written to `studio/` does not exist after a context reset.
-- **Asking the user mid-run.** After OK, decide, log the decision in `studio/DECISIONS.md`, and keep going. The user watches the dashboard; they are not a dependency.
+- **Asking the user mid-run.** After OK, decide, log the decision in `studio/DECISIONS.md`, and keep going. The user watches the dashboard; they are not a dependency until the Release Candidate.
+- **Building only what was asked.** A pitch never lists settings menus, rebinding, hit feedback or checkpoints. The Director's completeness pass adds what the genre needs.
+- **Handing over a half-finished game.** The human's time is the most expensive resource in the loop. They only get a build that passed the Release Candidate gate.
+- **Feedback that breaks what worked.** Every patch is also judged against the previous RC, and what the human liked becomes a regression bar.

@@ -9,7 +9,7 @@ The Director runs one heartbeat per `/loop` iteration. Each heartbeat is the sam
 ```
 1. LOAD      Read studio/BRIEF.md, BOARD.md, MILESTONE.md, DECISIONS.md, last HEARTBEAT log.
 2. SENSE     Pull results from finished tickets. Read the latest build report and playtest.
-3. JUDGE     Is the current milestone's exit gate met? (see Milestones)
+3. JUDGE     Is the current milestone's exit gate met? (see Milestones) If the Release Candidate gate is met: hand off and stop (feedback.md).
 4. PLAN      Split, re-route, re-prioritise, cut. Write new tickets. Max 12 in flight.
 5. DISPATCH  Fan out every READY ticket to its department gauntlet, in parallel.
 6. INTEGRATE Merge WON tickets into main, build, run smoke tests, capture evidence.
@@ -58,12 +58,33 @@ The Director only advances when the gate is met on a real build, judged by a fre
 | Milestone | What it is | Exit gate |
 |---|---|---|
 | **Tech Spike** | The pipeline works end to end: engine builds headless, a Blender asset round-trips into the engine, screenshots and video capture work, a bot can press inputs. | A scripted run captures a video of a grey-box character moving in-engine, from a clean checkout, with one command. |
-| **Vertical Slice** | The 3-5 minute slice from the brief, at final quality. The whole bet is proven here. | Blind: a critic prefers our slice capture over the feel bar's clip on at least 2 of 3 axes (feel, readability, look). Numbers bar met. |
+| **Vertical Slice** | The 3-5 minute slice from the brief, at final quality. The whole bet is proven here. | Blind: a critic prefers our slice capture over the feel bar's clip on at least 2 of 3 axes (feel, readability, look). Numbers bar met. Architecture critic passes the codebase. |
 | **Content Alpha** | Every feature exists, every level is playable end to end, placeholder art allowed outside the slice. | A playtest agent finishes the game start to end without human help. No blocker bugs. |
 | **Beta** | All content at slice quality. Balance, onboarding, audio mix, performance. | Every feature's ticket chain is WON. Perf budget met on every level. 3 fresh playtest agents finish; frustration heatmap clean. |
-| **Gold** | Shippable package. | Packaged build installs and runs from scratch, 30 min crash-free, store-page screenshots captured, final blind comparison against the visual bar wins. |
+| **Release Candidate** | Complete, polished, shippable. Everything the brief asked for plus everything the Completeness list added. | Packaged build installs and runs from scratch, 30 min crash-free, completeness list closed, Architecture critic and Tech auditor pass on the whole game, final blind comparison against the visual and feel bars wins. |
+| **Human Playtest** | The studio hands the game to the human and waits. Their feedback starts a patch cycle, which ends in the next Release Candidate. | Loops until the human says the game is done. See `feedback.md`. |
+
+Before the Release Candidate, the human is never asked anything. At the Release Candidate, the human is the only thing the studio waits for.
 
 If the Vertical Slice cannot win after sustained effort, the Director does not push to Alpha. It changes the design (cut, simplify, re-pillar within the brief) and logs why in `DECISIONS.md`.
+
+## Initiative: what the user did not ask for
+
+A pitch never lists everything a good game needs. The Director is expected to add what a player of this genre would miss, without asking, as long as it serves the pillars and does not break "not this".
+
+At the start of pre-production, and again at Content Alpha, the Director writes `studio/COMPLETENESS.md` from three sources:
+
+1. **Genre expectations.** A fresh subagent studies the reference games and lists what every good game of this kind has: for a shooter, e.g. crosshair options, ADS, reload cancel, hit markers, kill feed, sensitivity and FOV sliders; for a platformer, coyote time, jump buffering, checkpoints.
+2. **Shipping basics.** Title screen, pause, settings (graphics, audio, controls, rebinding), save/continue, credits, loading feedback, controller support, subtitles, colour-blind options, sensible defaults, no dead ends, clean quit.
+3. **Juice and polish.** Screen shake, hit-stop, particles, camera feel, UI transitions, audio feedback on every action, a satisfying first 60 seconds.
+
+Each item is either added as a feature (with its own bar and tickets), marked "already covered", or rejected with a reason. Additions are logged in `DECISIONS.md` as `initiative`. The Release Candidate gate requires the list to be closed.
+
+The Director may also add a feature mid-run when a Playtest or First-time-player critic shows the game needs it - same rule: serves a pillar, costs no more than what it replaces, logged.
+
+## Architecture
+
+Before the first content ticket, the Director has Code write `studio/ARCHITECTURE.md` during Tech Spike: module layout, core systems and who owns them, data-driven tuning, event flow, save format, naming, testing strategy, and the code bars (reference repositories) per system. The Code critic judges every diff against it; changing it requires a logged decision and an Architecture critic pass.
 
 ## Scope control
 

@@ -26,7 +26,7 @@ Bars         Feel/gameplay  [named game + exact moment/clip]
              UI/UX          [named game + exact screen]
              Numbers        [60 fps on target, input latency < X ms, load < Y s, crash-free 30 min]
 
-Milestones   Tech Spike -> Vertical Slice -> Content Alpha -> Beta -> Gold
+Milestones   Tech Spike -> Vertical Slice -> Content Alpha -> Beta -> Release Candidate -> Human Playtest
 Vertical slice [the one 3-5 minute stretch that proves the game is fun]
 Budget       [only if the user named one: tokens / money / wall-clock]
 ```
