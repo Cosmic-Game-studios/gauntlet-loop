@@ -70,6 +70,12 @@ An external generation tool (MCP server or CLI) is used only if `MACHINE.md` lis
 
 Build this in the first heartbeat, before any capture or test: a debug hook that advances the simulation by N fixed steps with given inputs, independent of the real frame rate. Headless and software rendering run at a few frames per second; anything time-based (tests, captures, flashes that last one frame, auto-fire) is unreliable without it. Every test, capture script and playtester uses the stepped simulation.
 
+## Shared tools for the web (from `templates/web/`)
+
+- `tools/shot.mjs` - renders a scripted sequence (debug-hook calls, stepped simulation, real key presses and clicks) to PNGs plus one labelled contact sheet; run it under `flock` so renders do not starve the machine.
+- `tools/accept.mjs` - runs `studio/acceptance.json` and updates each check's `passes`.
+- `tools/blind.sh` - copies ours and the reference into a neutral A/B pair in random order and keeps the key away from the critic.
+
 ## Capture scripts (owned by Tech Art, built in Tech Spike)
 
 Evidence is produced by scripts, never by the builder, so nobody can cherry-pick a flattering angle:

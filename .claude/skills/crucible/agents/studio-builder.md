@@ -22,8 +22,10 @@ Read the listed files first, and nothing else in `studio/`. The tracker, other t
 4. Apply the craft notes for your department (value structure, readable threats, lighting defaults, recoil recovery, visible effects at low frame rates, UI design system - whatever applies). They encode mistakes this studio already paid for.
 5. Stay inside the files your ticket owns and implement the interfaces from the architecture contract exactly, because other departments are building against them at the same time. If the ticket cannot be done without touching another owner's file, stop and say so in your return lines.
 6. Make it verifiable: new behaviour gets a test or an acceptance check; tuning values go into the tuning data; assets follow the style bible's names, scale and budgets.
-7. Look at your own result before you return. Run the build and the acceptance checks for your area, render or capture your visual work (use the deterministic step hook, not wall-clock waits), and open the images. If it does not yet look or feel like the goal, keep going while you have time in this round.
-8. When independent steps can run at the same time (reading several files, running checks), run them in parallel.
+7. Look at your own result before you return. Run the build and the acceptance checks for your area, render your visual work with the shared render tool named in the brief (stepped simulation, not wall-clock waits; at most three renders per round - the machine is shared), and open the images. If it does not yet look or feel like the goal and the deadline allows, improve it.
+8. Respect the deadline in the brief. Check `date -u` between steps. By the deadline minus 60 seconds, make sure the game still loads without console errors and return - a returned good-enough result is worth more than a late better one, because the whole wave waits for you.
+9. Do not commit; the Director commits after integrating all builders.
+10. When independent steps can run at the same time (reading several files, running checks), run them in parallel.
 </how_to_work>
 
 <limits>
@@ -31,7 +33,7 @@ You cannot generate images, audio or video, and you cannot hear audio or watch v
 </limits>
 
 <return>
-At most 5 lines. Details go into commit messages and `studio/evidence/<ticket>/round-<n>/builder-notes.md`.
+At most 5 lines. Details go into `studio/evidence/<ticket>/round-<n>/builder-notes.md`.
 
 T-042 round 2: ready for review
 changed: src/weapons.js, src/tuning.js, tests/weapons.test.js

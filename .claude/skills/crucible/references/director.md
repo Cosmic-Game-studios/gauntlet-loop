@@ -16,7 +16,7 @@ The Director runs one heartbeat per `/loop` iteration. Each heartbeat starts fro
 7. REPORT    Overwrite STATUS.md, append HEARTBEAT.md, regenerate dashboard.html, commit. Rotate files (context.md).
 ```
 
-A heartbeat ends when it has dispatched work and written its report. The next one is started by the heartbeat driver (`claude-code.md`): `tools/drive.sh`, a scheduled Routine, or `/loop`. The very first heartbeat is **setup**: install the studio subagents, hooks and `CLAUDE.md` into the project (`claude-code.md`), write `STATUS.md` and `TRACKER.md`, then start Tech Spike. **Dispatched work must outlive nothing.** Under `drive.sh` each heartbeat is one headless `claude -p` process, and background subagents die when it exits. So in headless mode the Director waits for every ticket round it dispatched (parallel `Agent` calls, awaited) before INTEGRATE and REPORT; a heartbeat is one wave of ticket rounds. In an interactive session with `/loop` or a Routine, background agents survive between heartbeats; a heartbeat that finds work still running only does SENSE, INTEGRATE and REPORT, and it does not count as an idle heartbeat for the progress checks in `endurance.md`.
+A heartbeat ends when it has dispatched work and written its report. The next one is started by the heartbeat driver (`claude-code.md`): `tools/drive.sh`, a scheduled Routine, or `/loop`. The very first heartbeat is **setup and kickoff**: install the studio subagents, hooks and `CLAUDE.md` into the project (`claude-code.md`), write `STATUS.md`, `TRACKER.md` and the kickoff files, then dispatch the first wave. In sprint mode (`playbooks.md`) the whole run is one long heartbeat made of waves. **Dispatched work must outlive nothing.** Under `drive.sh` each heartbeat is one headless `claude -p` process, and background subagents die when it exits. So in headless mode the Director waits for every ticket round it dispatched (parallel `Agent` calls, awaited) before INTEGRATE and REPORT; a heartbeat is one wave of ticket rounds. In an interactive session with `/loop` or a Routine, background agents survive between heartbeats; a heartbeat that finds work still running only does SENSE, INTEGRATE and REPORT, and it does not count as an idle heartbeat for the progress checks in `endurance.md`.
 
 Write-through, not write-back: tick a checkbox, log an error, record a decision the moment it happens. If the session dies mid-heartbeat, the files are still right.
 
@@ -101,7 +101,7 @@ Capped rounds mean some tickets merge as PASSED rather than WON. That is deliber
 
 ## Architecture
 
-Before the first content ticket, the Director has Code write `studio/ARCHITECTURE.md` during Tech Spike: module layout, core systems and who owns them, data-driven tuning, event flow, save format, naming, testing strategy, and the code bars (reference repositories) per system. The Code critic judges every diff against it; changing it requires a logged decision and an Architecture critic pass.
+Before the first content ticket, the Tech Director writes `studio/ARCHITECTURE.md` (in sprint mode the Director writes a short version itself at kickoff): module layout, core systems and who owns them, data-driven tuning, event flow, save format, naming, testing strategy, and the code bars (reference repositories) per system. The Code critic judges every diff against it; changing it requires a logged decision and an Architecture critic pass.
 
 ## Scope control
 

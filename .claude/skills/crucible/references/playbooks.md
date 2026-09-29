@@ -7,21 +7,22 @@ The rituals are the same at every scale; what changes is how many cycles fit. Pi
 
 ## Under 1 hour (sprint mode)
 
-The Director runs as **one session** for the whole cap - reloading state every few minutes would waste the time it saves. It still writes through to `STATUS.md` and `TRACKER.md`, so a crash can resume. Dispatch every wave as parallel foreground `Agent` calls in one message, so the Director waits for all of them without polling.
+The Director runs as **one session** for the whole cap - reloading state every few minutes would cost more than it saves - and still writes through to `STATUS.md` and `TRACKER.md`, so a crash can resume. Leads are folded into builders (the look+arena builder *is* the Art Director for this run; the Director writes the contract itself). Every dispatch carries a **deadline** (`studio.md`), because a wave that waits for its slowest builder loses a whole review round.
 
-Percentages of the cap (for 30 minutes: 1 % = 18 s):
+Timeline for a 30-minute cap (scale proportionally):
 
-| Phase | Share | What happens |
+| Minutes | Who | What |
 |---|---|---|
-| **Kickoff** | 0-8 % | Director: probe (one command), brief, pillars, `ARCHITECTURE.md` contract (module files, one owner each, interfaces, shared constants file), `TRACKER.md`, `acceptance.json` from the spec. Keep each file short; they are working documents. |
-| **Foundation wave** | 8-35 % | In parallel: **Lead engineer** (Opus) - runnable skeleton that imports every module file of the contract (stubs allowed) plus the deterministic step hook; **Art Director** (Opus) - `STYLE_BIBLE.md` plus the look-dev module (renderer, lights, environment, post, palette constants; `craft.md`); **Design Director** (Opus) - feel numbers and tuning tables as a data module; **QA/Tools** (Sonnet) - acceptance runner, capture script (same framing as the bar), bar captures into `studio/bars/`; **Audio** (Sonnet) - the audio module against its interface. |
-| **Production wave** | 35-60 % | One builder per department module, all in parallel, against the style bible and contract: level/arena, player controller and feel, weapons/viewmodel/VFX, enemy models and animation, enemy AI, HUD/menus/UX, audio polish. Opus/Sonnet per `studio.md`. The Director integrates and runs the acceptance suite as they return. |
-| **Review** | 60-68 % | In parallel on the integrated build: art critic (coach, per visible piece, vs bar and look-dev target), UX critic, code critic, playtester, acceptance suite. Director writes one gap per department. |
-| **Fix wave** | 68-85 % | Resume the same builders with their one gap each (parallel). |
-| **Review + fix, round 2** | 85-95 % | A short second cycle on the pieces the player sees most: weapons feel, enemy readability, HUD, the first view of the level. Code blockers first. |
-| **Handoff** | 95-100 % | Final acceptance run, commit, `KNOWN_GAPS.md`, `PLAY.md`, `STATUS.md` = `WAITING FOR HUMAN`. |
+| 0-3 | Director | Probe (one command), brief, pillars, `ARCHITECTURE.md` with one owner per file and the shared interfaces, a shared constants/palette file, `acceptance.json`, role prompt files (`claude-code.md`), `tools/shot.mjs` and `tools/accept.mjs` from the templates. Commit. |
+| 3-11 | 5 builders, parallel, deadline minute 10:30 | **Wave 1 ships the whole game at first-pass quality** - no stubs in another owner's file. Opus: gameplay core + weapons and feel; look + arena (Art Director role: style bible, renderer and post setup, level); enemies (models, animation, AI); HUD + all screens (UI is a hero ticket). Sonnet: audio + bar captures in comparable framing (at most 3 minutes on bars). |
+| 11-12.5 | Director | Integrate, acceptance run, one shared capture set and contact sheets, commit - the first playable build. |
+| 12.5-15 | Review board, parallel | Opus coaches for the look, the enemies, the HUD/screens (ux mode), plus the Code critic. |
+| 15-19.5 | Resumed builders, deadline 19:00 | One gap each (code blockers first). |
+| 19.5-26.5 | Review + fix, round 2 | Same shape, shorter: coaches on the three most visible pieces, resumed builders with deadline 26:00. If time allows, round 3 on the single weakest piece. |
+| 26.5-28.5 | Sonnet re-check | Fix diffs of the last round re-checked against their blockers and the acceptance list; revert a fix that breaks a check. |
+| 28.5-30 | Director | Final acceptance run, commit, `KNOWN_GAPS.md`, `PLAY.md`, `STATUS.md` = `WAITING FOR HUMAN`. |
 
-In sprint mode the held-out judge runs only if a review cycle ends with time to spare; otherwise the latest coach verdicts decide, and the gaps are listed in `KNOWN_GAPS.md`. Hero pieces get as many review-fix rounds as fit, up to the round budget.
+About 16 dispatches, at most 10 of them Opus. No judges, champions or playtesters in sprint mode - the coaches' verdicts and the acceptance list decide, and open gaps go to `KNOWN_GAPS.md`. If background-agent notifications work in the environment, a **pipeline per piece** (each piece goes to its next review as soon as its builder returns, instead of waiting for the wave) fits one or two more rounds; check that once at kickoff.
 
 ## 1-8 hours (vertical slice mode)
 
@@ -33,7 +34,7 @@ The full milestone ladder (`director.md`): Tech Spike -> Vertical Slice -> Conte
 
 ## Keeping the machine healthy
 
-Headless rendering is CPU-heavy. Builders render and look at their own work, but the capture runs for reviews are done once by QA per review and shared, not by every critic. On a small machine, cap simultaneous headless browsers at about the number of CPU cores; builders queue their captures if needed.
+Headless rendering is CPU-heavy, and a starved machine makes every builder slower. All renders go through the shared tool (`tools/shot.mjs` on the web): stepped simulation, a modest resolution (e.g. 960x540), and a lock so at most two renders run at once (`flock`). Builders take at most three renders per round; review captures are taken once by the Director or QA and shared as contact sheets. The number of parallel builders follows the machine: about one per CPU core plus one, which is five on a 4-core machine.
 
 ## Completion goal
 

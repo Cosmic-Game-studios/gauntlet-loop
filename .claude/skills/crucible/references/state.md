@@ -94,7 +94,7 @@ Legend: `[ ]` open (any status up to WON), `[x]` MERGED, `[~]` cut. Status words
 ## Ticket block (below the checklist in TRACKER.md)
 
 ```
-### T-042  Player dash                      [Code]  tier: hero  status: IN GAUNTLET  round: 2/3  champion: r1
+### T-042  Player dash                      [Code]  tier: hero  status: IN GAUNTLET  round: 2/6  champion: r1
 feature:     Core movement
 goal:        8 m dash, 0.15 s, cancels into attack, i-frames first 0.1 s
 bar:         Hades - Zagreus dash, gameplay capture 00:40-01:10 (bars/hades_dash.mp4)

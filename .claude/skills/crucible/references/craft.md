@@ -12,6 +12,7 @@ The first Arena benchmark showed what happens without them: flat greybox lightin
 - **Landmarks and composition.** Every play space has at least one landmark visible from most places, lanes or sightlines that lead the eye, and height variation. Avoid symmetric empty boxes.
 - **Materials.** At least three surface types that differ in roughness and pattern (floor, walls, props, trim). Procedural detail beats flat colour: noise, panel lines, edge wear, decals, emissive trim. No untextured default grey.
 - **Lighting.** Key light with shadows, soft fill (hemisphere or environment), and accent lights placed to lead the eye. Fog or atmospheric falloff for depth. One colour temperature contrast (warm key vs cool fill, or the reverse).
+- **Style that fits how the assets are made.** When every asset is built in code (primitives, procedural geometry), pick a style where that looks intended: flat or faceted low-poly, bevelled edges, strong silhouettes, emissive trim, clean colour blocking - not a realistic style that makes primitives look unfinished. Characters built from primitives still get a clear head, a readable pose and at least one exaggerated feature.
 - **Look-dev scene.** The Art Director builds a small in-engine scene (one corner of the level, one of each enemy, the weapon) with the final renderer settings. It becomes the internal bar that every art ticket is compared with, and it exists before production starts.
 
 ## Tech art defaults (Tech Art)
@@ -21,7 +22,7 @@ General: correct colour management, a filmic tone mapper, image-based ambient li
 **Web / three.js** (all of this ships inside the `three` package, so it is not an extra dependency):
 - `renderer.outputColorSpace = THREE.SRGBColorSpace`; `renderer.toneMapping = THREE.ACESFilmicToneMapping` (or `AgXToneMapping`), exposure tuned on the look-dev scene.
 - Image-based light without assets: `scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture` (`three/examples/jsm/environments/RoomEnvironment.js`). This alone lifts standard materials out of the "flat" look.
-- Post: `EffectComposer` -> `RenderPass` -> `UnrealBloomPass` (threshold high enough that only emissives and flashes bloom) -> `OutputPass`; add `SMAAPass` or FXAA for edges. Optional `VignetteShader` / colour correction. Keep a low-quality path without post for weak machines.
+- Post: `EffectComposer` -> `RenderPass` -> `UnrealBloomPass` at half resolution (threshold high enough that only emissives and flashes bloom) -> `OutputPass`; FXAA (cheaper) or SMAA for edges; optional vignette / colour correction. Post costs little on a GPU but a lot under software rendering - keep the chain short and offer a quality setting rather than silently downgrading.
 - Shadows: `PCFSoftShadowMap`, one shadow-casting directional light with a tight shadow camera around the play space, sensible `shadow.bias`/`normalBias`.
 - Fog: `THREE.Fog` or `FogExp2` matched to the sky colour.
 - First-person viewmodel: its own scene and camera (narrower FOV than the world camera), rendered after the world with a depth clear, with its own lights so it never renders unlit.
@@ -40,7 +41,7 @@ Numbers live in tuning tables; the Design Director sets them from the bar where 
 - **Shooting.** Recoil that kicks and **recovers**; spread that blooms and settles; a trigger latch for semi-automatic weapons; a muzzle flash, tracer or impact, and a hit marker on every hit; a distinct kill confirmation; weapon switch and reload animations with readable timing.
 - **Impact.** Enemies react on hit (flinch, knockback, hit flash), die visibly, and the player feels damage (directional indicator, screen edge, sound).
 - **Juice, in moderation.** Small screen shake on big events, a few frames of hit-stop on kills, particles on impacts. Never enough to hurt readability.
-- **Hitboxes match what the player sees.** Enemies are hittable where the crosshair naturally rests; check that enemy height and the player's eye height make a level shot hit.
+- **Hitboxes match what the player sees.** Enemies are hittable where the crosshair naturally rests: a level shot from standing eye height must hit a standing enemy at mid range. Make this an acceptance check - the first benchmark's enemies were shorter than the eye line, so level shots flew over them.
 
 ## UI and UX (UI/UX department, UX critic)
 

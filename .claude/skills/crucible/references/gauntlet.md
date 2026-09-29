@@ -53,7 +53,7 @@ No ticket ever gets more rounds than its budget. The Director cannot extend it; 
 
 - A `studio-builder` subagent (see `claude-code.md`) with the ticket's context pack (`context.md`): the ticket, the pillars, the relevant style bible and `ARCHITECTURE.md` sections, the bar, the matching `LESSONS.md` rules, and - from round 2 on - the coach critic's GAP and the Code critic's BLOCKERS. Nothing else.
 - It changes the work and nothing outside its ticket's files.
-- Each builder runs in a fresh git worktree. From round 2 on, the Director names the **champion branch** (`ticket/T-042-r1` etc.) in the prompt and the builder checks it out first, so a revision builds on the best version, not on main. Every round commits to its own branch `ticket/<id>-r<n>`.
+- Builders work on the files their ticket owns and do not commit; the Director integrates and commits after each wave (worktrees and per-round branches only when files could overlap - `claude-code.md`). From round 2 on, the builder starts from the champion version of its files.
 - It does **not** produce the critics' evidence. Evidence is captured by the studio's capture scripts (`engines.md`) after verify, so a builder cannot cherry-pick flattering angles or frames.
 - It returns at most 5 lines and writes "ready for verify", never "done".
 
@@ -92,7 +92,7 @@ Style nits never block. Correctness and robustness blockers are part of the **fl
 
 A fresh `experience-critic` subagent in **coach mode**. Its job is to find the single biggest gap between ours and the bar, so the builder has one clear thing to fix.
 
-It gets evidence A and B (ours and a reference, labels stripped, order randomised, in a form it can perceive - see below), the one question for this ticket, the pillars, and the craft rubric for this department (`craft.md`).
+It gets evidence A and B (ours and a reference, prepared by script: copied under neutral names in random order, the key kept by the Director, often as one contact sheet per side - see below), the one question for this ticket, the pillars, and the craft rubric for this department (`craft.md`).
 
 **The reference is always available.** In order of preference: the external bar in comparable framing (`BARS.md`); the Art Director's look-dev target (for art and UI); the current champion (from round 2 on). If no comparable external bar exists, the coach compares against the other two - a review round never ends without a usable gap.
 

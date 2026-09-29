@@ -15,7 +15,7 @@ For each: **Model** - default routing. **Builds** - what it produces. **Evidence
 
 ## Code
 
-- **Model:** Sonnet for systems, AI logic, tools and fixes with a known cause; Opus for player controller and weapon feel, and for the Lead Engineer's skeleton.
+- **Model:** Sonnet for systems, AI logic, tools and fixes with a known cause; Opus for player controller, weapon feel and the gameplay core of the first wave.
 
 - **Builds:** gameplay systems, AI, physics, save/load, input, camera, tools that make other departments faster.
 - **Evidence:** tests passing, a scripted scenario video, frame timing.

@@ -14,6 +14,8 @@ The Director installs the studio into the game project before any ticket:
 | `templates/settings.json` | `.claude/settings.json` (merge the `hooks` key) | Hooks below. |
 | `templates/hooks/*.sh` | `.claude/hooks/` | |
 | `templates/drive.sh` | `tools/drive.sh` | Optional outer driver for multi-day unattended runs. |
+| `templates/web/shot.mjs`, `accept.mjs`, `blind.sh` (web projects; write the equivalent for other engines) | `tools/` | Shared render tool with contact sheets, acceptance runner, blind A/B pair preparation. |
+| role prompt bodies | `studio/prompts/<role>.md` | `mkdir -p studio/prompts && for f in .claude/skills/crucible/agents/*.md; do awk 'c>=2; /^---$/{c++}' "$f" > studio/prompts/$(basename "$f"); done` - dispatch briefs point to these files instead of pasting the role text. |
 
 New subagent files are picked up when a session starts. If the current session does not list them, the Director continues in a fresh session (the hooks restore its state), or - as a fallback - uses the built-in general-purpose agent with the role file's body (everything below the `---` frontmatter) pasted as the start of the prompt.
 

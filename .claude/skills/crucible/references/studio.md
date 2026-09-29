@@ -58,15 +58,21 @@ A studio has rhythms. Crucible has five, and the playbook (`playbooks.md`) sets 
 Every subagent starts from nothing. The brief is the only thing it knows, so a vague brief produces duplicated, off-target or incompatible work. Every dispatch follows this shape - stable parts first, the ticket last (this also keeps prompt caching effective):
 
 ```
-<role>            the role file body (agents/<role>.md), unchanged every time
-<department>      the department's section from departments.md and the matching craft.md section, unchanged
-<studio_context>  paths to read: pillars, STYLE_BIBLE section, ARCHITECTURE section, LESSONS for this department
+<role>            "Read studio/prompts/<role>.md first - it is your role." (a file path, not pasted text: the
+                  Director's output tokens are the most expensive tokens in the run)
+<department>      the department's section from departments.md and the matching craft.md section - only the
+                  parts for this engine (a three.js ticket does not need Blender turntable instructions)
+<studio_context>  paths to read: pillars, STYLE_BIBLE section, ARCHITECTURE section and the file-owner table,
+                  LESSONS for this department
 <ticket>
   goal:          what the player will experience when this is done, in one or two sentences
   deliverable:   exactly which files/assets change; which interface they implement
-  boundaries:    what not to touch (other departments' files, the brief, shared contracts)
+  boundaries:    what not to touch (other owners' files, the brief, shared contracts); do not commit - the
+                 Director commits after integration, so parallel builders never collide in git
   bar:           what it is compared against and on which question
   done when:     the acceptance checks and numbers that must pass, and how to run them
+  tools:         the render/capture tool and the acceptance runner, with the exact commands
+  deadline:      absolute UTC time; check `date -u` as you work and return by deadline minus 60 s
   round:         n of budget; the one gap from the last review, if any
 </ticket>
 <return>          the 5-line return format
@@ -76,4 +82,4 @@ Tell the builder why, not only what: "rushers must be readable at 20 m because t
 
 ## Size of the studio
 
-Parallelism is the studio's main advantage over a single agent - use it. For a small game, a production sprint typically runs 6-10 builders at once; a larger project runs more, limited by the number of files that can have a single owner at the same time and by the machine (headless renders are CPU-heavy - `playbooks.md`). Critics in a review run in parallel too. Scale down only when tickets would collide on the same files.
+Parallelism is the studio's main advantage over a single agent - use it, within two limits: the number of files that can have a single owner at the same time, and the machine (headless renders are CPU-heavy; about one builder per CPU core plus one - `playbooks.md`). Critics in a review run in parallel too. In sprint mode the leads are folded into builders; in longer runs they are separate lead tickets.

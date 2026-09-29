@@ -24,7 +24,7 @@ static checks / lint  ->  unit tests  ->  asset validators  ->  headless build  
 ```
 
 - Never spend a critic on work that fails a script.
-- Code critic before Experience critics: a BLOCK usually forces a change that would invalidate the Experience verdict anyway.
+- In a single ticket's gauntlet, the Code critic runs before the Experience critics (a BLOCK usually forces a change that would invalidate the Experience verdict). In a review board on an integrated build they run in parallel to save wall-clock time, and code blockers are fixed first in the next sprint.
 
 ## Model tiering
 

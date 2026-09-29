@@ -44,7 +44,7 @@ The skill files themselves are part of this budget. Builders and critics never r
 
 ## Rule 3 - Return contracts keep the Director small
 
-Subagents write their full output to files and return **at most 5 lines** to whoever spawned them:
+Builders write their full output to files and return **at most 5 lines**; critics and playtesters return only their verdict block. Either way, nothing long reaches the Director:
 
 ```
 T-042 round 3: JUDGE ours x2 (both orders) | CODE PASS
