@@ -28,7 +28,7 @@ For each: **Model** - default routing. **Builds** - what it produces. **Evidence
 
 - **Model:** Opus (the Art Director owns the style bible - `agents/art-director.md`).
 
-- **Builds:** style bible, colour script, style frames, 2D textures, icons, UI art. Claude cannot generate images, so art is made with code and tools: SVG (UI, icons, logos, 2D sprites), procedural textures (noise, gradients, masks, in Python or Blender nodes), style frames as blocked-out Blender scenes rendered with target lighting and palette, and fetched reference images from the bar games as mood boards. An external image generator is used only if the probe found one (`MACHINE.md`).
+- **Builds:** style bible, colour script, style frames, 2D textures, icons, UI art. Any tool that gives the best result (`engines.md` - making content): an image generator or MCP server if connected; otherwise SVG, procedural textures, style frames rendered from blocked-out scenes, and fetched reference images from the bar games as mood boards.
 - **Evidence:** the image at final use size, plus in-engine screenshot once integrated.
 - **Bar:** the reference game's concept art or press-kit images.
 - **Readability is a style-bible rule, not a polish item.** The style bible defines value and hue separation: threats, pickups and interactive objects must contrast with the environment (different hue family *and* value band), checked by a scripted luminance/hue test on captures and by a Silhouette critic question: "Find every enemy in this frame within one second." A cohesive palette that camouflages the threats fails the floor.
@@ -49,7 +49,7 @@ Every sourced asset has its licence recorded in `studio/ASSETS.md`. No asset of 
 
 - **Model:** Opus.
 
-- **Builds:** blockouts, hero meshes, props, environment kits, UVs, bakes, PBR textures. Works through Blender Python in background mode (`engines.md`).
+- **Builds:** blockouts, hero meshes, props, environment kits, UVs, bakes, PBR textures. Any capable tool - a Blender MCP server, Blender Python, the engine's modelling tools, generators as a starting point (`engines.md`).
 - **Pipeline per asset:** reference sheet -> blockout -> silhouette check -> high/low poly -> UV -> bake -> texture -> LODs -> export -> engine import.
 - **Evidence:** an automated turntable (8 angles, fixed studio lighting), silhouette at game distance, wireframe, and an in-engine shot under game lighting.
 - **Bar:** the reference game's equivalent asset, same angle, same distance.
@@ -84,7 +84,7 @@ Every sourced asset has its licence recorded in `studio/ASSETS.md`. No asset of 
 
 - **Model:** Sonnet (synthesis code against the audio direction).
 
-- **Builds:** SFX, music, ambience, mix, adaptive layers. Claude can neither generate nor hear audio, so audio is made as code and judged as data: SFX by synthesis scripts (oscillators, noise, envelopes, filters, layering - sfxr-style for retro, physical-modelling-style layers for impacts) and CC0 libraries processed by script; music composed as MIDI and rendered with a soundfont or synth; mixing by measured loudness targets. An external audio generator is used only if the probe found one. Audio is always flagged for the human playtest in `PLAY.md`.
+- **Builds:** SFX, music, ambience, mix, adaptive layers. The model can neither generate nor hear audio, so use an audio generator or library if one is available, otherwise synthesis scripts (oscillators, noise, envelopes, filters, layering) and licensed/CC0 sounds processed by script; music from a generator or composed as MIDI and rendered; mixing by measured loudness targets. Whatever the source, audio is judged as data by critics. Audio is always flagged for the human playtest in `PLAY.md`.
 - **Evidence:** spectrogram and waveform images, LUFS / peak / onset timing, and which gameplay event (frame) it plays on - never "listen to it".
 - **Bar:** the reference game's equivalent sound or track.
 - **Verify:** loudness target, no clipping, loop points, correct format, triggers wired.

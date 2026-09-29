@@ -16,9 +16,9 @@ No GPU is not an automatic blocker: Blender renders with Cycles on CPU, Godot an
 
 Captures are written to `studio/evidence/<ticket-id>/round-<n>/`.
 
-## Blender (all 3D assets)
+## Blender (one good option for 3D assets)
 
-- Run: `blender -b [file.blend] -P script.py -- [args]` (background mode, Python API `bpy`).
+- Interactive through a Blender MCP server if one is connected (serialize through the `blender` lock), or headless: `blender -b [file.blend] -P script.py -- [args]` (Python API `bpy`).
 - Assets are built **as scripts** where possible (procedural modelling, modifiers, geometry nodes), so a critic's GAP can be applied by editing code, and every asset is reproducible.
 - Standard scripts the Tech Art department writes during Tech Spike:
   - `validate.py` - scale, transforms, normals, polycount, UVs, naming.
@@ -56,15 +56,17 @@ Captures are written to `studio/evidence/<ticket-id>/round-<n>/`.
 - Build with the bundler, serve locally, drive with Playwright (Chromium preinstalled): scripted inputs, screenshots, video recording, `performance` timings.
 - Assets as glTF from Blender.
 
-## Making content without generative models
+## Making content: use the best tool available
 
-Claude cannot generate images, audio or video (see `claude-code.md` for the full table). Content comes from code and tools:
+Nothing here is a whitelist. Builders pick whatever gives the best result on this machine - the engine's own editor and scripting, MCP servers connected to the session (an Unreal Editor MCP server for placing, configuring and lighting; a Blender MCP server for modelling, sculpting, rigging and animation), DCC tools, libraries, asset kits, generation tools, or tools they install where the machine allows it. The only fixed points are the engine the brief names, evidence captured through the adapter, and what the model itself cannot do: generate or hear audio, generate images or video, or watch video (`claude-code.md`) - where a tool can do those things, use the tool.
 
-- **Images:** SVG rasterised with a script (e.g. `rsvg-convert`, `cairosvg`, or the browser), procedural textures with Pillow/numpy, Blender renders.
-- **Audio:** synthesis scripts (numpy/scipy writing WAV), processing with `sox`/`ffmpeg`, MIDI composed as data and rendered with `fluidsynth` + a soundfont.
-- **3D:** Blender Python; kit assets imported and restyled.
+Known-good options when nothing better is available:
 
-An external generation tool (MCP server or CLI) is used only if `MACHINE.md` lists one; its output still goes through validation and critics.
+- **Images and textures:** SVG rasterised by script, procedural textures (Pillow/numpy, shader or material nodes), Blender or in-engine renders; an image generator if one is connected.
+- **Audio:** synthesis scripts, processing with `sox`/`ffmpeg`, MIDI rendered with a soundfont; an audio generator if one is connected.
+- **3D and animation:** Blender (MCP server or `bpy`), the engine's modelling and animation tools, kit assets restyled to the style bible, image-to-3D generation as a starting point where available.
+
+Whatever the tool, the output goes through the same validation, capture and critics.
 
 ## First tool of every project: deterministic stepping
 
@@ -74,7 +76,7 @@ Build this in the first heartbeat, before any capture or test: a debug hook that
 
 - `tools/shot.mjs` - renders a scripted sequence (debug-hook calls, stepped simulation, real key presses and clicks) to PNGs plus one labelled contact sheet; run it under `flock` so renders do not starve the machine.
 - `tools/accept.mjs` - runs `studio/acceptance.json` and updates each check's `passes`.
-- `tools/blind.sh` - copies ours and the reference into a neutral A/B pair in random order and keeps the key away from the critic.
+- `tools/blind.sh pair|reveal` - copies ours and the reference into an isolated neutral A/B pair in random order; the key stays behind the settings deny rule and only the Director reveals it.
 - `tools/perf.mjs` - instruments WebGL and reports draw calls, triangles, frame rate and heap growth for menu, idle and a fixed combat load; run it in every review and keep the numbers within `BUDGETS.md`.
 
 ## Capture scripts (owned by Tech Art, built in Tech Spike)

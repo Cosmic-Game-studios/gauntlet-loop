@@ -4,7 +4,9 @@
 import { chromium } from 'playwright'; import http from 'http'; import fs from 'fs'; import path from 'path';
 const [,, gameDir, outFile] = process.argv;
 const types = { '.js': 'text/javascript', '.mjs': 'text/javascript', '.html': 'text/html', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml' };
-const srv = http.createServer((q, s) => { let p = path.join(gameDir, decodeURIComponent(q.url.split('?')[0])); if (fs.existsSync(p) && fs.statSync(p).isDirectory()) p = path.join(p, 'index.html'); if (!fs.existsSync(p)) { s.statusCode = 404; return s.end(); } s.setHeader('Content-Type', types[path.extname(p)] || 'application/octet-stream'); s.end(fs.readFileSync(p)); }).listen(0);
+const ROOT = path.resolve(gameDir);
+const resolveSafe = url => { const p = path.resolve(ROOT, '.' + path.posix.normalize('/' + decodeURIComponent(url.split('?')[0]))); return p === ROOT || p.startsWith(ROOT + path.sep) ? p : null; };
+const srv = http.createServer((q, s) => { let p = resolveSafe(q.url); if (!p) { s.statusCode = 403; return s.end(); } if (fs.existsSync(p) && fs.statSync(p).isDirectory()) p = path.join(p, 'index.html'); if (!fs.existsSync(p)) { s.statusCode = 404; return s.end(); } s.setHeader('Content-Type', types[path.extname(p)] || 'application/octet-stream'); s.end(fs.readFileSync(p)); }).listen(0);
 const b = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--enable-precise-memory-info', '--js-flags=--expose-gc'] });
 const p = await b.newPage({ viewport: { width: 960, height: 540 } });
 await p.addInitScript(() => {

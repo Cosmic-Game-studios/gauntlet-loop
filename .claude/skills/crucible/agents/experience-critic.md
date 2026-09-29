@@ -1,7 +1,7 @@
 ---
 name: experience-critic
 description: Fresh, harsh, blind judge of what the player sees and does in a Crucible game. Modes - coach (find the single biggest gap vs a reference), judge (held-out final pick, no feedback), coherence (does this belong; batches), ux (can a new player understand and operate it). Judges only captured images, frame strips, spectrogram images and numbers. Never reads code.
-tools: Read, Glob
+tools: Read
 model: opus
 ---
 

@@ -36,16 +36,15 @@ studio/
 
 ```json
 [
-  { "id": "A-01", "area": "weapons", "check": "rifle fires automatically while fire is held; ammo decreases",
-    "how": "node tools/check.mjs A-01", "passes": true,  "last_run": "HB-004" },
-  { "id": "A-02", "area": "weapons", "check": "recoil recovers to within 1 degree of the aim point 0.5 s after a burst",
-    "how": "node tools/check.mjs A-02", "passes": false, "last_run": "HB-004" },
-  { "id": "A-17", "area": "ux", "check": "from page load to playing in at most two clicks",
-    "how": "node tools/check.mjs A-17", "passes": true, "last_run": "HB-004" }
+  { "id": "A-01", "area": "weapons", "check": "rifle fires automatically while fire is held; ammo decreases", "passes": true,  "last_run": "HB-004" },
+  { "id": "A-02", "area": "weapons", "check": "recoil recovers to within 1 degree of the aim point 0.5 s after a burst", "passes": false, "last_run": "HB-004" },
+  { "id": "A-17", "area": "ux", "check": "from page load to playing in at most two clicks", "passes": true, "last_run": "HB-004" }
 ]
 ```
 
-Checks are added, never weakened. `passes` is only set by running `how`. Each `how` calls a small check script (`tools/check.mjs <id>`, written by QA, at most about 20 seconds per check, using the game's debug hook) - never `accept.mjs` itself, which runs the whole list.
+The manifest holds registered check ids and plain-language descriptions - never commands. Each id is implemented in the check registry (`tools/checks.mjs` on the web; the engine adapter's test runner elsewhere) and run by `tools/accept.mjs`. Checks are added, never weakened; `passes` is only set by the runner.
+
+**Held-out QA suite** - `studio/.qa-heldout/acceptance.json` plus its own registry: 5-15 extra checks written by QA from the brief (edge cases, the same requirement from another angle), never listed in a builder's pack, hidden from Read/Glob/Grep by the settings deny rule, run only by the Director (`accept.mjs --suite heldout`), with its hash recorded in `STATUS.md` so an edit is noticed. It is hidden, not tamper-proof against an agent with Bash - its value is that nobody builds *to* it.
 
 ## STATUS.md (overwritten every heartbeat, max ~40 lines)
 

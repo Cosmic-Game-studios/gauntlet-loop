@@ -14,7 +14,7 @@ The Director installs the studio into the game project before any ticket:
 | `templates/settings.json` | `.claude/settings.json` (merge the `hooks` key) | Hooks below. |
 | `templates/hooks/*.sh` | `.claude/hooks/` | |
 | `templates/drive.sh` | `tools/drive.sh` | Optional outer driver for multi-day unattended runs. |
-| `templates/web/shot.mjs`, `accept.mjs`, `blind.sh`, `perf.mjs` (web projects; write the equivalent for other engines) | `tools/` | Shared render tool with contact sheets, acceptance runner, blind A/B pair preparation, performance probe. |
+| `templates/web/*` for web projects; `templates/unreal/crucible_ue.py` plus `studio/adapter.json` for Unreal; the adapter interface (`references/adapters.md`) written at Tech Spike for other engines | `tools/` | Render tool with contact sheets, acceptance runner and check registry, blind A/B pairs, performance probe. |
 | role prompt bodies | `studio/prompts/<role>.md` | `mkdir -p studio/prompts && for f in .claude/skills/crucible/agents/*.md; do awk 'c>=2; /^---$/{c++}' "$f" > studio/prompts/$(basename "$f"); done` - dispatch briefs point to these files instead of pasting the role text. |
 
 New subagent files are picked up when a session starts. If the current session does not list them, the Director continues in a fresh session (the hooks restore its state), or - as a fallback - uses the built-in general-purpose agent with the role file's body (everything below the `---` frontmatter) pasted as the start of the prompt.
@@ -29,7 +29,7 @@ New subagent files are picked up when a session starts. If the current session d
 | Art Director (lead) | `art-director` | `opus` | all except spawning agents | Style bible, look-dev scene, palette constants; later art-coherence reviews of whole builds. |
 | Tech Director / Design Director (leads) | `studio-builder` with the lead's department brief | `opus` | all except spawning agents | Architecture contract; design numbers, tuning tables, UX flow. |
 | Builder | `studio-builder` | `inherit`; the Director passes `model` per ticket from the routing table in `studio.md` (Opus for visual, spatial and feel work; Sonnet for implementation) | all except spawning agents | Works on the files its ticket owns. Worktree isolation only when files could overlap. |
-| Art / UX / coach / judge / coherence critic | `experience-critic` | `opus` | `Read, Glob` | Read-only. `Read` opens images, which is how it sees evidence. |
+| Art / UX / coach / judge / coherence critic | `experience-critic` | `opus` | `Read` | Read-only, no Glob or Bash; it gets explicit file paths. `Read` opens images, which is how it sees evidence. Blind keys and the held-out QA suite are behind `permissions.deny` rules in the project settings. |
 | Code / architecture / audit critic | `code-critic` | `opus` | `Read, Grep, Glob, Bash`; `Edit, Write` disallowed | Can run tests and the profiler, cannot change code. |
 | Playtester / first-time player | `playtester` | `sonnet` (opus at a release gate) | `Read, Glob, Bash`; `Edit, Write` disallowed | Plays through the step-play harness. |
 | QA runs, clerk work | general-purpose | `haiku` | all | Running the acceptance suite and summarising, renaming evidence, dashboard. |
@@ -63,7 +63,7 @@ At handoff the Director sets `WAITING FOR HUMAN`, which stops `drive.sh`, and ca
 
 ## Model limits the loop is built around
 
-Claude models read text and images. They do **not**:
+These are facts about the model, not rules about tools: whenever a tool on the machine or an MCP server can do what the model cannot (generate images, audio or 3D, drive an editor), the studio uses it. Claude models read text and images. They do **not**:
 
 - **generate images, audio or video,**
 - **hear audio** or **watch video** (only individual frames, as images).

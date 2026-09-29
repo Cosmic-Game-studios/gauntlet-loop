@@ -68,13 +68,17 @@ Every dispatch is built stable-first (`studio.md` - dispatch brief): role file, 
 
 ## Rule 6 - The acceptance list is the definition of done
 
-`studio/acceptance.json` lists every requirement of the brief as a machine-checkable check with a `passes` flag (see `state.md`). It is written at kickoff from the brief and the completeness list, run by QA after every integration, and never edited to make a check pass - only to add checks. A ticket is not done while one of its checks fails, and the Release Candidate gate requires all of them. This keeps the studio from declaring victory early and gives every heartbeat an objective progress number.
+`studio/acceptance.json` lists every requirement of the brief as a registered, machine-checkable check with a `passes` flag (see `state.md`). QA owns it - not the builders whose work it judges: it is written at kickoff from the brief and the completeness list, implemented in the check registry, run after every integration, and never edited to make a check pass - only to add checks. A small **held-out QA suite** that builders never see checks the same requirements from other angles, so passing the visible list by overfitting to it shows up. A ticket is not done while one of its checks fails, and the Release Candidate gate requires all of them. This keeps the studio from declaring victory early and gives every heartbeat an objective progress number.
 
 ## Fresh context by design
 
 - **Every heartbeat starts from files.** The Director does not rely on remembering the previous heartbeat. The first thing it reads is `STATUS.md` and `TRACKER.md`; if the context was compacted or the session restarted, nothing changes.
 - **Session length follows the playbook** (`playbooks.md`). Under about two hours the Director keeps one session - reloading state every few minutes costs more than it saves, and the context stays small because it only reads 5-line returns. For longer runs, the Director finishes the heartbeat, writes `STATUS.md`, commits, and continues in a fresh session (the heartbeat driver, a scheduled Routine, or the next heartbeat after a reset) whenever its context passes roughly half the window or after a set number of heartbeats.
 - **Builders and critics are always scoped.** One ticket per builder, one question per critic; their contexts never accumulate project history.
+
+## Commits never sweep in other work
+
+The Director commits by path - `studio/` and the files the integrated tickets changed (`git add -- <paths>` then `git commit -- <paths>`), never `git add -A` or a bare `git commit` that could include changes someone else staged. Automatic snapshots (the PreCompact hook) go to a side ref through a temporary index and never touch the branch or the staging area.
 
 ## File hygiene
 

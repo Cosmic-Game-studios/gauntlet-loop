@@ -4,7 +4,10 @@
       {
         "matcher": "startup|resume|clear|compact",
         "hooks": [
-          { "type": "command", "command": "bash .claude/hooks/studio-session-start.sh" }
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/studio-session-start.sh"
+          }
         ]
       }
     ],
@@ -12,9 +15,18 @@
       {
         "matcher": "manual|auto",
         "hooks": [
-          { "type": "command", "command": "bash .claude/hooks/studio-pre-compact.sh" }
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/studio-pre-compact.sh"
+          }
         ]
       }
+    ]
+  },
+  "permissions": {
+    "deny": [
+      "Read(./studio/.keys/**)",
+      "Read(./studio/.qa-heldout/**)"
     ]
   }
 }

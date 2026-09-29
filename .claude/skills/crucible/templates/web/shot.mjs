@@ -15,7 +15,9 @@ const [W, H] = opt('--size', '960x540').split('x').map(Number); const sheet = op
 const stepHook = opt('--step-hook', '(window.__studio && window.__studio.step) || (window.__game && window.__game.step)');
 fs.mkdirSync(outDir, { recursive: true });
 const types = { '.js': 'text/javascript', '.mjs': 'text/javascript', '.html': 'text/html', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml' };
-const srv = http.createServer((q, s) => { let p = path.join(gameDir, decodeURIComponent(q.url.split('?')[0])); if (fs.existsSync(p) && fs.statSync(p).isDirectory()) p = path.join(p, 'index.html'); if (!fs.existsSync(p)) { s.statusCode = 404; return s.end(); } s.setHeader('Content-Type', types[path.extname(p)] || 'application/octet-stream'); s.end(fs.readFileSync(p)); }).listen(0);
+const ROOT = path.resolve(gameDir);
+const resolveSafe = url => { const p = path.resolve(ROOT, '.' + path.posix.normalize('/' + decodeURIComponent(url.split('?')[0]))); return p === ROOT || p.startsWith(ROOT + path.sep) ? p : null; };
+const srv = http.createServer((q, s) => { let p = resolveSafe(q.url); if (!p) { s.statusCode = 403; return s.end(); } if (fs.existsSync(p) && fs.statSync(p).isDirectory()) p = path.join(p, 'index.html'); if (!fs.existsSync(p)) { s.statusCode = 404; return s.end(); } s.setHeader('Content-Type', types[path.extname(p)] || 'application/octet-stream'); s.end(fs.readFileSync(p)); }).listen(0);
 const port = srv.address().port;
 const b = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });
 const p = await b.newPage({ viewport: { width: W, height: H } }); const errors = [];

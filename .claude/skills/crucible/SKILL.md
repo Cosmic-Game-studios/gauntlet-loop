@@ -7,7 +7,7 @@ description: Turns a game idea into a fully autonomous, multi-agent game studio 
 
 The gauntlet loop, scaled up to a whole game studio.
 
-One user pitch goes in. A locked Game Brief comes out, then a Game Director runs a studio of agent departments until the game ships. Nothing is merged on the builder's word: every piece of work passes machine checks and fresh critics, and the pieces that matter most have to beat a real shipped game in a blind comparison.
+One user pitch goes in. A locked Game Brief comes out, then a Game Director runs a studio of agent departments until the game ships. The quality target is a game a player would not recognise as AI-made: art direction, models, animation, effects, level design, performance and feel judged against real shipped games of the genre. Nothing is merged on the builder's word: every piece of work passes machine checks and fresh critics, and the pieces that matter most have to beat a real shipped game in a blind comparison.
 
 You have three jobs, in order:
 
@@ -27,7 +27,7 @@ PITCH -> questions (max 5) -> BRIEF -> [human: OK / edit]
 
 ## Phase 0 - Intake (the only time you talk to the user)
 
-1. **Probe the machine** before promising anything. Silently check: GPU or software rendering (Xvfb, lavapipe/llvmpipe), free disk, installed engines and versions (Blender, Godot, Unreal, Unity), licences that need credentials (Unity), ffmpeg, a browser for web builds, network access to fetch bars (video sites, store pages, repos), Python audio/image libraries (numpy, scipy, Pillow), MIDI rendering (fluidsynth + a soundfont), and whether any external image/audio/3D generation tool is connected (MCP server or CLI). Claude itself cannot generate images, audio or video, nor hear audio or watch video - the plan must not depend on it (`references/claude-code.md`). Write it to `studio/MACHINE.md`. An engine that cannot build **and capture screenshots/video** headlessly here is not offered - or it is offered with exactly what the user must install first.
+1. **Probe the machine** before promising anything (for an engine with an adapter, run its `probe` verb - `references/adapters.md`). Silently check: GPU or software rendering (Xvfb, lavapipe/llvmpipe), free disk, installed engines and versions (Blender, Godot, Unreal, Unity), licences that need credentials (Unity), ffmpeg, a browser for web builds, network access to fetch bars (video sites, store pages, repos), Python audio/image libraries (numpy, scipy, Pillow), MIDI rendering (fluidsynth + a soundfont), and whether any external image/audio/3D generation tool is connected (MCP server or CLI). Claude itself cannot generate images, audio or video, nor hear audio or watch video - the plan must not depend on it (`references/claude-code.md`). Write it to `studio/MACHINE.md`. An engine that cannot build **and capture screenshots/video** headlessly here is not offered - or it is offered with exactly what the user must install first.
 2. **Read the pitch.** Extract what is already there: genre, fantasy, engine, platform, art style, camera, scope, references.
 3. **Ask only what is missing, max 5 questions, in one message.** Priority order:
    - Engine and target platform, from the engines that passed the probe. Default if unanswered: the most capable engine that passed (Godot 4 or web are the usual safe choices in a GPU-less container; Unreal 5 only where it is installed and can render).
@@ -56,6 +56,7 @@ Read in this order, and only what the current step needs:
    - `references/craft.md` - art, tech-art, game-feel and UI/UX defaults; pass the relevant section into every dispatch brief.
    - `references/departments.md` - what each department builds, its evidence, bar and checks.
    - `references/claude-code.md` - installing the subagents and hooks, roles-to-subagents table, heartbeat drivers, model limits.
+   - `references/adapters.md` - the engine adapter interface (probe, build, test, capture, perf, step, package, logs), the Unreal adapter, MCP servers, Unreal builder isolation and locks. Proven in the Tech Spike.
    - `references/engines.md` - headless engines, deterministic stepping, capture scripts.
    - `references/state.md` - file formats: STATUS, TRACKER, acceptance.json, tickets.
    - `references/endurance.md` - tiers, cost, calibrated bars, multi-day runs.

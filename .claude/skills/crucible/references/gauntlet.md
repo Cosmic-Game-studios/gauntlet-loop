@@ -92,7 +92,7 @@ Style nits never block. Correctness and robustness blockers are part of the **fl
 
 A fresh `experience-critic` subagent in **coach mode**. Its job is to find the single biggest gap between ours and the bar, so the builder has one clear thing to fix.
 
-It gets evidence A and B (ours and a reference, prepared by script: copied under neutral names in random order, the key kept by the Director, often as one contact sheet per side - see below), the one question for this ticket, the pillars, and the craft rubric for this department (`craft.md`).
+It gets evidence A and B (ours and a reference), prepared by `tools/blind.sh`: copied under neutral names, in random order, into a fresh directory outside the project; the critic is given only that directory. The A/B key goes to `studio/.keys/`, which a deny rule in `.claude/settings.json` hides from Read, Glob, Grep and recognised file commands in Bash; critics have only `Read` - so blindness is enforced by permissions, not only by the prompt. The Director reveals a key with `tools/blind.sh reveal <pair>`. The Tech Spike verifies this once: a critic asked to read a key must be refused., the one question for this ticket, the pillars, and the craft rubric for this department (`craft.md`).
 
 **The reference is always available.** In order of preference: the external bar in comparable framing (`BARS.md`); the Art Director's look-dev target (for art and UI); the current champion (from round 2 on). If no comparable external bar exists, the coach compares against the other two - a review round never ends without a usable gap.
 
