@@ -75,6 +75,7 @@ Build this in the first heartbeat, before any capture or test: a debug hook that
 - `tools/shot.mjs` - renders a scripted sequence (debug-hook calls, stepped simulation, real key presses and clicks) to PNGs plus one labelled contact sheet; run it under `flock` so renders do not starve the machine.
 - `tools/accept.mjs` - runs `studio/acceptance.json` and updates each check's `passes`.
 - `tools/blind.sh` - copies ours and the reference into a neutral A/B pair in random order and keeps the key away from the critic.
+- `tools/perf.mjs` - instruments WebGL and reports draw calls, triangles, frame rate and heap growth for menu, idle and a fixed combat load; run it in every review and keep the numbers within `BUDGETS.md`.
 
 ## Capture scripts (owned by Tech Art, built in Tech Spike)
 

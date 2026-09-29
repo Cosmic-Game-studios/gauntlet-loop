@@ -15,7 +15,7 @@ Timeline for a 30-minute cap (scale proportionally):
 |---|---|---|
 | 0-3 | Director | Probe (one command), brief, pillars, `ARCHITECTURE.md` with one owner per file and the shared interfaces, a shared constants/palette file, `acceptance.json`, role prompt files (`claude-code.md`), `tools/shot.mjs` and `tools/accept.mjs` from the templates. Commit. |
 | 3-11 | 5 builders, parallel, deadline minute 10:30 | **Wave 1 ships the whole game at first-pass quality** - no stubs in another owner's file. Opus: gameplay core + weapons and feel; look + arena (Art Director role: style bible, renderer and post setup, level); enemies (models, animation, AI); HUD + all screens (UI is a hero ticket). Sonnet: audio + bar captures in comparable framing (at most 3 minutes on bars). |
-| 11-12.5 | Director | Integrate, acceptance run, one shared capture set and contact sheets, commit - the first playable build. |
+| 11-12.5 | Director | Integrate, acceptance run, perf probe, one shared capture set and contact sheets, commit - the first playable build. |
 | 12.5-15 | Review board, parallel | Opus coaches for the look, the enemies, the HUD/screens (ux mode), plus the Code critic. |
 | 15-19.5 | Resumed builders, deadline 19:00 | One gap each (code blockers first). |
 | 19.5-26.5 | Review + fix, round 2 | Same shape, shorter: coaches on the three most visible pieces, resumed builders with deadline 26:00. If time allows, round 3 on the single weakest piece. |

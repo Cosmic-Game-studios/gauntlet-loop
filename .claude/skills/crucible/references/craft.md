@@ -26,7 +26,8 @@ General: correct colour management, a filmic tone mapper, image-based ambient li
 - Shadows: `PCFSoftShadowMap`, one shadow-casting directional light with a tight shadow camera around the play space, sensible `shadow.bias`/`normalBias`.
 - Fog: `THREE.Fog` or `FogExp2` matched to the sky colour.
 - First-person viewmodel: its own scene and camera (narrower FOV than the world camera), rendered after the world with a depth clear, with its own lights so it never renders unlit.
-- Performance: merge static level geometry (`BufferGeometryUtils.mergeGeometries`) or use `InstancedMesh`; share materials; pool particles, tracers, decals; no allocations in the frame loop.
+- Performance: merge static level geometry (`BufferGeometryUtils.mergeGeometries`) or use `InstancedMesh`; share materials; pool particles, tracers, decals; no allocations in the frame loop. **Characters too:** a creature built from 20 primitives costs 20 draw calls (and 20 more for shadows) - merge each character's static parts per material, or instance per enemy type, so draw calls do not grow with enemy count.
+- **Budgets, measured every review** with `tools/perf.mjs` (draw calls and triangles per frame, frame rate, heap growth) under a fixed load, recorded in `BUDGETS.md`. In the first benchmark the three games ranged from 17 to 630 draw calls for the same content; the difference was entirely in merging and instancing.
 
 **Godot / Unity / Unreal**: the same intent with the engine's tools - Environment + WorldEnvironment tonemap/glow (Godot), URP/HDRP volume with tonemapping and bloom (Unity), post-process volume with Lumen (Unreal).
 
