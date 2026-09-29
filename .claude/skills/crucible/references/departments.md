@@ -63,7 +63,7 @@ Every sourced asset has its licence recorded in `studio/ASSETS.md`. No asset of 
 
 - **Model:** Opus.
 - **Builds:** player character, enemies, NPCs, creatures - design sheet, model, materials, outline/rim setup, LODs - handed to Animation with named pivots or a skeleton.
-- **Craft:** `craft.md` - "Character design", "3D models built in code", "The AAA look".
+- **Craft:** `craft.md` - "Character design", "3D models built in code", "The AAA look". Tools (web): `src/sculpt.js` for organic bodies, `src/shapes.js` for hard gear, `src/rig.js` for the skeleton handed to Animation.
 - **Evidence:** lineup of all characters side by side at the same scale and at game distance, turntable strips, silhouettes, close-up of the face/mask and hands, in-game shot in the level's lighting.
 - **Bar:** the reference game's characters in the same framing.
 - **Verify:** every type readable and distinct as a black silhouette at game distance; enemy hue family not used by the level; triangle and draw-call budget; pivots at joints; nothing floats or intersects in the bind pose.
@@ -97,6 +97,7 @@ Every sourced asset has its licence recorded in `studio/ASSETS.md`. No asset of 
 - **Evidence:** a material ball sheet (every library material on a sphere and a bevelled cube under game lighting), before/after gameplay frames from fixed poses, the perf probe before and after.
 - **Bar:** the reference game's surfaces and image in the same framing, plus the frame-time budget.
 - **Verify:** no shader errors or warnings; programs compiled before the first frame (`precompile`); shader program count, frame time and draw calls within `BUDGETS.md`; every quality level renders correctly; effects and grade never wash out the target.
+- **In blitz and sprint runs** this builder also covers Tech Art: lighting and keeping `BUDGETS.md` (which the Director drafts at kickoff from `craft.md`) true.
 - **Rule:** one library, used by everyone. A department that needs a new surface asks for it in its return line instead of writing its own shader, so the game keeps one look and a small number of programs.
 - **Other engines:** Unreal - master materials with material instances and material functions, a material parameter collection for global values (time, wetness, hit flash), post-process volumes and the Lumen/Nanite/shadow settings, custom stencil for outlines; Godot - `ShaderMaterial` with shared includes and `global uniforms`, `WorldEnvironment`; Unity - Shader Graph subgraphs on URP/HDRP, volume profiles.
 
@@ -104,7 +105,8 @@ Every sourced asset has its licence recorded in `studio/ASSETS.md`. No asset of 
 
 - **Model:** Opus.
 
-- **Builds:** rigs, skinning, locomotion sets, attacks, reactions, retargeting, blend trees / state machines with Code.
+- **Builds:** rigs, skinning, locomotion sets, attacks, reactions, retargeting, blend trees / state machines with Code; animation events that the VFX, audio and gameplay code hang on. Tools (web): `src/rig.js`.
+- **Craft:** `craft.md` - "Animation".
 - **Evidence:** clip on the in-engine character, side view and game camera view, plus a slowed 0.25x version.
 - **Bar:** the reference game's equivalent move, frame-stepped.
 - **Verify:** loops, root motion, foot sliding threshold, correct skeleton, event markers (footsteps, hit frames) present, no joint beyond its rotation limits, no mesh interpenetration in any frame (scripted collision check on sampled frames).

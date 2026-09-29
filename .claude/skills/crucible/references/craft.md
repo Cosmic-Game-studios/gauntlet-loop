@@ -20,7 +20,7 @@ The first Arena benchmark showed what happens without them: flat greybox lightin
 General: correct colour management, a filmic tone mapper, image-based ambient light, a small post chain, tight shadows, and a quality setting so it scales.
 
 **Web / three.js** (all of this ships inside the `three` package, so it is not an extra dependency; `templates/web/lookdev.js`, copied into the game at kickoff, implements the renderer, the post chain by quality level (grade, bloom, GTAO), dynamic resolution, shader precompile, toon ramp, ink outlines, merge-by-material and canvas textures; `templates/web/materials.js` adds the stylised surface patch, micro-detail normal maps, dissolve and the sky - all tested starting points):
-- `renderer.outputColorSpace = THREE.SRGBColorSpace`; `renderer.toneMapping = THREE.ACESFilmicToneMapping` (or `AgXToneMapping`), exposure tuned on the look-dev scene.
+- `renderer.outputColorSpace = THREE.SRGBColorSpace`; `renderer.toneMapping = THREE.ACESFilmicToneMapping` (or `AgXToneMapping`), exposure tuned on the hero frame.
 - Image-based light without assets: `scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture` (`three/examples/jsm/environments/RoomEnvironment.js`). This alone lifts standard materials out of the "flat" look.
 - Post: `EffectComposer` -> `RenderPass` -> `UnrealBloomPass` at half resolution (threshold high enough that only emissives and flashes bloom) -> `OutputPass`; FXAA (cheaper) or SMAA for edges; optional vignette / colour correction. Post costs little on a GPU but a lot under software rendering - keep the chain short and offer a quality setting rather than silently downgrading.
 - Shadows: `PCFSoftShadowMap`, one shadow-casting directional light with a tight shadow camera around the play space, sensible `shadow.bias`/`normalBias`.
@@ -37,6 +37,7 @@ General: correct colour management, a filmic tone mapper, image-based ambient li
 
 When assets are authored in code or through a DCC tool driven by script, the difference between "greybox" and "finished" is craft, not polycount:
 
+- **Organic forms are sculpted, not assembled:** bodies, creatures, faces and cloth folds come from `src/sculpt.js` - shapes that melt into each other in one seamless mesh with painted colour zones and bone weights from the parts, one draw call per character. Hard gear (masks, armour plates, weapons in hand) is modelled with `shapes.js` and fused on with `attachRigid`. A character assembled from separate spheres and cylinders reads as a placeholder at any distance.
 - **Starter kit (web):** `src/shapes.js` - `profile` (bevelled extrusion of a side outline), `chamferBox`, `lathe`, `tube`, `mirrorX`, `assemble` (parts list to a model), `bakeOcclusion` (vertex AO and gradient), `scatter` (instanced repeats); merge the result with `mergeByMaterial` from `src/lookdev.js`.
 - **Shape language first.** Block the silhouette from a few big forms, then add medium forms, then small details - never start with details. Each character has one exaggerated feature (oversized shoulder, visor, claw, backpack) that reads at game distance.
 - **Real geometry, not boxes.** Bevelled edges (`RoundedBoxGeometry`, chamfered custom geometry), extrusions of 2D profiles (`ExtrudeGeometry` with bevel), lathed profiles (`LatheGeometry`) for barrels, helmets and limbs, tubes along curves for cables and pipes, smooth normals where surfaces should read as soft. Panel lines, bolts, vents and trims as small geometry or normal detail.
@@ -46,6 +47,12 @@ When assets are authored in code or through a DCC tool driven by script, the dif
 
 ## Animation (Animation department)
 
+- **Work like an animator, in passes.** Key poses first (the silhouette of every beat reads as a still), then timing (how long each beat holds), then spacing (easing between poses: `anticipate` before big moves, `snap` into strikes, `back` for overshoot and settle, `out` for recoveries), then polish (overlap, follow-through, secondary motion). Review the pose strip before timing, and the timed filmstrip before polish - a bad pose cannot be fixed by smoothing.
+- **Starter kit (web):** `src/rig.js` - `createRig` (skeleton from a joint list, bind pose = joint positions, faces +z), `poseClip` (clips from key poses with per-key easing, root motion and events), `Animator` (loops and one-shots with cross-fades, events for hit frames and footsteps, hit-flinch and look-at layers), `Spring`, `twoBoneIK`.
+- **Weight and contact.** Down poses on each step (the root drops at contact), feet planted without sliding (stride length = speed x cycle time; scale the clip's time to the move speed), hips lead and the upper body counter-rotates, heavy things take longer to start and stop.
+- **Layers.** Base locomotion, upper-body actions over it, additive reactions (hits, breathing), then procedural corrections (look-at, IK on feet and hands). A character that can only play one clip at a time looks mechanical.
+- **Personality in motion.** Each type moves in its own way: a rusher lunges and leans forward, a heavy lumbers, an undead creature lurches with asymmetric, irregular timing and a dragging limb, a soldier moves economically. Movement tells the player what a threat is before its model does.
+- **Events drive the rest.** Animation events (`hit`, `footstep`, `release`, `death`) trigger the damage, the VFX and the sound on the exact frame - never a separate timer that drifts from the pose.
 - **Rigs, not wobbling boxes.** A bone hierarchy (`THREE.Bone`/`Skeleton` with a `SkinnedMesh`, or a clean hierarchy of pivoted parts for mechanical characters), with pivots at real joints.
 - **Clips and a state machine.** Keyframed clips (`AnimationClip` + `AnimationMixer`) for idle, locomotion, attack windup/strike/recover, hit reaction, death; cross-fades between states driven by gameplay; root motion or speed-matched locomotion so feet do not slide.
 - **Principles you can see in stills.** Clear key poses, anticipation before big actions, follow-through and overlap after them, arcs instead of straight lines, ease-in/out spacing, weight shifts. Telegraph every enemy attack with a readable windup pose.
@@ -105,7 +112,7 @@ What separates a high-end game from a competent one is rarely one feature; it is
 - **Silhouette test at game distance.** Each type recognisable as a black shape at 20 m; one exaggerated feature per type (mask, horns, backpack, oversized arm, antenna).
 - **Colour zones.** 60/30/10 split per character; the enemy hue family is reserved and never appears in the level; a bright focal colour on the head or weapon; a readable weak point (glowing, contrasting) where crits land.
 - **Detail on focal points.** Face or mask, hands, weapon and one gear piece carry the detail (straps, pouches, armour plates with bevels, seams, rivets); the torso and legs stay calmer.
-- **Built to move.** Parts split at the joints with pivots at the joint centres (or skinned to a skeleton), overlapping plates instead of gaps, a neutral pose that animates well. Outlines and rim light on every part so the character pops from any background.
+- **Built to move.** Skinned to a skeleton (`sculpt.js` + `rig.js`) or split at the joints with pivots at the joint centres, overlapping plates instead of gaps, a neutral pose that animates well; share one sculpted geometry per enemy type and clone the rigged mesh per spawn (`SkeletonUtils.clone`). Outlines and rim light on every part so the character pops from any background.
 
 ## Weapon design (Weapon & Prop Art)
 
@@ -120,7 +127,7 @@ What separates a high-end game from a competent one is rarely one feature; it is
 
 - **One library, few programs.** Patch built-in lit materials (`onBeforeCompile`) rather than writing lighting from scratch: they keep shadows, fog, skinning, instancing and every light type. Share one program per material kind; vary by uniforms, never by generating new shader code per object.
 - **What the library covers:** stylised surface (rim, world-space variation, grime), micro-detail normal maps, dissolve, hit flash, sky, outline or edge detection, halftone/hatching for comic styles, special surfaces (water, energy, holograms, foliage wind) when the game needs them.
-- **World-space tricks** avoid UV work: variation, grime and wear from world position and normals; triplanar mapping for terrain and large architecture.
+- **World-space tricks** avoid UV work on static geometry: variation, grime and wear from world position and normals; triplanar mapping for terrain and large architecture. Anything that moves (characters, weapons, doors) uses object space, or the pattern slides over it.
 - **Animated shaders run on the simulation clock** (`tickMaterials(dt)`), so pauses and captures freeze them.
 - **Cost awareness.** Texture lookups and noise octaves per pixel are the cost; heavy effects run at half resolution; no discard on large surfaces except dissolves; transparency sorted and limited; `precompile` before the first frame so the first fight never hitches.
 - **Quality levels.** Low, medium, high - each one looks intended, and the player chooses. Captures and reviews use one fixed level.
@@ -129,7 +136,7 @@ What separates a high-end game from a competent one is rarely one feature; it is
 
 Looking expensive and running cheap is the craft. Budgets live in `BUDGETS.md` from kickoff and are checked by the perf probe after every integration; a visual gain that breaks the budget is not a gain.
 
-- **Budgets (web, mid-range laptop, 1080p, 60 fps target):** under ~150 draw calls in combat, under ~300k triangles on screen, under ~30 shader programs, no per-frame allocations, heap flat over a minute of combat. Other engines: frame time per thread from the profiler.
+- **Budgets (web; target 60 fps at 1080p on a mid-range laptop):** under ~150 draw calls in combat, under ~300k triangles on screen, under ~30 shader programs, no per-frame allocations, heap flat over a minute of combat. `tools/perf.mjs` measures draw calls, triangles, shader programs linked, heap and a relative frame rate; under software rendering the frame rate only compares builds with each other - absolute fps is confirmed on real hardware in the human playtest. Other engines: frame time per thread from the profiler.
 - **Draw calls:** merge static geometry per material; one draw call per material per character type, instanced when many; instanced scatter for repeated props; texture atlases or shared materials instead of per-object materials.
 - **Triangles where they are seen:** detail on focal points and close-range assets, LODs (`THREE.LOD`) for characters and props beyond ~20 m, simple silhouettes for the far backdrop.
 - **Shadows:** one shadow-casting sun with a tight frustum around the play space; small props and distant objects do not cast; shadow map size by quality level.

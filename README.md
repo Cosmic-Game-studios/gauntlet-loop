@@ -46,6 +46,8 @@ Crucible is built for exactly those failure modes:
 | Busy process, unchanged game | A **progress contract**: every heartbeat must raise playable quality, reduce a real risk or gain needed information. Progress reviews measure the game and cut process or **replace the approach** when it stops improving. |
 | Context loss on long runs, or agents drowning in context | **Files are the memory.** A one-screen `STATUS.md` and a checkbox `TRACKER.md` belong to the Director. Every other agent gets a **context pack built by a tool** - only the sections and interfaces its ticket needs, about 1-6k tokens - and returns at most 5 lines. |
 | Games that look like prototypes | Art departments like a real studio - **Character Art, Weapon & Prop Art, World Design, Level Design, Shaders & Rendering**, Animation, VFX - working towards one **hero frame**. A **Visual QA inspector** plays every build and hunts defects up close, in motion and in combat; turntables and filmstrips go to blind critics. Tested starters for modelled assets, a shared material library and a graded post chain. |
+| Departments that build parts, not a game | **Feature pods** like a real studio: an enemy or weapon gets one feature sheet (numbers, silhouette, animation beats, events), then modelling, animation, VFX, audio and code build in parallel against it and are reviewed as one feature. **Dailies** after every integration; **lead sign-off** on hero pieces. |
+| Stiff, assembled characters | **Sculpted characters** (`sculpt.js`): seamless organic meshes with painted colour zones and bone weights, one draw call each; **animation in passes** (`rig.js`): key poses, timing, easing with anticipation and overshoot, layers, events, IK. |
 | Beautiful but slow | **Performance budgets** from kickoff (draw calls, triangles, shader programs, frame time), measured at every integration; a visual gain that breaks the budget goes back to its owner. |
 | The pitch never lists everything a game needs | A **completeness pass** adds what the genre expects: settings, rebinding, hit feedback, checkpoints, juice. |
 | Taste the model cannot judge | **You** play the release candidate. Fun, feel and sound are yours to judge, and every piece of feedback becomes a new bar and new tickets. |
@@ -253,7 +255,7 @@ Heartbeat drivers: `tools/drive.sh` (a fresh headless session per heartbeat, for
   - package: `BuildCookRun`
   - multiplayer: dedicated-server smoke tests, and Gauntlet for larger multiplayer suites
 
-  Builders are isolated, merged through an integration queue, and share engine resources through locks. **Web** (three.js) ships ready-made tools: a kickoff script, capture with filmstrips, a step-play tool, a perf probe, acceptance runner, blind pairs, and starters for rendering (`lookdev.js`), the material library (`materials.js`) and modelled assets (`shapes.js`). Godot and Unity follow the same interface.
+  Builders are isolated, merged through an integration queue, and share engine resources through locks. **Web** (three.js) ships ready-made tools: a kickoff script, capture with filmstrips, a step-play tool, a perf probe, acceptance runner, blind pairs, and starters for rendering (`lookdev.js`), the material library with hand-painted textures and comic hatching (`materials.js`), modelled assets (`shapes.js`), sculpted characters (`sculpt.js`) and animation (`rig.js`). Godot and Unity follow the same interface.
 - **Tools are not prescribed.** Builders use whatever gives the best result, including MCP servers connected to the session, for example an Unreal Editor or Blender MCP server, as well as DCC tools and generators. What is fixed is the engine named in the brief, evidence captured through the adapter, and the model's real limits.
 - **Craft built in:** the AAA look layer by layer, world and level design, character and weapon design, shaders, 3D modelling in code, skeletal animation, VFX that never hide the target, comic and cel rendering, optimization budgets and game feel. Measurable craft rules become acceptance checks.
 
@@ -300,7 +302,7 @@ The cycle repeats until you say the game is done.
 │   ├── visual-qa.md           plays the build, hunts visual defects with screenshots
 │   └── art-director.md        style bible, hero frame, coherence reviews
 ├── templates/                 CLAUDE.md, hooks, settings.json, drive.sh, pack.mjs (context packs)
-│   ├── web/                   kickoff, shot, play, perf, accept/check, blind; lookdev, materials, shapes starters
+│   ├── web/                   kickoff, shot, play, perf, accept/check, blind; lookdev, materials, shapes, sculpt, rig starters
 │   └── unreal/                crucible_ue.py engine adapter
 └── references/
     ├── studio.md              org chart, model routing, rituals, dispatch brief

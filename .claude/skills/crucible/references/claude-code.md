@@ -26,7 +26,7 @@ New subagent files are picked up when a session starts. If the current session d
 | Role | Subagent | Model | Tools | Notes |
 |---|---|---|---|---|
 | Game Director | the main session | Opus | all | Plans, routes, merges, decides. Never builds. |
-| Art Director (lead) | `art-director` | `opus` | all except spawning agents | Style bible, look-dev scene, palette constants; later art-coherence reviews of whole builds. |
+| Art Director (lead) | `art-director` | `opus` | all except spawning agents | Style bible, hero frame, palette constants; later art-coherence reviews of whole builds. |
 | Tech Director / Design Director (leads) | `studio-builder` with the lead's department brief | `opus` | all except spawning agents | Architecture contract; design numbers, tuning tables, UX flow. |
 | Builder | `studio-builder` | `inherit`; the Director passes `model` per ticket from the routing table in `studio.md` (Opus for visual, spatial and feel work; Sonnet for implementation) | all except spawning agents | Works on the files its ticket owns. Worktree isolation only when files could overlap. |
 | Art / UX / coach / judge / coherence critic | `experience-critic` | `opus` | `Read` | Read-only, no Glob or Bash; it gets explicit file paths. `Read` opens images, which is how it sees evidence. Blind keys and the held-out QA suite are behind `permissions.deny` rules in the project settings. |

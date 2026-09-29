@@ -10,12 +10,13 @@ const srv = http.createServer((q, s) => { let p = resolveSafe(q.url); if (!p) { 
 const b = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--enable-precise-memory-info', '--js-flags=--expose-gc'] });
 const p = await b.newPage({ viewport: { width: 960, height: 540 } });
 await p.addInitScript(() => {
-  const P = window.__perf = { calls: 0, tris: 0, frames: 0, heap: [] };
+  const P = window.__perf = { calls: 0, tris: 0, frames: 0, heap: [], programs: 0 };
   const wrap = (proto, name, triFn) => { const o = proto[name]; if (!o) return; proto[name] = function (...a) { P.calls++; P.tris += triFn(a); return o.apply(this, a); }; };
   for (const C of [window.WebGLRenderingContext, window.WebGL2RenderingContext]) { if (!C) continue; const pr = C.prototype;
     const tri = (mode, count, inst = 1) => (mode === 4 ? count / 3 : mode === 5 || mode === 6 ? Math.max(0, count - 2) : 0) * inst;
     wrap(pr, 'drawArrays', a => tri(a[0], a[2])); wrap(pr, 'drawElements', a => tri(a[0], a[1]));
-    wrap(pr, 'drawArraysInstanced', a => tri(a[0], a[2], a[3])); wrap(pr, 'drawElementsInstanced', a => tri(a[0], a[1], a[4])); }
+    wrap(pr, 'drawArraysInstanced', a => tri(a[0], a[2], a[3])); wrap(pr, 'drawElementsInstanced', a => tri(a[0], a[1], a[4]));
+    const lp = pr.linkProgram; pr.linkProgram = function (...a) { P.programs++; return lp.apply(this, a); }; }
   const raf = window.requestAnimationFrame.bind(window);
   window.requestAnimationFrame = cb => raf(t => { P.frames++; cb(t); });
   window.__perfT0 = performance.now();
@@ -39,5 +40,6 @@ const s = await p.evaluate(() => window.__game?.getState?.()); const [x, y, z] =
 for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2, r = 9 + (i % 3) * 3; await G('spawnEnemy', i % 2 ? 'shooter' : 'rusher', x + Math.cos(a) * r, y, z + Math.sin(a) * r); }
 await p.waitForTimeout(800); await G('setInput', { fire: true });
 R.combat12 = await window_(8000); await G('setInput', { fire: false });
+R.shaderPrograms = await p.evaluate(() => window.__perf.programs);   // programs linked since load (a late jump means mid-game compiles: precompile)
 fs.writeFileSync(outFile, JSON.stringify(R, null, 2)); console.log(JSON.stringify(R));
 await b.close(); srv.close(); process.exit(0);

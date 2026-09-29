@@ -15,7 +15,7 @@ Why this shape: in the first Arena benchmark, a studio with three generalist bui
    ART DIRECTOR      TECH DIRECTOR              DESIGN DIRECTOR         PRODUCER / QA LEAD
    (Opus)            (Opus)                     (Opus)                  (Sonnet)
    style bible,      architecture contract,     mechanics, feel         acceptance suite,
-   look-dev scene,   module owners, code        numbers, tuning,        capture + step tools,
+   hero frame,       module owners, code        numbers, tuning,        capture + step tools,
    visual reviews    reviews, integration       UX flows, onboarding    playtests, tracker hygiene
         |                  |                          |                    |
    ----- DEPARTMENTS (builders, one ticket each, own files) -------------------------------
@@ -47,13 +47,27 @@ When a Sonnet ticket fails its first review on quality (not on a bug), the next 
 
 ## Rituals
 
-A studio has rhythms. Crucible has five, and the playbook (`playbooks.md`) sets how often each runs for the available time.
+A studio has rhythms. Crucible has six, and the playbook (`playbooks.md`) sets how often each runs for the available time.
 
-1. **Kickoff** - brief and pillars (Director), then in parallel: style bible and look-dev scene (Art Director), architecture contract with one owner per file (Tech Director), feel numbers, tuning tables and UX flow (Design Director), acceptance suite, capture and step tools, bar captures in comparable framing (Producer/QA). Nothing is built by departments until the contract exists; everything after is built against it.
+1. **Kickoff** - brief and pillars (Director), then in parallel: style bible and hero frame (Art Director, with Shaders & Rendering), architecture contract with one owner per file (Tech Director), feel numbers, tuning tables and UX flow (Design Director), acceptance suite, capture and step tools, bar captures in comparable framing (Producer/QA). Nothing is built by departments until the contract exists; everything after is built against it.
 2. **Production sprint** - every department builds its ticket in parallel, on its own files, against the style bible and contract. A sprint ends when all dispatched builders have returned.
 3. **Review** - the review board runs in parallel on the integrated build: art critic, UX critic, code critic, playtester, acceptance suite. The Director turns their verdicts into **one top gap per department** (never a list) and a fix list for bugs.
 4. **Fix sprint** - the same builders are resumed with their one gap (continuity is cheap; see `context.md`). Then review again. This review-fix cycle is the gauntlet (`gauntlet.md`), up to the round budget.
-5. **Milestone review** - on a real build: acceptance suite green, held-out judges on hero pieces, the milestone gate in `director.md`. Then the next milestone's tickets are written.
+5. **Dailies** - after every integration, everything that changed on screen goes onto one contact sheet (the evidence sets from `tools/review.json`) next to the hero frame and the bar. The Director looks at it, the Visual QA inspector plays the build; in runs of an hour or more the Art Director reviews it in coherence mode. This is how a studio sees drift the day it happens, not at the milestone.
+6. **Milestone review** - on a real build: acceptance suite green, held-out judges on hero pieces, the milestone gate in `director.md`. Then the next milestone's tickets are written.
+
+## Feature pods: how a studio builds one thing with many departments
+
+A player never sees "the animation department's work" - they see an enemy: its silhouette, the way it lurches at them, the telegraph before the swing, the hit spark, the sound, the death. When those pieces are built in isolation they do not fit, however good each one is. So a feature that spans departments (an enemy type, a weapon, a zone, a boss) is built by a **pod**:
+
+1. **Feature sheet first** (Director, with the Art and Design Directors' rules; one page in `studio/features/<feature>.md`): fantasy and role in play, the numbers (health, speed, damage, timings), silhouette and shape language, proportions and colour zones, the animation beats with their frame timings (windup 0.4 s, strike at 0.52 s, recover 0.3 s), the gameplay events those beats fire (`hit`, `footstep`, `death`), and which VFX and sounds hang on which event.
+2. **Contracts before content**: the rig (joint list, pivots, facing), the event names, the file owners. Character Art, Animation, VFX, Audio and Code then build **in parallel** against the sheet - no one waits for another's finished work.
+3. **Reviewed as one feature**: the pod's evidence is one sheet - turntable, lineup at game distance, filmstrips of each beat with its VFX, the numbers - so the coach judges the enemy a player meets, not five parts.
+4. **Tuned together**: the fix round for a pod goes to whichever department owns the gap, with the rest of the pod's sheet in its pack.
+
+In blitz and sprint runs a pod is usually one Opus ticket per feature (for example "zombie: model, rig, clips, AI hooks") plus the VFX and audio builders working from the same sheet.
+
+**Lead sign-off.** A hero piece is only WON when its lead would ship it: the Art Director for anything visible, the Design Director for feel, the Tech Director for code and budgets. In short runs the coach verdict, the inspector's defect list and the acceptance checks are that sign-off; in long runs the lead adds one line to the piece's verdicts (`SIGN-OFF` or the one thing that blocks it).
 
 ## Writing a dispatch brief
 

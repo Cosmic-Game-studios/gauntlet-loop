@@ -6,6 +6,7 @@
 //   {"wait": 500}                           wall-clock wait (avoid; prefer "step")
 //   {"key": "KeyW", "ms": 400}              hold a real key      {"click": [640, 400]}   real click
 //   {"shot": "name"}                        screenshot -> <outDir>/<name>.png
+//   {"print": "expr"}                       evaluate an expression in the page and add its value to the output ("values")
 //   {"strip": "name", "frames": 8, "step": 3, "js": "..."}   filmstrip in one image: frames `step` ticks apart (animation, recoil,
 //                                           effects); `js` runs before each frame with ${i} replaced (turntables: rotate the model by i)
 // Run it under one of two locks so at most two renders share the CPU, and skip the render if the wait times out:
@@ -24,8 +25,12 @@ const port = srv.address().port;
 const b = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });
 const p = await b.newPage({ viewport: { width: W, height: H } }); const errors = [];
 p.on('pageerror', e => errors.push(e.message)); p.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
-await p.goto(`http://localhost:${port}/index.html`); await p.waitForTimeout(1500);
-const shots = [];
+await p.goto(`http://localhost:${port}/index.html`);
+// wait for the game to finish loading (async setup, texture generation, shader precompile), not for a fixed time
+await p.waitForFunction(h => { try { return typeof eval(h) === 'function'; } catch { return false; } }, stepHook, { timeout: 30000 }).catch(() => {});
+await p.waitForTimeout(300);
+const shots = [], values = [];
+try {
 for (const a of JSON.parse(fs.readFileSync(actionsFile, 'utf8'))) {
   if (a.strip) {
     const imgs = [], k = a.step || 3, nf = Math.min(a.frames || 8, 12);
@@ -38,6 +43,7 @@ for (const a of JSON.parse(fs.readFileSync(actionsFile, 'utf8'))) {
     await sp.setContent(`<body style="margin:0;background:#111"><div style="display:grid;grid-template-columns:repeat(${Math.min(4, nf)},1fr);gap:3px;padding:3px">${imgs.map((d, i) => `<figure style="margin:0;position:relative"><img src="data:image/jpeg;base64,${d}" style="width:100%;display:block"><figcaption style="position:absolute;left:4px;top:4px;background:#000b;color:#fff;font:13px sans-serif;padding:1px 5px">${i + 1} (+${k * i}t)</figcaption></figure>`).join('')}</div></body>`);
     const f = path.join(outDir, a.strip + '.png'); await sp.screenshot({ path: f, fullPage: true }); await sp.close(); shots.push([f, a.strip]);
   }
+  else if (a.print) values.push(await p.evaluate(a.print).catch(e => 'error: ' + e.message));
   else if (a.eval) await p.evaluate(a.eval);
   else if (a.step) await p.evaluate(([h, n]) => { const f = eval(h); if (typeof f !== 'function') throw new Error('step hook missing: ' + h); f(n); }, [stepHook, a.step]);
   else if (a.wait) await p.waitForTimeout(a.wait);
@@ -45,6 +51,7 @@ for (const a of JSON.parse(fs.readFileSync(actionsFile, 'utf8'))) {
   else if (a.click) await p.mouse.click(a.click[0], a.click[1]);
   else if (a.shot) { await p.waitForTimeout(80); const f = path.join(outDir, a.shot + '.png'); await p.screenshot({ path: f }); shots.push([f, a.shot]); }
 }
+} catch (e) { errors.push('shot.mjs: ' + e.message.split('\n')[0]); }   // page errors above usually explain it
 if (sheet && shots.length) {  // contact sheet: all shots of this run in one labelled image
   const cells = shots.map(([f, n]) => `<figure style="margin:0;position:relative"><img src="data:image/png;base64,${fs.readFileSync(f).toString('base64')}" style="width:100%;display:block"><figcaption style="position:absolute;left:6px;top:6px;background:#000a;color:#fff;font:14px sans-serif;padding:2px 6px">${n}</figcaption></figure>`).join('');
   await p.setViewportSize({ width: 1600, height: 100 });
@@ -52,5 +59,5 @@ if (sheet && shots.length) {  // contact sheet: all shots of this run in one lab
   await p.screenshot({ path: path.join(outDir, sheet), fullPage: true });
 }
 fs.writeFileSync(path.join(outDir, 'errors.json'), JSON.stringify(errors, null, 2));
-console.log(JSON.stringify({ shots: shots.map(s => s[0]), sheet: sheet ? path.join(outDir, sheet) : null, errors: errors.length }));
+console.log(JSON.stringify({ shots: shots.map(s => s[0]), sheet: sheet ? path.join(outDir, sheet) : null, errors: errors.length, ...(values.length ? { values } : {}) }));
 await b.close(); srv.close();

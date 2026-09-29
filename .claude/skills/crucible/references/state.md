@@ -27,6 +27,7 @@ studio/
 ├── feedback/         # RC-<n>.md: human feedback, interpretation, new bars, tickets, status
 ├── handoff/          # RC-<n>/: build, PLAY.md, CHANGES.md, highlight video, screenshots
 ├── bars/             # fetched reference material (clips, screenshots, audio, reference repos)
+├── features/         # <feature>.md: feature sheet for a pod - numbers, silhouette, animation beats, events, VFX and sound cues
 ├── tickets/          # <ticket-id>.md: header (sections, owns, uses, lesson tags, evidence) + ticket body - written by the Director
 ├── packs/            # <ticket-id>.md: context pack built by tools/pack.mjs - the only studio file a builder reads
 ├── evidence/         # <ticket-id>/round-<n>/ captures + critic verdicts + logs

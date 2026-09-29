@@ -18,12 +18,12 @@ Everything from sprint mode applies, compressed, and **pipelined**: each piece g
 | 11-13.5 | Round 3 on the most visible piece (usually world or characters), re-check fix diffs against their blockers (Sonnet), final acceptance and perf run. |
 | 13.5-15 | Commit, `KNOWN_GAPS.md`, `PLAY.md`, last contact sheet, `state: WAITING FOR HUMAN RC-1`. |
 
-About 14-18 dispatches. Builders in blitz mode render at most twice per round.
+About 18-24 dispatches. Builders in blitz mode render at most twice per round.
 
 Blitz rules that decide the result:
 - **Dispatch at minute 1.5, not minute 4.** The Director writes only what builders cannot invent consistently: the owner table, the hook, the cross-module signatures, the palette and the three look words. Everything else goes into tickets.
 - **Absolute paths and absolute deadlines** in every brief (`deadline 12:07 UTC`, `/abs/path/game/src/enemies.js`); builders check `date -u` before each render.
-- **Visual pieces are Opus and get their craft sections through the pack** (`craft.md`: "The AAA look" plus the department's own section - world, level, character, weapon, shaders, animation, VFX, comic rendering), plus the one bar frame that matters for them.
+- **Visual pieces are Opus and get their craft sections through the pack** (`craft.md`: "The AAA look" plus the department's own sections - "World design", "Level design", "Character design", "Weapon design", "Shaders", "Animation", "Visual effects", "Stylised and comic rendering", "Optimization"), plus the one bar frame that matters for them.
 - **An early return raises the ambition, it does not end the run.** Builders often return in 2-3 minutes: each one gets its coach and its next round at once. The handoff starts no earlier than the cap minus 2 minutes; if everything is green before that, the next action is another Visual QA pass and a fix round on the most visible piece.
 - **The perf probe runs at every integration.** A piece that breaks `BUDGETS.md` goes back to its owner with the numbers before its next visual round - a beautiful frame at a third of the frame rate is a regression.
 - **Size test steps to the machine**: measure the milliseconds per simulation step once at kickoff and keep every check under about 20 seconds; slow software rendering otherwise times the checks out.

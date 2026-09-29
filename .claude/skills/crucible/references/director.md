@@ -45,16 +45,20 @@ Decompose just in time. Only the current milestone gets tickets. Later milestone
 | rules, numbers, economy, progression, feel tuning | Design |
 | gameplay code, systems, AI, physics, save/load, netcode | Code |
 | concept, style frames, colour scripts, textures (2D) | Art |
-| meshes, UVs, sculpts, Blender work | 3D |
+| characters, creatures, enemies (design sheet, model, materials) | Character Art |
+| weapons, viewmodels, hard-surface props | Weapon & Prop Art |
+| landmarks, backdrop, environment kits, set dressing, zone identity | World Design & Environment Art |
 | rigs, skinning, animation, retargeting | Animation |
-| shaders, VFX, lighting, LODs, import pipeline, perf | Tech Art |
+| material library, shaders, sky, post chain, render settings, quality levels | Shaders & Rendering |
+| muzzle flashes, impacts, deaths, damage numbers, ambient effects | VFX |
+| lighting, LODs, import pipeline, the frame budget | Tech Art |
 | SFX, music, mix, adaptive audio | Audio |
 | blockouts, layouts, encounters, pacing | Level Design |
 | HUD, menus, onboarding, accessibility | UI/UX |
 | test plans, bug hunts, automated playtests | QA |
 | builds, packaging, CI, platform settings | Build |
 
-Cross-department features (for example a new enemy) become a **chain**: Design spec -> Art concept -> 3D model -> Animation -> Tech Art import -> Code behaviour -> Audio -> Level placement -> QA. Each link is its own ticket; the next link unblocks only when the previous one WON. The one exception is Design: a spec is **APPROVED** when the Director has checked it is complete and testable (every rule has a number or a test, every number is in a data file, it serves a pillar) - no critic is spent on it - which unblocks the chain; the Design ticket itself stays open and is WON only when the implemented feature wins its gauntlet.
+Cross-department features (for example a new enemy) are built by a **feature pod** (`studio.md`): one feature sheet, then the departments build in parallel against it. Where one link truly needs another's output, it becomes a **chain**: Design spec -> Character Art model -> Animation -> Code behaviour -> VFX and Audio on the animation events -> Level placement -> QA. Each link is its own ticket; the next link unblocks only when the previous one WON. The one exception is Design: a spec is **APPROVED** when the Director has checked it is complete and testable (every rule has a number or a test, every number is in a data file, it serves a pillar) - no critic is spent on it - which unblocks the chain; the Design ticket itself stays open and is WON only when the implemented feature wins its gauntlet.
 
 ## Milestones and exit gates
 

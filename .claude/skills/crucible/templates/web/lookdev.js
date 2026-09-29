@@ -88,23 +88,30 @@ export async function createPost(renderer, scene, camera, { quality = 'medium', 
 // Dynamic resolution: keeps the frame time near the target by scaling the pixel ratio between min and max.
 // Call update(frameMs) once per rendered frame; set .enabled = false while capturing so review images are comparable.
 export function createAutoScale(renderer, onResize, { targetMs = 16.7, min = 0.6, max = Math.min(devicePixelRatio, 1.5), every = 45 } = {}) {
-  let acc = 0, n = 0;
+  let acc = 0, n = 0, good = 0;
   return {
     enabled: true,
     update(frameMs) {
       if (!this.enabled) return;
-      acc += frameMs; if (++n < every) return;
+      acc += Math.min(frameMs, 50); if (++n < every) return;   // clamp: one tab switch or hitch must not decide the resolution
       const avg = acc / n; acc = 0; n = 0;
       const pr = renderer.getPixelRatio();
-      const next = avg > targetMs * 1.15 ? Math.max(min, pr * 0.85) : avg < targetMs * 0.7 ? Math.min(max, pr * 1.1) : pr;
+      let next = pr;
+      if (avg > targetMs * 1.2) { next = Math.max(min, pr * 0.85); good = 0; }
+      else if (avg <= targetMs * 1.05 && ++good >= 3) { next = Math.min(max, pr * 1.1); good = 0; }   // up only after 3 steady windows
       if (Math.abs(next - pr) > 0.01) { renderer.setPixelRatio(next); onResize && onResize(); }
     },
   };
 }
 
-// Compile every material in the scene before the first frame, so shaders never hitch mid-fight. Await it behind the loading screen.
-export async function precompile(renderer, scene, camera) {
+// Compile every material before the first frame, so shaders never hitch mid-fight. Await it behind the loading screen.
+// Pass the composer when there is one: materials compile for its render target (linear, no tone mapping), not for the screen.
+export async function precompile(renderer, scene, camera, composer = null) {
+  const prev = renderer.getRenderTarget();
+  if (composer) renderer.setRenderTarget(composer.readBuffer);
   if (renderer.compileAsync) await renderer.compileAsync(scene, camera); else renderer.compile(scene, camera);
+  renderer.setRenderTarget(prev);
+  if (composer) composer.render(0);   // also builds the post passes' programs
 }
 
 // Cel shading: a 2-4 band ramp shared by every toon material, so characters and world light the same way.
@@ -140,11 +147,15 @@ export function inkMaterial(thickness = 0.03, color = 0x111111) {
   return inkMats.get(key);
 }
 export function addOutline(mesh, thickness = 0.03, color = 0x111111) {
+  // safe inside traverse(): never outline an outline, never outline twice
+  if (mesh.userData.isOutline) return null;
+  const had = mesh.children.find(c => c.userData.isOutline); if (had) return had;
   const hull = mesh.isSkinnedMesh
     ? new THREE.SkinnedMesh(mesh.geometry, inkMaterial(thickness, color))
     : new THREE.Mesh(mesh.geometry, inkMaterial(thickness, color));
   if (mesh.isSkinnedMesh) hull.bind(mesh.skeleton, mesh.bindMatrix);
   hull.castShadow = false; hull.receiveShadow = false; hull.raycast = () => {};
+  hull.userData.isOutline = true;
   mesh.add(hull);
   return hull;
 }
@@ -153,9 +164,11 @@ export function addOutline(mesh, thickness = 0.03, color = 0x111111) {
 export function mergeByMaterial(root) {
   root.updateMatrixWorld(true);
   const inv = new THREE.Matrix4().copy(root.matrixWorld).invert();
-  const groups = new Map();
+  const groups = new Map(), keep = [];
   root.traverse(o => {
-    if (!o.isMesh || o.isSkinnedMesh || o.userData.keep) return;
+    if (!o.isMesh) return;
+    // moving parts (userData.keep), skinned and instanced meshes stay separate objects, re-parented with their transform
+    if (o.isSkinnedMesh || o.isInstancedMesh || o.userData.keep) { keep.push(o); return; }
     const g = o.geometry.clone().applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld));
     for (const k of Object.keys(g.attributes)) if (!['position', 'normal', 'uv', 'color'].includes(k)) g.deleteAttribute(k);
     if (!g.attributes.uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2));
@@ -169,6 +182,10 @@ export function mergeByMaterial(root) {
     const mesh = new THREE.Mesh(mergeGeometries(geos), mat);
     mesh.castShadow = mesh.receiveShadow = true;
     out.add(mesh);
+  }
+  for (const o of keep) {
+    const m = new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld);
+    o.removeFromParent(); m.decompose(o.position, o.quaternion, o.scale); out.add(o);
   }
   return out;
 }

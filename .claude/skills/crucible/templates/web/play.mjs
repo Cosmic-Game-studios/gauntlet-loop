@@ -35,7 +35,9 @@ const gsrv = http.createServer((q, s) => { let p = resolveSafe(q.url); if (!p) {
 const b = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });
 const p = await b.newPage({ viewport: { width: W, height: H } }); const errors = [];
 p.on('pageerror', e => errors.push(e.message)); p.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
-await p.goto(`http://127.0.0.1:${gsrv.address().port}/index.html`); await p.waitForTimeout(3000);
+await p.goto(`http://127.0.0.1:${gsrv.address().port}/index.html`);
+await p.waitForFunction(() => !!(window.__studio || window.__game), null, { timeout: 30000 }).catch(() => {});
+await p.waitForTimeout(500);
 
 let n = 0;
 const hook = '(window.__studio || window.__game)';

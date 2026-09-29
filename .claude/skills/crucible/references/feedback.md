@@ -66,8 +66,8 @@ How the common kinds of feedback translate:
 | Feedback kind | Diagnosis first | New bar | Typical departments |
 |---|---|---|---|
 | **Feel** ("gunplay/movement/combat feels off") | Coach critic + Code critic measure the current state (latency, frame data, curves) | Named game's exact mechanic, captured | Code, Design, Animation, Audio, Tech Art |
-| **Look** ("more borderless comic art", "looks cheap") | Coherence critic lists what currently contradicts the new direction | Named game(s) with that style + new style frames | Art (new style bible), Tech Art (shaders, outlines, post), 3D, UI |
-| **Performance** ("smooth frame rates") | Tech auditor profiles every level, finds the top 5 costs | The numbers bar: target fps on target hardware, 1% lows, no hitches > N ms | Tech Art, Code, 3D (LODs), Build |
+| **Look** ("more borderless comic art", "looks cheap") | Coherence critic lists what currently contradicts the new direction | Named game(s) with that style + new style frames | Art Director (new style bible), Shaders & Rendering (shaders, outlines, post), Character Art, Weapon & Prop Art, World Design, UI |
+| **Performance** ("smooth frame rates") | Tech auditor profiles every level, finds the top 5 costs | The numbers bar: target fps on target hardware, 1% lows, no hitches > N ms | Tech Art, Shaders & Rendering, Code, Character Art and World Design (LODs), Build |
 | **Content / pacing** ("level 3 is boring") | `playtester` replays it: dead time, repetition, difficulty curve | Named level from the reference game | Level, Design |
 | **Clarity** ("didn't understand X") | First-time player critic reproduces the confusion | Named game's onboarding for a similar mechanic | UI/UX, Design, Level |
 | **Bug** | QA reproduces it and adds a regression test | - | Owning department |

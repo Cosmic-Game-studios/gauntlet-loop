@@ -4,16 +4,16 @@
 //   import { profile, chamferBox, lathe, tube, mirrorX, assemble, bakeOcclusion } from './shapes.js';
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { mergeVertices, toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js';
 
 // A 2D outline (side view) extruded with a bevel: receivers, stocks, blades, armour plates, brackets, building trims.
 // points: [[x, y], ...] in metres, counter-clockwise; holes: optional list of point lists. Centered on its depth.
 export function profile(points, depth, { bevel = 0.012, bevelSegments = 2, holes = [], curveSegments = 6 } = {}) {
   const shape = new THREE.Shape(points.map(([x, y]) => new THREE.Vector2(x, y)));
   for (const h of holes) shape.holes.push(new THREE.Path(h.map(([x, y]) => new THREE.Vector2(x, y))));
-  const g = new THREE.ExtrudeGeometry(shape, { depth: Math.max(depth - 2 * bevel, 0.001), bevelEnabled: bevel > 0, bevelThickness: bevel, bevelSize: bevel, bevelSegments, curveSegments });
+  const g = new THREE.ExtrudeGeometry(shape, { depth: Math.max(depth - 2 * bevel, 0.001), bevelEnabled: bevel > 0, bevelThickness: bevel, bevelSize: bevel, bevelOffset: -bevel, bevelSegments, curveSegments });
   g.translate(0, 0, -depth / 2 + bevel);
-  g.computeVertexNormals();
-  return g;
+  return toCreasedNormals(g, Math.PI / 5);   // bevels shade smoothly, hard edges stay hard; the outline keeps its exact size
 }
 
 // A box with rounded edges that catch the light - the default for anything man-made. Never use a sharp BoxGeometry for a visible prop.
@@ -23,9 +23,7 @@ export function chamferBox(w, h, d, radius = 0.02, segments = 2) {
 
 // A lathed form from a half-profile [[radius, y], ...] bottom to top: barrels, muzzles, scopes, helmets, torsos, limbs, bottles, pillars.
 export function lathe(points, segments = 16) {
-  const g = new THREE.LatheGeometry(points.map(([r, y]) => new THREE.Vector2(Math.max(r, 0), y)), segments);
-  g.computeVertexNormals();
-  return g;
+  return new THREE.LatheGeometry(points.map(([r, y]) => new THREE.Vector2(Math.max(r, 0), y)), segments);   // its own normals are seamless
 }
 
 // A tube along a smooth curve through points: cables, hoses, pipes, horns, tails, straps.
@@ -48,7 +46,10 @@ export function mirrorX(geometry) {
     const x = a.attributes[name], y = b.attributes[name]; const arr = new x.array.constructor(x.array.length + y.array.length);
     arr.set(x.array); arr.set(y.array, x.array.length); out.setAttribute(name, new THREE.BufferAttribute(arr, x.itemSize, x.normalized));
   }
-  return out;
+  out.deleteAttribute('normal');
+  const welded = mergeVertices(out, 1e-4);   // weld the seam at x = 0 so the halves shade as one surface
+  welded.computeVertexNormals();
+  return welded;
 }
 
 // Build a model from parts: [{ geo, mat, pos: [x,y,z], rot: [x,y,z] (radians), scale: n | [x,y,z], name, keep }]. Returns a Group.
@@ -56,6 +57,9 @@ export function mirrorX(geometry) {
 export function assemble(parts) {
   const g = new THREE.Group();
   for (const p of parts) {
+    if (!p.geo.attributes.color) {   // white vertex colour, so vertexColors materials never render black on unbaked parts
+      p.geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(p.geo.attributes.position.count * 3).fill(1), 3));
+    }
     const m = new THREE.Mesh(p.geo, p.mat);
     if (p.pos) m.position.set(...p.pos);
     if (p.rot) m.rotation.set(...p.rot);
@@ -69,7 +73,8 @@ export function assemble(parts) {
 }
 
 // Baked vertex occlusion and gradient: darker low down and in concave-facing areas, lighter on top. Makes parts sit together
-// like a baked AO pass, at zero runtime cost. Materials need `vertexColors: true`. Apply in model space before merging.
+// like a baked AO pass, at zero runtime cost. Materials need `vertexColors: true`. For a whole model, pass the model's own minY/maxY
+// to every part (or bake the merged geometry) so the gradient runs over the model, not per part.
 export function bakeOcclusion(geometry, { bottom = 0.55, top = 1.0, minY = null, maxY = null, downward = 0.25, tint = null } = {}) {
   const pos = geometry.attributes.position; geometry.computeBoundingBox();
   const y0 = minY ?? geometry.boundingBox.min.y, y1 = maxY ?? geometry.boundingBox.max.y;
