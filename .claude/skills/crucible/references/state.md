@@ -61,6 +61,8 @@ Debt:       14 PASSED tickets in DEBT.md (5 hero, 9 core) - polish pass at Beta
 Errors:     2 open (E-019 crash on level 4 load - T-260 on it; E-021 audio pops on pause)
 Top risk:   Level 5 pacing - playtester: 3 min of dead corridor
 Numbers:    61 fps avg / 48 1%-low (target 60/50), load 3.2 s, 0 crashes in last 40 min bot play
+Progress:   since last review (HB-082): acceptance 71->78 %, playable levels 3->4, open majors 6->3, perf within budget,
+            2 new champions (enemies, HUD), process share 31 % -> continue
 Budget:     n/a (no user budget)
 Next:       1. split T-251   2. merge T-238, T-241   3. dispatch level 5 blockout   4. fix E-019   5. lessons review 3D
 ```

@@ -11,9 +11,11 @@ The Director runs one heartbeat per `/loop` iteration. Each heartbeat starts fro
 2. SENSE     Read the 5-line return of every finished ticket and the latest build/playtest summary. Tick TRACKER.md.
 3. JUDGE     Is the current milestone's exit gate met? (see Milestones) If the Release Candidate gate is met: hand off and stop (feedback.md).
 4. PLAN      Split, re-route, re-prioritise, cut. Write new tickets with tier + context pack. Record repeated gaps in LESSONS.md.
+             Give the heartbeat one purpose: raise playable quality, reduce a real risk, or gain information a decision needs.
 5. DISPATCH  Fan out every READY ticket to its department gauntlet, in parallel.
 6. INTEGRATE Merge WON tickets into main, build, run smoke tests, capture evidence.
 7. REPORT    Overwrite STATUS.md, append HEARTBEAT.md, regenerate dashboard.html, commit. Rotate files (context.md).
+             Record whether the purpose was met and what changed in the game (not in the documents).
 ```
 
 A heartbeat ends when it has dispatched work and written its report. The next one is started by the heartbeat driver (`claude-code.md`): `tools/drive.sh`, a scheduled Routine, or `/loop`. The very first heartbeat is **setup and kickoff**: install the studio subagents, hooks and `CLAUDE.md` into the project (`claude-code.md`), write `STATUS.md`, `TRACKER.md` and the kickoff files, then dispatch the first wave. In sprint mode (`playbooks.md`) the whole run is one long heartbeat made of waves. **Dispatched work must outlive nothing.** Under `drive.sh` each heartbeat is one headless `claude -p` process, and background subagents die when it exits. So in headless mode the Director waits for every ticket round it dispatched (parallel `Agent` calls, awaited) before INTEGRATE and REPORT; a heartbeat is one wave of ticket rounds. In an interactive session with `/loop` or a Routine, background agents survive between heartbeats; a heartbeat that finds work still running only does SENSE, INTEGRATE and REPORT, and it does not count as an idle heartbeat for the progress checks in `endurance.md`.
@@ -102,6 +104,38 @@ Capped rounds mean some tickets merge as PASSED rather than WON. That is deliber
 ## Architecture
 
 Before the first content ticket, the Tech Director writes `studio/ARCHITECTURE.md` (in sprint mode the Director writes a short version itself at kickoff): module layout, core systems and who owns them, data-driven tuning, event flow, save format, naming, testing strategy, and the code bars (reference repositories) per system. The Code critic judges every diff against it; changing it requires a logged decision and an Architecture critic pass.
+
+## The progress contract
+
+Crucible must never become better at running Crucible than at making the game. Tickets, critics, reports and status files are only worth their cost when the game improves because of them.
+
+**Every heartbeat has to do at least one of three things:** raise playable quality, reduce a real risk, or gain information that a pending decision needs. A heartbeat whose only output is documents, reviews of unchanged work or status updates did not make progress - five agents producing plans for forty minutes while the build stays the same is a failed heartbeat, however busy it looked.
+
+**Every progress review** (every 5 heartbeats, at least once per day of wall-clock, and at every milestone gate) the Director compares the last review's numbers with today's, from measurements rather than impressions:
+
+| Signal | Measured by |
+|---|---|
+| Playable content up? | Features and levels playable end to end (acceptance areas passing), minutes of distinct play |
+| Acceptance coverage up? | Checks passing / total, visible and held-out suite |
+| Bugs down? | Open errors in `TRACKER.md` by severity, crashes and fatal log lines (`adapter logs`) |
+| Performance up (or within budget)? | `adapter perf` against `BUDGETS.md` |
+| Visual and feel quality up? | Champion changes and coach picks on the fixed review captures, judge outcomes |
+| Milestone completion up? | Gate items met |
+| Process share down (or stable)? | Tokens and time spent on building vs on reviewing, reporting and planning (`STATUS.md`) |
+
+- **Yes on the signals that matter for the current milestone -> continue.**
+- **No -> stop dispatching and diagnose before spending more**: is it the approach, the tickets (too big, too vague), the tools (a broken adapter verb, missing captures), the bars (unreachable, not comparable), or the process itself (too many reviews, too much reporting)? Then change strategy: **cut process** (fewer critics, lighter reports, larger tickets), **re-scope** (smaller slice, simpler feature serving the same pillar), or **replace the approach** (below). The diagnosis and the change go to `DECISIONS.md`.
+
+**Process budget.** When more than about 40 % of the run's tokens go to review, reporting and planning rather than to building - measured over a whole progress review, not a single review heartbeat - the Director cuts process first: critics only on hero pieces, shorter status files, no re-review of unchanged work.
+
+## Replacing an approach
+
+The original technical plan is a hypothesis, not a commitment. When a system keeps failing its gates - a character or animation pipeline, a rendering technique, a networking model, a level-generation method - the Director runs an **approach review** instead of another round of the same:
+
+- Trigger: the same system FAILED or plateaued in two progress reviews, or it has consumed more than about twice its planned share of the budget without meeting its gate.
+- Question: "If we were starting today with what we now know, would we choose this approach?" Sunk cost is not an argument.
+- Options, cheapest first: a known-good alternative technique (a different animation approach, a simpler shading model, a proven networking model, an engine feature or plugin instead of custom code), a narrower version that still serves the pillar, or cutting the system.
+- Outcome: one sentence in `DECISIONS.md` - "This approach does not work because ...; we replace it with ...". The old tickets are closed, new ones written, and `LESSONS.md` records what the failure taught.
 
 ## Scope control
 

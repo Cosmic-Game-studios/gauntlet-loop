@@ -77,6 +77,7 @@ A bar is a **named shipped game**, narrowed to the exact thing being judged, tha
 
 ## What breaks an autonomous studio
 
+- **Process over product.** Crucible must never get better at running Crucible than at making the game. Every heartbeat raises playable quality, reduces a real risk or gains needed information; progress reviews measure the game, and when it stops improving the Director cuts process, re-scopes or replaces the approach (`references/director.md`).
 - **The Director building.** The Director plans, routes, merges and cuts. It never writes a ticket's output itself.
 - **Too few review rounds on what the player sees.** Visible quality needs iteration: hero pieces get up to six review rounds. Too many rounds optimise for the critic instead - so every round uses a fresh critic and rotating captures, a plateau stops the ticket early, and a held-out judge decides.
 - **Nobody owning the look.** Without an Art Director, a style bible and a look-dev scene before production, parallel departments produce a greybox. Art, level, UI and feel each need an owner and a critic.
