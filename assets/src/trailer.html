@@ -1,0 +1,206 @@
+<!doctype html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;background:#000">
+<canvas id="c" width="1280" height="400"></canvas>
+<script type="module">
+import { GIFEncoder, quantize, applyPalette } from './node_modules/gifenc/dist/gifenc.esm.js';
+
+const W = 1280, H = 400, FPS = 15, DUR = 17;
+const cv = document.getElementById('c'), g = cv.getContext('2d');
+
+// ---------- helpers ----------
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const ease = x => { x = clamp(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const out = x => 1 - Math.pow(1 - clamp(x), 3);
+const seg = (t, a, b) => clamp((t - a) / (b - a));                 // 0..1 inside [a,b]
+const env = (t, a, b, f = .5) => Math.min(seg(t, a, a + f), 1 - seg(t, b - f, b)); // fade in/out window
+const FONT = '"DejaVu Sans", sans-serif', MONO = '"DejaVu Sans Mono", monospace';
+function rnd(i) { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+
+function text(s, x, y, size, color, opts = {}) {
+  g.save(); g.font = `${opts.weight || 'normal'} ${size}px ${opts.mono ? MONO : FONT}`;
+  g.textAlign = opts.align || 'center'; g.textBaseline = 'middle'; g.globalAlpha = opts.alpha ?? 1;
+  if (opts.spacing) g.letterSpacing = opts.spacing + 'px';
+  if (opts.glow) { g.shadowColor = opts.glow; g.shadowBlur = opts.blur || 24; }
+  g.fillStyle = color; g.fillText(s, x, y); g.restore();
+}
+function vignette() {
+  const v = g.createRadialGradient(W / 2, H / 2, H * .3, W / 2, H / 2, W * .75);
+  v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.75)'); g.fillStyle = v; g.fillRect(0, 0, W, H);
+}
+function letterbox(t) { // cinematic bars
+  const h = 26; g.fillStyle = '#000'; g.fillRect(0, 0, W, h); g.fillRect(0, H - h, W, h);
+}
+function background(t, heat = 0) {
+  g.fillStyle = '#07080b'; g.fillRect(0, 0, W, H);
+  if (heat > 0) {
+    const r = g.createRadialGradient(W * .5, H * .75, 10, W * .5, H * .7, W * .6);
+    r.addColorStop(0, `rgba(255,110,30,${.35 * heat})`); r.addColorStop(.4, `rgba(120,30,8,${.3 * heat})`); r.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = r; g.fillRect(0, 0, W, H);
+  }
+}
+function embers(t, n, cx, spread, alpha = 1) {
+  for (let i = 0; i < n; i++) {
+    const life = 3 + rnd(i) * 3, ph = (t / life + rnd(i + 7)) % 1;
+    const x = cx + (rnd(i + 3) - .5) * spread + Math.sin(t * 1.3 + i) * 12 * ph;
+    const y = H + 10 - ph * (H + 40);
+    const a = Math.sin(ph * Math.PI) * alpha * (.4 + rnd(i + 9) * .6);
+    g.fillStyle = `rgba(255,${150 + Math.floor(rnd(i + 5) * 80)},70,${a})`;
+    g.beginPath(); g.arc(x, y, .8 + rnd(i + 11) * 2.2, 0, 6.283); g.fill();
+  }
+}
+function crucible(cx, cy, s, heat) {
+  const glow = g.createRadialGradient(cx, cy, 5, cx, cy, 260 * s);
+  glow.addColorStop(0, `rgba(255,140,40,${.55 * heat})`); glow.addColorStop(1, 'rgba(255,140,40,0)');
+  g.fillStyle = glow; g.fillRect(cx - 300 * s, cy - 300 * s, 600 * s, 600 * s);
+  const iron = g.createLinearGradient(cx - 130 * s, 0, cx + 130 * s, 0);
+  iron.addColorStop(0, '#24272d'); iron.addColorStop(.5, '#5b606b'); iron.addColorStop(1, '#1e2126');
+  g.fillStyle = iron; g.strokeStyle = '#111317'; g.lineWidth = 3;
+  g.beginPath(); g.moveTo(cx - 130 * s, cy); g.quadraticCurveTo(cx - 125 * s, cy + 140 * s, cx, cy + 142 * s);
+  g.quadraticCurveTo(cx + 125 * s, cy + 140 * s, cx + 130 * s, cy); g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = '#1b1d22'; g.strokeStyle = '#6b707b'; g.beginPath(); g.ellipse(cx, cy, 130 * s, 30 * s, 0, 0, 6.283); g.fill(); g.stroke();
+  const m = g.createRadialGradient(cx - 10 * s, cy - 6 * s, 2, cx, cy, 116 * s);
+  m.addColorStop(0, `rgba(255,246,210,${heat})`); m.addColorStop(.35, `rgba(255,177,59,${heat})`); m.addColorStop(.8, `rgba(255,90,31,${heat})`); m.addColorStop(1, `rgba(150,30,10,${heat})`);
+  g.fillStyle = m; g.beginPath(); g.ellipse(cx, cy + 2 * s, 116 * s, 22 * s, 0, 0, 6.283); g.fill();
+  g.strokeStyle = '#6b707b'; g.lineWidth = 9 * s; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(cx - 140 * s, cy - 4 * s); g.lineTo(cx - 172 * s, cy - 20 * s); g.moveTo(cx + 140 * s, cy - 4 * s); g.lineTo(cx + 172 * s, cy - 20 * s); g.stroke();
+}
+function node(x, y, w, h, label, on, sub) {
+  g.save();
+  g.fillStyle = on ? 'rgba(255,122,42,.16)' : 'rgba(255,255,255,.04)';
+  g.strokeStyle = on ? 'rgba(255,160,90,.95)' : 'rgba(255,255,255,.15)'; g.lineWidth = 2;
+  if (on) { g.shadowColor = '#ff7a2a'; g.shadowBlur = 22 * on; }
+  g.beginPath(); g.roundRect(x - w / 2, y - h / 2, w, h, 12); g.fill(); g.stroke(); g.restore();
+  text(label, x, sub ? y - 9 : y, 20, on ? '#ffe6c8' : '#8a8f98', { weight: 'bold' });
+  if (sub) text(sub, x, y + 14, 13, on ? '#ffb97a' : '#666b73', { mono: true });
+}
+function wire(x1, y1, x2, y2, p) {
+  g.strokeStyle = 'rgba(255,255,255,.12)'; g.lineWidth = 2; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
+  if (p > 0) {
+    g.strokeStyle = 'rgba(255,150,60,.9)'; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x1 + (x2 - x1) * p, y1 + (y2 - y1) * p); g.stroke();
+    if (p < 1) { g.save(); g.shadowColor = '#ffb347'; g.shadowBlur = 16; g.fillStyle = '#fff1d0';
+      g.beginPath(); g.arc(x1 + (x2 - x1) * p, y1 + (y2 - y1) * p, 4, 0, 6.283); g.fill(); g.restore(); }
+  }
+}
+function stamp(x, y, label, color, p) {
+  if (p <= 0) return; const s = 1 + (1 - out(p)) * 1.6;
+  g.save(); g.translate(x, y); g.rotate(-.12); g.scale(s, s); g.globalAlpha = clamp(p * 2);
+  g.strokeStyle = color; g.lineWidth = 3; g.beginPath(); g.roundRect(-58, -20, 116, 40, 6); g.stroke();
+  g.font = `bold 22px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = color; g.fillText(label, 0, 1);
+  g.restore();
+}
+
+// ---------- scenes ----------
+function frame(t) {
+  // 0.0 - 3.0  hook
+  // 2.6 - 6.0  reveal
+  // 5.8 - 9.0  studio
+  // 8.8 - 12.0 gauntlet
+  // 11.8 - 14.4 context
+  // 14.2 - 17  finale
+  const heat = t < 2.6 ? 0 : t < 6 ? ease(seg(t, 2.6, 4.2)) : t > 14.2 ? ease(seg(t, 14.2, 15.4)) : .35;
+  background(t, heat);
+  embers(t, t < 2.6 ? 26 : 60, W * .5, t < 6 || t > 14.2 ? 520 : 1200, t < 2.6 ? seg(t, 0, 1.2) : 1);
+
+  // hook
+  if (t < 3) {
+    const a = env(t, .3, 2.9, .6);
+    text('Every agent stops at', W / 2, H / 2 - 22, 34, '#d8d2cc', { alpha: a });
+    text('“it runs.”', W / 2, H / 2 + 26, 44, '#ffffff', { alpha: a * ease(seg(t, .9, 1.6)), weight: 'bold' });
+  }
+  // reveal
+  if (t > 2.6 && t < 6.1) {
+    const a = env(t, 2.6, 6.1, .4);
+    g.save(); g.globalAlpha = a;
+    const rise = out(seg(t, 2.6, 3.8));
+    crucible(300, 190 + (1 - rise) * 40, 1, ease(seg(t, 3.0, 4.4)));
+    g.restore();
+    const word = 'CRUCIBLE';
+    for (let i = 0; i < word.length; i++) {
+      const p = seg(t, 3.5 + i * .12, 4.1 + i * .12);
+      const hot = 1 - seg(t, 4.1 + i * .12, 5.2 + i * .12);
+      const col = `rgb(255,${Math.round(200 + 46 * (1 - hot))},${Math.round(120 + 104 * (1 - hot))})`;
+      text(word[i], 560 + i * 82, 176 + (1 - out(p)) * 18, 96, col, { weight: 'bold', alpha: p * a, glow: `rgba(255,120,30,${.9 * hot})`, blur: 30 });
+    }
+    text('An autonomous game studio for Claude Code', 850, 262, 26, '#f3d9bf', { alpha: a * seg(t, 4.6, 5.2) });
+  }
+  // studio
+  if (t > 5.8 && t < 9.1) {
+    const a = env(t, 5.8, 9.1, .4); g.save(); g.globalAlpha = a;
+    text('ONE PITCH. ONE PAGE. THEN THE STUDIO RUNS.', W / 2, 62, 18, '#ff9a4d', { mono: true, spacing: 3 });
+    const xs = [150, 400, 660], y = 210, on = i => ease(seg(t, 6.1 + i * .55, 6.5 + i * .55));
+    wire(xs[0] + 90, y, xs[1] - 90, y, seg(t, 6.4, 6.8)); wire(xs[1] + 90, y, xs[2] - 100, y, seg(t, 6.95, 7.35));
+    node(xs[0], y, 170, 64, 'Your pitch', on(0)); node(xs[1], y, 170, 64, 'Game Brief', on(1), 'you say OK');
+    node(xs[2], y, 190, 74, 'Game Director', on(2), 'plans · routes · cuts');
+    const deps = ['Design', 'Code', '3D · Blender', 'Animation', 'Tech Art', 'Audio', 'Level', 'UI · QA'];
+    deps.forEach((d, i) => {
+      const dy = 104 + i * 30, p = seg(t, 7.5 + i * .08, 7.9 + i * .08);
+      wire(xs[2] + 95, y, 930, dy, p);
+      node(1030, dy, 190, 24, '', 0);
+      text(d, 1030, dy, 15, p > .9 ? '#ffe6c8' : '#6d727a', { alpha: clamp(p * 2) });
+    });
+    g.restore();
+  }
+  // gauntlet
+  if (t > 8.8 && t < 12.1) {
+    const a = env(t, 8.8, 12.1, .4); g.save(); g.globalAlpha = a;
+    text('EVERY TICKET RUNS THE GAUNTLET', W / 2, 62, 18, '#ff9a4d', { mono: true, spacing: 3 });
+    const y = 200, xs = [190, 470, 750, 1060], on = i => ease(seg(t, 9.0 + i * .5, 9.4 + i * .5));
+    for (let i = 0; i < 3; i++) wire(xs[i] + 95, y, xs[i + 1] - 95, y, seg(t, 9.3 + i * .5, 9.6 + i * .5));
+    node(xs[0], y, 180, 70, 'Builder', on(0), 'own worktree');
+    node(xs[1], y, 180, 70, 'Code critic', on(1), 'read-only');
+    node(xs[2], y, 180, 70, 'Coach critic', on(2), 'one gap / round');
+    node(xs[3], y, 200, 70, 'Held-out judge', on(3), 'blind · both orders');
+    stamp(xs[1], y + 78, 'BLOCK', '#ff5a4a', seg(t, 9.7, 10.0) * (1 - seg(t, 10.35, 10.5)));
+    stamp(xs[1], y + 78, 'PASS', '#8ee07a', seg(t, 10.5, 10.8));
+    stamp(xs[3], y + 80, 'WON', '#ffd166', seg(t, 11.0, 11.3));
+    text('max 3 rounds · the best version wins, not the latest', W / 2, 346, 16, '#9a8f86', { alpha: seg(t, 10.2, 10.8) });
+    g.restore();
+  }
+  // context
+  if (t > 11.8 && t < 14.5) {
+    const a = env(t, 11.8, 14.5, .4); g.save(); g.globalAlpha = a;
+    text('Files are memory.', 360, 170, 44, '#fff1dc', { weight: 'bold' });
+    text('Context stays clean for a week-long run.', 360, 222, 20, '#c9b8a6');
+    g.fillStyle = 'rgba(255,255,255,.05)'; g.strokeStyle = 'rgba(255,255,255,.14)'; g.lineWidth = 1.5;
+    g.beginPath(); g.roundRect(700, 84, 440, 240, 10); g.fill(); g.stroke();
+    text('studio/TRACKER.md', 720, 108, 15, '#ff9a4d', { mono: true, align: 'left' });
+    const items = ['T-011  FP controller + collision', 'T-012  Rifle recoil pattern', 'T-013  Enemy navigation', 'T-014  HUD + hit markers', 'E-003  spawn inside cover'];
+    items.forEach((s, i) => { const done = t > 12.3 + i * .35;
+      text(done ? '[x]' : '[ ]', 724, 146 + i * 34, 16, done ? '#8ee07a' : '#7b8089', { mono: true, align: 'left' });
+      text(s, 770, 146 + i * 34, 16, done ? '#e8e2da' : '#7b8089', { mono: true, align: 'left' }); });
+    g.restore();
+  }
+  // finale
+  if (t > 14.2) {
+    const a = seg(t, 14.2, 14.7);
+    text('You play. It improves.', W / 2, 110, 30, '#f3e6d8', { alpha: a * (1 - seg(t, 15.2, 15.6)) });
+    const b = seg(t, 15.3, 16.0);
+    g.save(); g.globalAlpha = b; crucible(W / 2, 222, .5, 1); g.restore();
+    text('CRUCIBLE', W / 2, 150, 84, '#ffe2b8', { weight: 'bold', alpha: b, spacing: 10, glow: 'rgba(255,120,30,.8)', blur: 30 });
+    text('/crucible  your game idea', W / 2, 350, 18, '#ffb97a', { mono: true, alpha: seg(t, 15.8, 16.4) });
+  }
+  vignette(); letterbox(t);
+}
+
+// ---------- render ----------
+window.render = async () => {
+  const gif = GIFEncoder(); const n = FPS * DUR;
+  for (let i = 0; i < n; i++) {
+    frame(i / FPS);
+    const { data } = g.getImageData(0, 0, W, H);
+    for (let k = 0; k < data.length; k += 4) {            // film grain doubles as dithering against GIF banding
+      const n = (((k * 2654435761 + i * 97) >>> 0) % 9) - 4;
+      data[k] = Math.max(0, Math.min(255, data[k] + n)); data[k + 1] = Math.max(0, Math.min(255, data[k + 1] + n)); data[k + 2] = Math.max(0, Math.min(255, data[k + 2] + n));
+    }
+    const palette = quantize(data, 256, { format: 'rgb565' });
+    const index = applyPalette(data, palette, 'rgb565');
+    gif.writeFrame(index, W, H, { palette, delay: Math.round(1000 / FPS), repeat: 0 });
+  }
+  gif.finish(); const bytes = gif.bytes();
+  let s = ''; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(s);
+};
+window.still = t => { frame(t); return cv.toDataURL('image/png'); };
+window.ready = true;
+</script></body></html>
