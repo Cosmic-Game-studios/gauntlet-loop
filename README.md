@@ -2,7 +2,7 @@
   <img src="assets/crucible-trailer.gif" alt="Crucible trailer - an autonomous game studio for Claude Code" width="100%">
 </p>
 
-<p align="center"><sub><a href="assets/crucible-trailer.mp4">▶ Watch the trailer in full quality (MP4)</a></sub></p>
+<p align="center"><sub><a href="assets/crucible-trailer.mp4"><b>▶ Watch the trailer with sound (MP4, 1920×800)</b></a> · score and picture generated entirely in code</sub></p>
 
 <p align="center">
   <b>Describe your game. Approve one page. Crucible runs the studio until there is a game to play.</b>

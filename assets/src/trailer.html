@@ -1,206 +1,231 @@
 <!doctype html>
 <html><head><meta charset="utf-8"></head>
 <body style="margin:0;background:#000">
-<canvas id="c" width="1280" height="400"></canvas>
-<script type="module">
-import { GIFEncoder, quantize, applyPalette } from './node_modules/gifenc/dist/gifenc.esm.js';
-
-const W = 1280, H = 400, FPS = 15, DUR = 17;
+<canvas id="c" width="1920" height="800"></canvas>
+<script>
+// Crucible trailer v2 - 1920x800 (2.4:1), cut to the synthesised score (90 BPM, bar = 2.667 s).
+const W = 1920, H = 800, BEAT = 60 / 90, BAR = BEAT * 4, b = n => n * BAR;
 const cv = document.getElementById('c'), g = cv.getContext('2d');
+const HITS = [b(1), b(2), b(4), b(6), b(8) + BAR / 2, b(9)];
+const SERIF = '"DejaVu Serif", serif', SANS = '"DejaVu Sans", sans-serif', MONO = '"DejaVu Sans Mono", monospace';
 
 // ---------- helpers ----------
-const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const clamp = (x, a = 0, bb = 1) => Math.max(a, Math.min(bb, x));
+const seg = (t, a, c) => clamp((t - a) / (c - a));
 const ease = x => { x = clamp(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
 const out = x => 1 - Math.pow(1 - clamp(x), 3);
-const seg = (t, a, b) => clamp((t - a) / (b - a));                 // 0..1 inside [a,b]
-const env = (t, a, b, f = .5) => Math.min(seg(t, a, a + f), 1 - seg(t, b - f, b)); // fade in/out window
-const FONT = '"DejaVu Sans", sans-serif', MONO = '"DejaVu Sans Mono", monospace';
+const outBack = x => { x = clamp(x); const c1 = 1.7, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
 function rnd(i) { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+function sinceHit(t) { let d = 99; for (const h of HITS) if (t >= h) d = Math.min(d, t - h); return d; }
 
-function text(s, x, y, size, color, opts = {}) {
-  g.save(); g.font = `${opts.weight || 'normal'} ${size}px ${opts.mono ? MONO : FONT}`;
-  g.textAlign = opts.align || 'center'; g.textBaseline = 'middle'; g.globalAlpha = opts.alpha ?? 1;
-  if (opts.spacing) g.letterSpacing = opts.spacing + 'px';
-  if (opts.glow) { g.shadowColor = opts.glow; g.shadowBlur = opts.blur || 24; }
+let CHROMA = 0;
+function text(s, x, y, size, color, o = {}) {
+  g.save(); g.font = `${o.weight || 'normal'} ${size}px ${o.font || SANS}`;
+  g.textAlign = o.align || 'center'; g.textBaseline = 'middle'; g.letterSpacing = (o.spacing || 0) + 'px';
+  const a = o.alpha ?? 1; if (a <= 0) { g.restore(); return; }
+  if (CHROMA > 0 && !o.noChroma) {
+    g.globalCompositeOperation = 'lighter'; g.globalAlpha = a * .55;
+    g.fillStyle = '#ff2a2a'; g.fillText(s, x + CHROMA, y); g.fillStyle = '#2ad4ff'; g.fillText(s, x - CHROMA, y);
+    g.globalCompositeOperation = 'source-over';
+  }
+  g.globalAlpha = a;
+  if (o.glow) { g.shadowColor = o.glow; g.shadowBlur = o.blur || 30; }
   g.fillStyle = color; g.fillText(s, x, y); g.restore();
 }
-function vignette() {
-  const v = g.createRadialGradient(W / 2, H / 2, H * .3, W / 2, H / 2, W * .75);
-  v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.75)'); g.fillStyle = v; g.fillRect(0, 0, W, H);
-}
-function letterbox(t) { // cinematic bars
-  const h = 26; g.fillStyle = '#000'; g.fillRect(0, 0, W, h); g.fillRect(0, H - h, W, h);
-}
-function background(t, heat = 0) {
-  g.fillStyle = '#07080b'; g.fillRect(0, 0, W, H);
-  if (heat > 0) {
-    const r = g.createRadialGradient(W * .5, H * .75, 10, W * .5, H * .7, W * .6);
-    r.addColorStop(0, `rgba(255,110,30,${.35 * heat})`); r.addColorStop(.4, `rgba(120,30,8,${.3 * heat})`); r.addColorStop(1, 'rgba(0,0,0,0)');
-    g.fillStyle = r; g.fillRect(0, 0, W, H);
-  }
-}
-function embers(t, n, cx, spread, alpha = 1) {
-  for (let i = 0; i < n; i++) {
-    const life = 3 + rnd(i) * 3, ph = (t / life + rnd(i + 7)) % 1;
-    const x = cx + (rnd(i + 3) - .5) * spread + Math.sin(t * 1.3 + i) * 12 * ph;
-    const y = H + 10 - ph * (H + 40);
-    const a = Math.sin(ph * Math.PI) * alpha * (.4 + rnd(i + 9) * .6);
-    g.fillStyle = `rgba(255,${150 + Math.floor(rnd(i + 5) * 80)},70,${a})`;
-    g.beginPath(); g.arc(x, y, .8 + rnd(i + 11) * 2.2, 0, 6.283); g.fill();
-  }
-}
-function crucible(cx, cy, s, heat) {
-  const glow = g.createRadialGradient(cx, cy, 5, cx, cy, 260 * s);
-  glow.addColorStop(0, `rgba(255,140,40,${.55 * heat})`); glow.addColorStop(1, 'rgba(255,140,40,0)');
-  g.fillStyle = glow; g.fillRect(cx - 300 * s, cy - 300 * s, 600 * s, 600 * s);
-  const iron = g.createLinearGradient(cx - 130 * s, 0, cx + 130 * s, 0);
-  iron.addColorStop(0, '#24272d'); iron.addColorStop(.5, '#5b606b'); iron.addColorStop(1, '#1e2126');
-  g.fillStyle = iron; g.strokeStyle = '#111317'; g.lineWidth = 3;
-  g.beginPath(); g.moveTo(cx - 130 * s, cy); g.quadraticCurveTo(cx - 125 * s, cy + 140 * s, cx, cy + 142 * s);
-  g.quadraticCurveTo(cx + 125 * s, cy + 140 * s, cx + 130 * s, cy); g.closePath(); g.fill(); g.stroke();
-  g.fillStyle = '#1b1d22'; g.strokeStyle = '#6b707b'; g.beginPath(); g.ellipse(cx, cy, 130 * s, 30 * s, 0, 0, 6.283); g.fill(); g.stroke();
-  const m = g.createRadialGradient(cx - 10 * s, cy - 6 * s, 2, cx, cy, 116 * s);
-  m.addColorStop(0, `rgba(255,246,210,${heat})`); m.addColorStop(.35, `rgba(255,177,59,${heat})`); m.addColorStop(.8, `rgba(255,90,31,${heat})`); m.addColorStop(1, `rgba(150,30,10,${heat})`);
-  g.fillStyle = m; g.beginPath(); g.ellipse(cx, cy + 2 * s, 116 * s, 22 * s, 0, 0, 6.283); g.fill();
-  g.strokeStyle = '#6b707b'; g.lineWidth = 9 * s; g.lineCap = 'round';
-  g.beginPath(); g.moveTo(cx - 140 * s, cy - 4 * s); g.lineTo(cx - 172 * s, cy - 20 * s); g.moveTo(cx + 140 * s, cy - 4 * s); g.lineTo(cx + 172 * s, cy - 20 * s); g.stroke();
-}
-function node(x, y, w, h, label, on, sub) {
-  g.save();
-  g.fillStyle = on ? 'rgba(255,122,42,.16)' : 'rgba(255,255,255,.04)';
-  g.strokeStyle = on ? 'rgba(255,160,90,.95)' : 'rgba(255,255,255,.15)'; g.lineWidth = 2;
-  if (on) { g.shadowColor = '#ff7a2a'; g.shadowBlur = 22 * on; }
-  g.beginPath(); g.roundRect(x - w / 2, y - h / 2, w, h, 12); g.fill(); g.stroke(); g.restore();
-  text(label, x, sub ? y - 9 : y, 20, on ? '#ffe6c8' : '#8a8f98', { weight: 'bold' });
-  if (sub) text(sub, x, y + 14, 13, on ? '#ffb97a' : '#666b73', { mono: true });
-}
-function wire(x1, y1, x2, y2, p) {
-  g.strokeStyle = 'rgba(255,255,255,.12)'; g.lineWidth = 2; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
-  if (p > 0) {
-    g.strokeStyle = 'rgba(255,150,60,.9)'; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x1 + (x2 - x1) * p, y1 + (y2 - y1) * p); g.stroke();
-    if (p < 1) { g.save(); g.shadowColor = '#ffb347'; g.shadowBlur = 16; g.fillStyle = '#fff1d0';
-      g.beginPath(); g.arc(x1 + (x2 - x1) * p, y1 + (y2 - y1) * p, 4, 0, 6.283); g.fill(); g.restore(); }
-  }
-}
-function stamp(x, y, label, color, p) {
-  if (p <= 0) return; const s = 1 + (1 - out(p)) * 1.6;
-  g.save(); g.translate(x, y); g.rotate(-.12); g.scale(s, s); g.globalAlpha = clamp(p * 2);
-  g.strokeStyle = color; g.lineWidth = 3; g.beginPath(); g.roundRect(-58, -20, 116, 40, 6); g.stroke();
-  g.font = `bold 22px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = color; g.fillText(label, 0, 1);
+function fill(c, a = 1) { g.save(); g.globalAlpha = a; g.fillStyle = c; g.fillRect(-50, -50, W + 100, H + 100); g.restore(); }
+function heatGlow(x, y, r, a) { const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, `rgba(255,130,40,${a})`); gr.addColorStop(.45, `rgba(140,40,10,${a * .5})`); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); }
+function bokeh(t, n, a) {
+  g.save(); g.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < n; i++) { const x = (rnd(i) * W + t * (8 + rnd(i + 1) * 20)) % (W + 200) - 100, y = rnd(i + 2) * H, r = 18 + rnd(i + 3) * 60;
+    const gr = g.createRadialGradient(x, y, 0, x, y, r); const al = a * (.05 + rnd(i + 4) * .08) * (.6 + .4 * Math.sin(t * .8 + i));
+    gr.addColorStop(0, `rgba(255,170,90,${al})`); gr.addColorStop(.7, `rgba(255,120,50,${al * .6})`); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); }
   g.restore();
 }
+function embers(t, n, cx, spread, speed, a) {
+  g.save(); g.globalCompositeOperation = 'lighter'; g.lineCap = 'round';
+  for (let i = 0; i < n; i++) {
+    const life = (2.5 + rnd(i) * 3) / speed, ph = (t / life + rnd(i + 7)) % 1;
+    const x = cx + (rnd(i + 3) - .5) * spread + Math.sin(t * 1.7 + i) * 30 * ph, y = H + 20 - ph * (H + 80);
+    const vy = (H + 80) / life, len = clamp(vy * .035, 2, 60), al = Math.sin(ph * Math.PI) * a * (.35 + rnd(i + 9) * .65);
+    g.strokeStyle = `rgba(255,${150 + Math.floor(rnd(i + 5) * 90)},80,${al})`; g.lineWidth = 1 + rnd(i + 11) * 2.4;
+    g.beginPath(); g.moveTo(x, y); g.lineTo(x - Math.cos(t * 1.7 + i) * 3, y + len); g.stroke();
+  }
+  g.restore();
+}
+function rays(cx, cy, t, a) {
+  g.save(); g.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < 9; i++) { const ang = -Math.PI / 2 + (i - 4) * .13 + Math.sin(t * .4 + i) * .03, len = 700 + rnd(i) * 300, w = .03 + rnd(i + 4) * .05;
+    const al = a * (.08 + .07 * Math.sin(t * 2.1 + i * 1.7));
+    const gr = g.createLinearGradient(cx, cy, cx + Math.cos(ang) * len, cy + Math.sin(ang) * len); gr.addColorStop(0, `rgba(255,190,110,${al})`); gr.addColorStop(1, 'rgba(255,120,40,0)');
+    g.fillStyle = gr; g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + Math.cos(ang - w) * len, cy + Math.sin(ang - w) * len); g.lineTo(cx + Math.cos(ang + w) * len, cy + Math.sin(ang + w) * len); g.closePath(); g.fill(); }
+  g.restore();
+}
+function crucible(cx, cy, s, heat, t) {
+  heatGlow(cx, cy, 520 * s, .6 * heat);
+  const iron = g.createLinearGradient(cx - 150 * s, 0, cx + 150 * s, 0);
+  iron.addColorStop(0, '#1d1f24'); iron.addColorStop(.35, '#3c4048'); iron.addColorStop(.52, '#6a707c'); iron.addColorStop(.7, '#353940'); iron.addColorStop(1, '#16181c');
+  g.save(); g.fillStyle = iron; g.strokeStyle = '#0d0e11'; g.lineWidth = 4 * s;
+  g.beginPath(); g.moveTo(cx - 150 * s, cy); g.quadraticCurveTo(cx - 146 * s, cy + 165 * s, cx, cy + 168 * s); g.quadraticCurveTo(cx + 146 * s, cy + 165 * s, cx + 150 * s, cy); g.closePath(); g.fill(); g.stroke();
+  // rim light from the melt
+  const rim = g.createLinearGradient(0, cy, 0, cy + 70 * s); rim.addColorStop(0, `rgba(255,140,60,${.45 * heat})`); rim.addColorStop(1, 'rgba(255,140,60,0)');
+  g.fillStyle = rim; g.beginPath(); g.moveTo(cx - 150 * s, cy); g.quadraticCurveTo(cx - 148 * s, cy + 70 * s, cx - 120 * s, cy + 90 * s); g.lineTo(cx + 120 * s, cy + 90 * s); g.quadraticCurveTo(cx + 148 * s, cy + 70 * s, cx + 150 * s, cy); g.fill();
+  g.fillStyle = '#17191d'; g.strokeStyle = '#7a808c'; g.lineWidth = 3 * s; g.beginPath(); g.ellipse(cx, cy, 150 * s, 34 * s, 0, 0, 6.283); g.fill(); g.stroke();
+  g.beginPath(); g.ellipse(cx, cy + 2 * s, 134 * s, 25 * s, 0, 0, 6.283); g.clip();
+  const m = g.createRadialGradient(cx - 14 * s, cy - 6 * s, 2, cx, cy, 140 * s);
+  m.addColorStop(0, `rgba(255,250,225,${heat})`); m.addColorStop(.3, `rgba(255,190,70,${heat})`); m.addColorStop(.7, `rgba(255,95,30,${heat})`); m.addColorStop(1, `rgba(120,25,8,${heat})`);
+  g.fillStyle = m; g.fillRect(cx - 150 * s, cy - 40 * s, 300 * s, 80 * s);
+  g.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < 7; i++) { const bx = cx + Math.sin(t * .9 + i * 2.1) * 90 * s, by = cy + Math.cos(t * 1.3 + i) * 12 * s, br = (18 + 10 * Math.sin(t * 2 + i)) * s;
+    const gr = g.createRadialGradient(bx, by, 0, bx, by, br); gr.addColorStop(0, `rgba(255,240,190,${.5 * heat})`); gr.addColorStop(1, 'rgba(255,200,100,0)'); g.fillStyle = gr; g.fillRect(bx - br, by - br, br * 2, br * 2); }
+  g.restore();
+  g.save(); g.strokeStyle = '#6a707c'; g.lineWidth = 11 * s; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(cx - 160 * s, cy - 4 * s); g.lineTo(cx - 198 * s, cy - 26 * s); g.moveTo(cx + 160 * s, cy - 4 * s); g.lineTo(cx + 198 * s, cy - 26 * s); g.stroke(); g.restore();
+}
+function panel(x, y, w, h, on, r = 14) {
+  g.save(); g.fillStyle = on ? 'rgba(255,122,42,.14)' : 'rgba(255,255,255,.035)'; g.strokeStyle = on ? `rgba(255,165,95,${.4 + .55 * on})` : 'rgba(255,255,255,.12)'; g.lineWidth = 2;
+  if (on) { g.shadowColor = '#ff7a2a'; g.shadowBlur = 30 * on; } g.beginPath(); g.roundRect(x, y, w, h, r); g.fill(); g.stroke(); g.restore();
+}
+function stamp(x, y, label, color, p, rot = -.12, size = 1) {
+  if (p <= 0) return; const s = size * (1 + (1 - out(p)) * 2.2);
+  g.save(); g.translate(x, y); g.rotate(rot); g.scale(s, s); g.globalAlpha = clamp(p * 3);
+  g.shadowColor = color; g.shadowBlur = 20; g.strokeStyle = color; g.lineWidth = 5; g.beginPath(); g.roundRect(-110, -38, 220, 76, 10); g.stroke();
+  g.font = `bold 46px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = color; g.fillText(label, 0, 3); g.restore();
+}
+function bigWord(s, t0, t, y = H / 2, size = 120, color = '#fff3e2') { // trailer card: slow tracking expansion
+  const p = seg(t, t0, t0 + .25), sp = 14 + (t - t0) * 10;
+  text(s, W / 2, y, size, color, { font: SERIF, weight: 'bold', spacing: sp, alpha: p, glow: 'rgba(255,120,40,.45)', blur: 40 });
+}
+function vignette(a = .8) { const v = g.createRadialGradient(W / 2, H / 2, H * .35, W / 2, H / 2, W * .72); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, `rgba(0,0,0,${a})`); g.fillStyle = v; g.fillRect(0, 0, W, H); }
 
-// ---------- scenes ----------
-function frame(t) {
-  // 0.0 - 3.0  hook
-  // 2.6 - 6.0  reveal
-  // 5.8 - 9.0  studio
-  // 8.8 - 12.0 gauntlet
-  // 11.8 - 14.4 context
-  // 14.2 - 17  finale
-  const heat = t < 2.6 ? 0 : t < 6 ? ease(seg(t, 2.6, 4.2)) : t > 14.2 ? ease(seg(t, 14.2, 15.4)) : .35;
-  background(t, heat);
-  embers(t, t < 2.6 ? 26 : 60, W * .5, t < 6 || t > 14.2 ? 520 : 1200, t < 2.6 ? seg(t, 0, 1.2) : 1);
-
-  // hook
-  if (t < 3) {
-    const a = env(t, .3, 2.9, .6);
-    text('Every agent stops at', W / 2, H / 2 - 22, 34, '#d8d2cc', { alpha: a });
-    text('“it runs.”', W / 2, H / 2 + 26, 44, '#ffffff', { alpha: a * ease(seg(t, .9, 1.6)), weight: 'bold' });
+// ---------- shots ----------
+function shotColdOpen(t) {
+  fill('#040405');
+  const tick = (t % BEAT) < .06 ? 1 : 0; if (tick) heatGlow(W / 2, H / 2, 500, .05);
+  embers(t, 18, W / 2, 900, .5, seg(t, .3, 1.5) * .6);
+  const s = 'EVERY AGENT STOPS AT'; const p = seg(t, .55, 1.3);
+  text(s, W / 2, H / 2, 42, '#d9d2ca', { font: SERIF, spacing: 10 + t * 4, alpha: p });
+}
+function shotItRuns(t) {
+  const d = t - b(1); fill('#050404');
+  heatGlow(W / 2, H / 2, 900, .18 * Math.exp(-d * 1.4));
+  bigWord('“IT RUNS.”', b(1), t, H / 2 - 10, 150);
+  text('and then it stops.', W / 2, H / 2 + 120, 30, '#a39a90', { font: SERIF, spacing: 4, alpha: seg(t, b(1) + 1.2, b(1) + 1.7) * (1 - seg(t, b(2) - .35, b(2) - .05)) });
+  fill('#000', seg(t, b(2) - .35, b(2) - .02));
+}
+function shotIgnite(t) {
+  const d = t - b(2), push = 1 + ease(seg(t, b(2), b(3))) * .14;
+  fill('#060506');
+  g.save(); g.translate(W / 2, H * .62); g.scale(push, push); g.translate(-W / 2, -H * .62);
+  const heat = ease(seg(d, 0, 1.2));
+  bokeh(t, 16, heat); rays(W / 2, H * .55, t, heat); crucible(W / 2, H * .55, 1.25, heat, t);
+  embers(t, 120, W / 2, 700, 1 + heat, heat); g.restore();
+  // title forge begins in the next shot; tease hot line
+}
+function shotTitle(t) {
+  const push = 1.14 + seg(t, b(3), b(4)) * .03;
+  fill('#060506');
+  g.save(); g.translate(W / 2, H * .62); g.scale(push, push); g.translate(-W / 2, -H * .62);
+  g.globalAlpha = .55; rays(W / 2, H * .55, t, 1); crucible(W / 2, H * .55, 1.25, 1, t); g.globalAlpha = 1; g.restore();
+  fill('#000', .45); embers(t, 90, W / 2, 1600, 1.4, 1);
+  const word = 'CRUCIBLE', x0 = W / 2 - 7 * 118 / 2;
+  for (let i = 0; i < 8; i++) {
+    const t0 = b(3) + i * BEAT / 2, p = seg(t, t0, t0 + .12), cool = seg(t, t0 + .1, t0 + 1.4);
+    if (p <= 0) continue;
+    const col = `rgb(255,${Math.round(255 - 40 * cool)},${Math.round(245 - 110 * cool)})`;
+    text(word[i], x0 + i * 118, H / 2 - 30 + (1 - outBack(p)) * -40, 150, col, { font: SERIF, weight: 'bold', alpha: p, glow: `rgba(255,${Math.round(200 - 90 * cool)},60,${1 - .5 * cool})`, blur: 50 - 25 * cool });
   }
-  // reveal
-  if (t > 2.6 && t < 6.1) {
-    const a = env(t, 2.6, 6.1, .4);
-    g.save(); g.globalAlpha = a;
-    const rise = out(seg(t, 2.6, 3.8));
-    crucible(300, 190 + (1 - rise) * 40, 1, ease(seg(t, 3.0, 4.4)));
-    g.restore();
-    const word = 'CRUCIBLE';
-    for (let i = 0; i < word.length; i++) {
-      const p = seg(t, 3.5 + i * .12, 4.1 + i * .12);
-      const hot = 1 - seg(t, 4.1 + i * .12, 5.2 + i * .12);
-      const col = `rgb(255,${Math.round(200 + 46 * (1 - hot))},${Math.round(120 + 104 * (1 - hot))})`;
-      text(word[i], 560 + i * 82, 176 + (1 - out(p)) * 18, 96, col, { weight: 'bold', alpha: p * a, glow: `rgba(255,120,30,${.9 * hot})`, blur: 30 });
-    }
-    text('An autonomous game studio for Claude Code', 850, 262, 26, '#f3d9bf', { alpha: a * seg(t, 4.6, 5.2) });
+  text('AN AUTONOMOUS GAME STUDIO FOR CLAUDE CODE', W / 2, H / 2 + 110, 28, '#f1d7ba', { font: SANS, spacing: 8, alpha: seg(t, b(4) - .5, b(4) - .1) });
+}
+const MONT = b(4), CUT = BEAT * 2;
+function shotMontage(t) {
+  const k = Math.floor((t - MONT) / CUT), lt = t - MONT - k * CUT, T0 = MONT + k * CUT, drift = lt * 14;
+  fill('#060607'); bokeh(t, 12, .7); embers(t, 50, W / 2, 1900, 1.2 + k * .2, .7);
+  g.save(); g.translate(-drift, 0);
+  if (k === 0) { // ONE PITCH
+    text('ONE PITCH.', 530, H / 2, 92, '#fff1dc', { font: SERIF, weight: 'bold', spacing: 12 + lt * 8, alpha: seg(lt, 0, .15), glow: 'rgba(255,120,40,.4)', blur: 40 });
+    panel(1000, 250, 800, 300, 1);
+    const lines = ['A 3D arena shooter in the', 'browser. Two weapons, five', 'waves, enemies that flank.']; const total = lines.join('').length;
+    const n = Math.floor(seg(lt, .1, 1.1) * total); let used = 0;
+    text('/crucible', 1040, 300, 26, '#ff9a4d', { font: MONO, align: 'left', noChroma: true });
+    lines.forEach((ln, i) => { const vis = ln.slice(0, clamp(n - used, 0, ln.length)); used += ln.length; const cur = n >= used - ln.length && n < used && (lt * 3 % 1) < .5; text(vis + (cur ? '▍' : ''), 1040, 370 + i * 52, 32, '#ffd9b0', { font: MONO, align: 'left', noChroma: true }); });
+  } else if (k === 1) { // ONE PAGE
+    text('ONE PAGE.', 560, H / 2, 110, '#fff1dc', { font: SERIF, weight: 'bold', spacing: 12 + lt * 8, alpha: seg(lt, 0, .15), glow: 'rgba(255,120,40,.4)', blur: 40 });
+    const y = 150 + (1 - out(seg(lt, 0, .4))) * 120; panel(1120, y, 560, 520, .6, 8);
+    text('GAME BRIEF', 1170, y + 50, 26, '#ffb97a', { font: MONO, align: 'left', noChroma: true, spacing: 4 });
+    ['Pitch', 'Pillars', 'Not this', 'Core loop', 'Bars', 'Vertical slice', 'Milestones'].forEach((r, i) => { text(r, 1170, y + 110 + i * 52, 24, '#c9bfb4', { align: 'left', noChroma: true }); g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(1360, y + 104 + i * 52, 260 - (i * 37 % 90), 10); });
+    stamp(1500, y + 420, 'OK', '#8ee07a', seg(lt, BEAT * 1.5 - .05, BEAT * 1.5 + .12));
+  } else if (k === 2) { // GAME DIRECTOR
+    text('A GAME DIRECTOR.', W / 2, 150, 84, '#fff1dc', { font: SERIF, weight: 'bold', spacing: 10 + lt * 8, alpha: seg(lt, 0, .15), glow: 'rgba(255,120,40,.4)', blur: 40 });
+    const cx = W / 2, cy = 470, r = 110; g.save(); g.shadowColor = '#ff7a2a'; g.shadowBlur = 50; g.strokeStyle = 'rgba(255,170,100,.95)'; g.lineWidth = 4; g.fillStyle = 'rgba(255,122,42,.15)';
+    g.beginPath(); for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3 + Math.PI / 6; g.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); } g.closePath(); g.fill(); g.stroke(); g.restore();
+    text('DIRECTOR', cx, cy, 24, '#ffe6c8', { font: SANS, weight: 'bold', spacing: 2, noChroma: true });
+    text('plans · routes · merges · cuts', cx, cy + 190, 26, '#ffb97a', { font: MONO, noChroma: true, alpha: seg(lt, .2, .5) });
+    for (let i = 0; i < 12; i++) { const a = i / 12 * 6.283 + t * .9, rr = 230 + Math.sin(i) * 20; g.fillStyle = `rgba(255,200,140,${.5 + .5 * Math.sin(t * 3 + i)})`; g.beginPath(); g.arc(cx + Math.cos(a) * rr * 1.6, cy + Math.sin(a) * rr * .55, 5, 0, 6.283); g.fill(); }
+  } else if (k === 3) { // DEPARTMENTS
+    text('ELEVEN DEPARTMENTS.', W / 2, 130, 84, '#fff1dc', { font: SERIF, weight: 'bold', spacing: 10 + lt * 8, alpha: seg(lt, 0, .15), glow: 'rgba(255,120,40,.4)', blur: 40 });
+    const deps = ['Design', 'Code', 'Art', '3D · Blender', 'Animation', 'Tech Art', 'Audio', 'Level', 'UI / UX', 'QA', 'Build', 'Director'];
+    deps.forEach((d, i) => { const c = i % 4, r = Math.floor(i / 4), x = 330 + c * 330, y = 260 + r * 150, on = seg(lt, .1 + i * BEAT / 4, .2 + i * BEAT / 4);
+      if (i === 11) return; panel(x, y, 300, 110, on, 10); text(d, x + 150, y + 55, 34, on > .5 ? '#ffe6c8' : '#6d727a', { noChroma: true }); });
+  } else if (k === 4) { // BLOCK
+    text('EVERY TICKET', W / 2, 150, 84, '#fff1dc', { font: SERIF, weight: 'bold', spacing: 10 + lt * 8, alpha: seg(lt, 0, .15), glow: 'rgba(255,120,40,.4)', blur: 40 });
+    panel(300, 330, 420, 150, 1); text('Builder', 510, 385, 44, '#ffe6c8', { weight: 'bold', noChroma: true }); text('own worktree', 510, 435, 24, '#ffb97a', { font: MONO, noChroma: true });
+    panel(1200, 330, 420, 150, 1); text('Code critic', 1410, 385, 44, '#ffe6c8', { weight: 'bold', noChroma: true }); text('read-only', 1410, 435, 24, '#ffb97a', { font: MONO, noChroma: true });
+    g.strokeStyle = 'rgba(255,160,90,.9)'; g.lineWidth = 3; g.beginPath(); g.moveTo(730, 405); g.lineTo(730 + 460 * out(seg(lt, .05, .4)), 405); g.stroke();
+    stamp(1410, 600, 'BLOCK', '#ff5a4a', seg(t, b(6) - .02, b(6) + .14));
+  } else if (k === 5) { // PASS -> WON
+    text('RUNS THE GAUNTLET.', W / 2, 150, 84, '#fff1dc', { font: SERIF, weight: 'bold', spacing: 10 + lt * 8, alpha: seg(lt, 0, .15), glow: 'rgba(255,120,40,.4)', blur: 40 });
+    panel(240, 330, 420, 150, 1); text('Code critic', 450, 405, 44, '#ffe6c8', { weight: 'bold', noChroma: true });
+    panel(1260, 330, 420, 150, 1); text('Held-out judge', 1470, 385, 44, '#ffe6c8', { weight: 'bold', noChroma: true }); text('blind · both orders', 1470, 435, 24, '#ffb97a', { font: MONO, noChroma: true });
+    stamp(450, 600, 'PASS', '#8ee07a', seg(lt, .05, .2)); stamp(1470, 600, 'WON', '#ffd166', seg(lt, BEAT * 1.5 - .05, BEAT * 1.5 + .12), -.08, 1.15);
+  } else if (k === 6) { // FILES ARE MEMORY
+    text('FILES ARE MEMORY.', 560, H / 2, 72, '#fff1dc', { font: SERIF, weight: 'bold', spacing: 6 + lt * 5, alpha: seg(lt, 0, .15), glow: 'rgba(255,120,40,.4)', blur: 40 });
+    panel(1200, 170, 600, 460, .5, 10); text('studio/TRACKER.md', 1235, 215, 26, '#ff9a4d', { font: MONO, align: 'left', noChroma: true });
+    ['T-011  FP controller', 'T-012  Recoil pattern', 'T-013  Enemy nav', 'T-014  HUD + hitmarkers', 'T-015  Wave director', 'E-003  spawn in cover'].forEach((s, i) => { const done = lt > .15 + i * BEAT / 4;
+      text(done ? '[x]' : '[ ]', 1235, 290 + i * 56, 26, done ? '#8ee07a' : '#7b8089', { font: MONO, align: 'left', noChroma: true }); text(s, 1305, 290 + i * 56, 26, done ? '#efe7de' : '#7b8089', { font: MONO, align: 'left', noChroma: true }); });
+  } else { // BLIND. HARSH. HELD-OUT.  (riser)
+    const words = ['BLIND.', 'HARSH.', 'HELD-OUT.', 'NO MERCY.']; const wi = clamp(Math.floor(lt / (BEAT / 2)), 0, 3);
+    const sh = seg(lt, 0, CUT) * 14; g.translate((rnd(Math.floor(t * 30)) - .5) * sh, (rnd(Math.floor(t * 30) + 5) - .5) * sh);
+    heatGlow(W / 2, H / 2, 900, .15 + .5 * seg(lt, 0, CUT));
+    text(words[wi], W / 2, H / 2, 150, '#fff6ea', { font: SERIF, weight: 'bold', spacing: 20, glow: 'rgba(255,150,60,.8)', blur: 60 });
   }
-  // studio
-  if (t > 5.8 && t < 9.1) {
-    const a = env(t, 5.8, 9.1, .4); g.save(); g.globalAlpha = a;
-    text('ONE PITCH. ONE PAGE. THEN THE STUDIO RUNS.', W / 2, 62, 18, '#ff9a4d', { mono: true, spacing: 3 });
-    const xs = [150, 400, 660], y = 210, on = i => ease(seg(t, 6.1 + i * .55, 6.5 + i * .55));
-    wire(xs[0] + 90, y, xs[1] - 90, y, seg(t, 6.4, 6.8)); wire(xs[1] + 90, y, xs[2] - 100, y, seg(t, 6.95, 7.35));
-    node(xs[0], y, 170, 64, 'Your pitch', on(0)); node(xs[1], y, 170, 64, 'Game Brief', on(1), 'you say OK');
-    node(xs[2], y, 190, 74, 'Game Director', on(2), 'plans · routes · cuts');
-    const deps = ['Design', 'Code', '3D · Blender', 'Animation', 'Tech Art', 'Audio', 'Level', 'UI · QA'];
-    deps.forEach((d, i) => {
-      const dy = 104 + i * 30, p = seg(t, 7.5 + i * .08, 7.9 + i * .08);
-      wire(xs[2] + 95, y, 930, dy, p);
-      node(1030, dy, 190, 24, '', 0);
-      text(d, 1030, dy, 15, p > .9 ? '#ffe6c8' : '#6d727a', { alpha: clamp(p * 2) });
-    });
-    g.restore();
-  }
-  // gauntlet
-  if (t > 8.8 && t < 12.1) {
-    const a = env(t, 8.8, 12.1, .4); g.save(); g.globalAlpha = a;
-    text('EVERY TICKET RUNS THE GAUNTLET', W / 2, 62, 18, '#ff9a4d', { mono: true, spacing: 3 });
-    const y = 200, xs = [190, 470, 750, 1060], on = i => ease(seg(t, 9.0 + i * .5, 9.4 + i * .5));
-    for (let i = 0; i < 3; i++) wire(xs[i] + 95, y, xs[i + 1] - 95, y, seg(t, 9.3 + i * .5, 9.6 + i * .5));
-    node(xs[0], y, 180, 70, 'Builder', on(0), 'own worktree');
-    node(xs[1], y, 180, 70, 'Code critic', on(1), 'read-only');
-    node(xs[2], y, 180, 70, 'Coach critic', on(2), 'one gap / round');
-    node(xs[3], y, 200, 70, 'Held-out judge', on(3), 'blind · both orders');
-    stamp(xs[1], y + 78, 'BLOCK', '#ff5a4a', seg(t, 9.7, 10.0) * (1 - seg(t, 10.35, 10.5)));
-    stamp(xs[1], y + 78, 'PASS', '#8ee07a', seg(t, 10.5, 10.8));
-    stamp(xs[3], y + 80, 'WON', '#ffd166', seg(t, 11.0, 11.3));
-    text('max 3 rounds · the best version wins, not the latest', W / 2, 346, 16, '#9a8f86', { alpha: seg(t, 10.2, 10.8) });
-    g.restore();
-  }
-  // context
-  if (t > 11.8 && t < 14.5) {
-    const a = env(t, 11.8, 14.5, .4); g.save(); g.globalAlpha = a;
-    text('Files are memory.', 360, 170, 44, '#fff1dc', { weight: 'bold' });
-    text('Context stays clean for a week-long run.', 360, 222, 20, '#c9b8a6');
-    g.fillStyle = 'rgba(255,255,255,.05)'; g.strokeStyle = 'rgba(255,255,255,.14)'; g.lineWidth = 1.5;
-    g.beginPath(); g.roundRect(700, 84, 440, 240, 10); g.fill(); g.stroke();
-    text('studio/TRACKER.md', 720, 108, 15, '#ff9a4d', { mono: true, align: 'left' });
-    const items = ['T-011  FP controller + collision', 'T-012  Rifle recoil pattern', 'T-013  Enemy navigation', 'T-014  HUD + hit markers', 'E-003  spawn inside cover'];
-    items.forEach((s, i) => { const done = t > 12.3 + i * .35;
-      text(done ? '[x]' : '[ ]', 724, 146 + i * 34, 16, done ? '#8ee07a' : '#7b8089', { mono: true, align: 'left' });
-      text(s, 770, 146 + i * 34, 16, done ? '#e8e2da' : '#7b8089', { mono: true, align: 'left' }); });
-    g.restore();
-  }
-  // finale
-  if (t > 14.2) {
-    const a = seg(t, 14.2, 14.7);
-    text('You play. It improves.', W / 2, 110, 30, '#f3e6d8', { alpha: a * (1 - seg(t, 15.2, 15.6)) });
-    const b = seg(t, 15.3, 16.0);
-    g.save(); g.globalAlpha = b; crucible(W / 2, 222, .5, 1); g.restore();
-    text('CRUCIBLE', W / 2, 150, 84, '#ffe2b8', { weight: 'bold', alpha: b, spacing: 10, glow: 'rgba(255,120,30,.8)', blur: 30 });
-    text('/crucible  your game idea', W / 2, 350, 18, '#ffb97a', { mono: true, alpha: seg(t, 15.8, 16.4) });
-  }
-  vignette(); letterbox(t);
+  g.restore();
+  // white-out into the silence
+  if (k === 7) fill('#fff8ee', Math.pow(seg(lt, CUT - .45, CUT - .02), 2));
+}
+function shotSilence(t) {
+  fill('#000');
+  const d = t - b(8);
+  text('YOU PLAY.', W / 2, H / 2, 64, '#cfc6bc', { font: SERIF, spacing: 14 + d * 6, alpha: seg(d, .35, .9) * (1 - seg(t, HITS[4] - .1, HITS[4])) });
+  if (t >= HITS[4]) { heatGlow(W / 2, H / 2, 900, .25 * Math.exp(-(t - HITS[4]) * 2)); bigWord('IT IMPROVES.', HITS[4], t, H / 2, 130); }
+}
+function shotFinale(t) {
+  const d = t - b(9), push = 1.0 + ease(seg(d, 0, 8)) * .08;
+  fill('#060506');
+  g.save(); g.translate(W / 2, H * .7); g.scale(push, push); g.translate(-W / 2, -H * .7);
+  bokeh(t, 22, 1); rays(W / 2, H * .76, t, 1.2); crucible(W / 2, H * .76, .8, 1, t); embers(t, 140, W / 2, 1200, 1.1, 1);
+  g.restore();
+  text('CRUCIBLE', W / 2, 250, 170, '#ffe6c2', { font: SERIF, weight: 'bold', spacing: 26 + d * 3, alpha: seg(d, 0, .2), glow: 'rgba(255,120,30,.85)', blur: 60 });
+  text('AN AUTONOMOUS GAME STUDIO FOR CLAUDE CODE', W / 2, 372, 28, '#f3d9bf', { spacing: 9, alpha: seg(t, b(10), b(10) + .6) });
+  text('/crucible  your game idea', W / 2, 432, 26, '#ffb97a', { font: MONO, alpha: seg(t, b(10) + BAR / 2, b(10) + BAR / 2 + .6), noChroma: true });
+  text('built on the Gauntlet Loop by Matt Shumer', W / 2, 60, 18, '#8d8279', { spacing: 3, alpha: seg(t, b(11), b(11) + .8), noChroma: true });
+  fill('#000', seg(t, 30.3, 31.8));
 }
 
-// ---------- render ----------
-window.render = async () => {
-  const gif = GIFEncoder(); const n = FPS * DUR;
-  for (let i = 0; i < n; i++) {
-    frame(i / FPS);
-    const { data } = g.getImageData(0, 0, W, H);
-    for (let k = 0; k < data.length; k += 4) {            // film grain doubles as dithering against GIF banding
-      const n = (((k * 2654435761 + i * 97) >>> 0) % 9) - 4;
-      data[k] = Math.max(0, Math.min(255, data[k] + n)); data[k + 1] = Math.max(0, Math.min(255, data[k + 1] + n)); data[k + 2] = Math.max(0, Math.min(255, data[k + 2] + n));
-    }
-    const palette = quantize(data, 256, { format: 'rgb565' });
-    const index = applyPalette(data, palette, 'rgb565');
-    gif.writeFrame(index, W, H, { palette, delay: Math.round(1000 / FPS), repeat: 0 });
-  }
-  gif.finish(); const bytes = gif.bytes();
-  let s = ''; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
-  return btoa(s);
-};
+function frame(t) {
+  const sh = sinceHit(t); CHROMA = sh < .18 ? (1 - sh / .18) * 9 : 0;
+  g.save();
+  const shake = sh < .35 ? (1 - sh / .35) * 16 : 0; g.translate((rnd(Math.floor(t * 60)) - .5) * shake, (rnd(Math.floor(t * 60) + 3) - .5) * shake);
+  if (t < b(1)) shotColdOpen(t);
+  else if (t < b(2)) shotItRuns(t);
+  else if (t < b(3)) shotIgnite(t);
+  else if (t < b(4)) shotTitle(t);
+  else if (t < b(8)) shotMontage(t);
+  else if (t < b(9)) shotSilence(t);
+  else shotFinale(t);
+  g.restore();
+  if (sh < .12 && t > .1) fill('#fff4e6', (1 - sh / .12) * .75);      // flash frame on every hit
+  vignette();
+}
 window.still = t => { frame(t); return cv.toDataURL('image/png'); };
 window.ready = true;
 </script></body></html>
