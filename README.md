@@ -16,11 +16,11 @@ Most agent output stops at "good enough", or ships half of what was asked, becau
 git clone https://github.com/robonuggets/gauntlet-loop
 ```
 
-Copy the skills, the critic subagent and the workflow into your project:
+Copy the skills into your project:
 
 ```
 mkdir -p your-project/.claude
-cp -r gauntlet-loop/.claude/skills gauntlet-loop/.claude/agents gauntlet-loop/.claude/workflows your-project/.claude/
+cp -r gauntlet-loop/.claude/skills your-project/.claude/
 ```
 
 Only want the prompt writer? `gauntlet-loop/.claude/skills/gauntlet-loop` on its own is enough.
@@ -40,8 +40,6 @@ It offers you 2 or 3 quality bars to aim at, you pick one, and it hands back a s
 ├── SKILL.md      # the skill
 ├── game-dev.md   # complete games: bars, captures, visual quality, engine notes (read only for game goals)
 └── plan.md       # running the loop from a Wayfinder map or spec (read only when there is a plan)
-.claude/workflows/gauntlet-loop.js   # the same loop as a Claude Code workflow
-.claude/agents/gauntlet-critic.md    # read-only blind critic the workflow uses
 .claude/skills/wayfinder, to-spec, grilling, domain-modeling,
                research, prototype, setup-matt-pocock-skills   # bundled from mattpocock/skills (MIT)
 THIRD_PARTY.md    # source and license of the bundled skills
@@ -54,7 +52,7 @@ LICENSE           # CC BY 4.0, for this repo's own files
 1. **You describe what you want.** Anything: a game with its engine and look, a site, an essay, a CLI tool, a research brief. Describe as much as you like.
 2. **It offers 2 or 3 bars.** Each one is a specific, real thing your agent can actually fetch and compare against. Not "award-winning design", but a named page, a named game, a named repo.
 3. **You pick one.** It writes one prompt, with your description carried over word for word, and stops.
-4. **You paste it into a fresh session** (or, in Claude Code, run it as a workflow). The agent becomes the director and:
+4. **You paste it into a fresh session**, or let the skill run it here. The agent becomes the director and:
    - writes the goal to a file it re-reads every round;
    - turns your description into a checklist;
    - builds a rough version of all of it first;
@@ -177,19 +175,9 @@ Wayfinder plans and never builds; a cleared map hands off to execution, which is
 
 If the plan still has open questions, the skill sends you back to Wayfinder instead of looping on guesses. Details, including a one-line fix for long grilling rounds, are in `plan.md`.
 
-## Run it as a Claude Code workflow
+## Prompts only
 
-In Claude Code the same loop also runs as a workflow instead of a pasted prompt:
-
-- The checklist is written and everything is built rough first.
-- The bar is captured before round one.
-- The A/B key stays inside the script, and the critic can only read the files it is given.
-- Every critic gets the same budget, and the same round budget applies.
-- Captures run only while no builder is editing, so they never see a half-built tree.
-- The checklist gate, the whole-thing comparison and the fresh completeness check all run, and the run ends with `DONE.md`.
-- Every round is logged under `gauntlet/progress/`. A run that hits its token budget stops cleanly with a summary.
-
-Ask for it after the skill writes the prompt ("run it as the gauntlet-loop workflow"), or end a pasted prompt with "Run this with the gauntlet-loop workflow, passing this whole prompt as the brief." It runs many agents, so it spends real tokens. A token target for the turn (for example "+2m") becomes its budget.
+The skill ships no scripts and no workflow code. The loop is the prompt. In Claude Code, the prompt's last line lets Claude Code orchestrate the subagents itself; in any other agent, the portable last lines do the same.
 
 ## Works with any agent
 
