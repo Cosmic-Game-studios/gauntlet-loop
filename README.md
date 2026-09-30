@@ -125,20 +125,24 @@ The [original prompt](https://github.com/mshumer/Claude-of-Duty/blob/main/prompt
 | Everything must be specified up front | Your description is the minimum; open points are filled creatively in its spirit and marked on the checklist so you can change them |
 | "Visually beautiful" as a wish | `STYLE.md` from the bar, named default looks to avoid, no default engine look in the final build |
 
-## What is measured, and what is not yet
+## What is measured
 
-**Measured** in the benchmark runs above:
-- the original loop's failures (vague bar, honour-system blindness, oscillating critics, broken features after polish, no end);
-- the director-with-files pattern against the original's single lead context.
+**Long runs (30 minutes, a browser shooter).** A director with state files and short returns was compared with the original loop's single lead context. It used 32-48% fewer tokens, cost less, passed more functional checks and survived restarts (table above).
 
-**Not yet measured:** this version head to head against the original prompt and the previous version on the same brief. Every rule here answers a failure the benchmark logs recorded, but that is not the same as a measured win.
+**Short runs (10 minutes, Claude Sonnet 5.5, same brief for every method, objective checks by a script validated against a reference implementation):**
 
-**What the head-to-head should report** - the numbers the loop already writes to `STATUS.md` and `DONE.md`:
-- checklist items passing at the end;
-- playthrough blockers;
-- pieces won blind;
-- a blind judge's pick between the finished results;
-- tokens and cost.
+| Brief | Original prompt | v4 (director) | v5 (v4 + use the budget, one critic for look and code) |
+|---|---|---|---|
+| Tetris, 30 checks | 29/30, $0.59 | 30/30, $1.03 | - |
+| Tetris with modes, replays, remapping, 40 checks | **40/40**, $0.79 | 33/40, $1.56 | 39/40, **$0.65** |
+
+What this shows:
+- v5 beats v4 on completeness and cost, so its changes stay.
+- In runs this short, the original prompt is not beaten. The model builds the whole brief in one pass, and the loop's process has no time to pay off.
+- The loop's measured gains so far are from long runs: context, cost and restarts.
+- Blind judges in the first short run preferred the original's look and this loop's code.
+
+The next measurement worth making is a longer run on a brief too big for one pass. That is where this loop's process is meant to earn its cost.
 
 ## Games
 
