@@ -84,7 +84,7 @@ These lines each fix a failure seen when real agents ran the loop. Keep them whe
 - **Own files per builder.** Parallel builders on one project collide unless each owns its files.
 - **Measure what a picture cannot show.** Movement feel, timing, sound and game logic do not survive a screenshot. They get numbers and tests.
 - **Wins must not regress.** A piece polished in isolation can break something that worked (a reload, a jump) or blow the performance budget. A win that does that is not a win.
-- **Change approach on a stuck gap.** When one gap repeats, more polish on the same approach rarely closes it. This changes the approach; it never ends the loop.
+- **Change approach on a stuck gap.** When one gap repeats, more polish on the same approach rarely closes it. This changes the approach; it does not end the loop. If a piece stays stuck through two changes, the workflow hands it to the user instead of burning rounds.
 
 Current Claude models follow a prompt closely and literally, plan and split work well on their own, and keep going without being pushed. So the prompt says each thing once, at normal volume, with the reason where the reason is not obvious. Firmness belongs on the exit condition and nowhere else. Stacked MUST and NEVER lines make the agent rigid, and a prescribed plan is worse than the one it would make.
 
@@ -98,7 +98,7 @@ Plain sentences. No bullet lists inside the prompt. It should read like someone 
 
 ## In Claude Code: run it as a workflow
 
-This repo ships the loop as a Claude Code workflow, `.claude/workflows/gauntlet-loop.js`, with a read-only critic subagent, `.claude/agents/gauntlet-critic.md`. The workflow does in code what the prompt asks for in words: it captures the bar before the first round, keeps the A/B key in the script where no agent can see it, gives the critic only Read and Glob so it cannot run or capture anything, starts each piece when its dependencies have won, changes approach when a gap repeats and hands a piece that stays stuck through two changes back to the user, holds the regression gate, and ends with the whole-thing comparison. Every round lands on the progress page.
+This repo ships the loop as a Claude Code workflow, `.claude/workflows/gauntlet-loop.js`, with a read-only critic subagent, `.claude/agents/gauntlet-critic.md`. The workflow does in code what the prompt asks for in words: it captures the bar before the first round, keeps the A/B key in the script where no agent can see it, stages every pair under a neutral folder with numbered files, gives the critic only Read so it cannot list folders, run or capture anything, fails closed when a pair is incomplete, runs captures only while no builder is editing, starts each piece when its dependencies have won, changes approach when a gap repeats and hands a piece that stays stuck through two changes back to the user, holds the regression gate, and ends with the whole-thing comparison. Every round lands on the progress page. If the token budget or the agent cap runs out, it stops cleanly and returns where each piece stands.
 
 When the user asks to run the loop and the workflow is installed, call the Workflow tool with the name `gauntlet-loop` and `args` set to `{"brief": "<the prompt you wrote>"}`, adding `"plan": "<link or path>"` when there is a plan. Running it spends real tokens across many agents, so run it only when the user asked for it. A token target the user sets for the turn ("+2m") becomes the run's budget: the workflow stops starting rounds when it runs low and says where it stopped.
 

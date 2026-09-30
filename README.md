@@ -115,10 +115,11 @@ Bar becomes a named tool's implementation plus its benchmark, so taste and a num
 In Claude Code the loop also runs as a workflow instead of a pasted prompt. The workflow does in code what the prompt asks for in words:
 
 - the bar is captured before the first round;
-- the A/B key stays inside the script, and the critic is a read-only subagent that cannot run or capture anything, so blind means blind;
+- the A/B key stays inside the script, pairs are staged as numbered files in a neutral folder, and the critic is a subagent that can only read the files it is given, so blind means blind;
 - pieces start when their dependencies have won, a gap that repeats changes the approach, and a piece still stuck is handed to you;
 - a win only counts when the regression check passes, and the whole thing faces the bar at the end;
-- every round is written to `gauntlet/PROGRESS.md`.
+- captures run only while no builder is editing, so they never see a half-built tree;
+- every round is logged under `gauntlet/progress/`, indexed by `gauntlet/PROGRESS.md`, and a run that hits its token budget stops cleanly with a summary.
 
 Ask for it after the skill writes the prompt ("run it as the gauntlet-loop workflow"), or end a pasted prompt with "Run this with the gauntlet-loop workflow, passing this whole prompt as the brief." It runs many agents, so it spends real tokens. A token target for the turn (for example "+2m") becomes its budget.
 
