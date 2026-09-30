@@ -34,7 +34,8 @@ It offers you 2 or 3 quality bars to aim at, you pick one, and it hands back a s
 
 ```
 .claude/skills/gauntlet-loop/
-└── SKILL.md      # the whole skill, one file
+├── SKILL.md      # the skill
+└── game-dev.md   # bars, captures and engine notes for games (read only for game goals)
 README.md
 LICENSE           # CC BY 4.0
 ```
@@ -43,12 +44,23 @@ LICENSE           # CC BY 4.0
 
 1. **You give a goal.** Anything. A site, an essay, a CLI tool, a research brief.
 2. **It offers 2 or 3 bars.** Each one is a specific, real thing your agent can actually fetch and compare against. Not "award-winning design", but a named page, a named post, a named repo.
-3. **You pick one.** It writes one short prompt, around 150 words, and stops.
+3. **You pick one.** It writes one short prompt, a few plain paragraphs, and stops.
 4. **You paste it into a fresh session.** That agent splits the work, runs builder and critic pairs, and loops.
 
-The critic is the part that matters. It is a separate agent with fresh context, it opens the actual output, it puts your work next to the bar with the labels stripped, and it says which one is better. Not a score out of 10, which drifts upward every round. A pick.
+The critic is the part that matters. It is a separate agent with fresh context. The lead captures your work and the bar the same way, shuffles them into an unlabeled A and B and keeps the key, so the critic really is blind. It says which one is better, points to what decided it, and names the single biggest gap. Not a score out of 10, which drifts upward every round. A pick.
+
+A win only counts if nothing that worked before broke. When a gap keeps coming back, the builder changes approach instead of polishing. When every piece has won, the whole thing faces the bar once more.
 
 The loop exits when your work wins the blind comparison, or when you stop the run. Never after a fixed number of rounds.
+
+## Games
+
+For games, and anything built in Unreal Engine, Unity, Godot or a web engine, the skill reads `game-dev.md`. Agents cannot watch video, hear sound or play in real time, so every piece gets a capture method that works for them: stills from fixed cameras, frame strips of scripted input, measured numbers for feel (time to top speed, jump airtime, camera lag), and a frame budget as the measurable half.
+
+```
+/gauntlet-loop third-person movement for my Unreal 5 game, as good as Uncharted
+```
+Bar becomes Uncharted 4's traversal: frames and numbers pulled from official footage, compared against the same moves captured from your test map, at 60 fps.
 
 ## Why a bar and not a rubric
 
@@ -88,6 +100,8 @@ For any other agent, the skill swaps those two lines for plain instructions: kee
 - A vague bar. The critic invents a comparison and approves everything. By far the most common failure.
 - The builder judging its own work. The critic needs fresh context and no knowledge of how hard the builder tried.
 - A soft critic. Give it a binary job, not a score.
+- Blindness nobody engineered. A critic that takes its own screenshots knows which one is yours.
+- Wins that break things. A prettier piece that broke a feature or the frame budget is a step back.
 - A fixed round count. The exit is winning, or you calling it.
 
 ## Credit
