@@ -16,11 +16,14 @@ Most agent output stops at "good enough" because nothing is holding it to a stan
 git clone https://github.com/robonuggets/gauntlet-loop
 ```
 
-Copy the skill folder into your project:
+Copy the skills, the critic subagent and the workflow into your project:
 
 ```
-cp -r gauntlet-loop/.claude/skills/gauntlet-loop your-project/.claude/skills/
+mkdir -p your-project/.claude
+cp -r gauntlet-loop/.claude/skills gauntlet-loop/.claude/agents gauntlet-loop/.claude/workflows your-project/.claude/
 ```
+
+Only want the prompt writer? `gauntlet-loop/.claude/skills/gauntlet-loop` on its own is enough.
 
 Then in your agent:
 
@@ -37,8 +40,13 @@ It offers you 2 or 3 quality bars to aim at, you pick one, and it hands back a s
 ├── SKILL.md      # the skill
 ├── game-dev.md   # bars, captures and engine notes for games (read only for game goals)
 └── plan.md       # running the loop from a Wayfinder map or spec (read only when there is a plan)
+.claude/workflows/gauntlet-loop.js   # the loop as a Claude Code workflow
+.claude/agents/gauntlet-critic.md    # read-only blind critic the workflow uses
+.claude/skills/wayfinder, to-spec, grilling, domain-modeling,
+               research, prototype, setup-matt-pocock-skills   # bundled from mattpocock/skills (MIT)
+THIRD_PARTY.md    # source and license of the bundled skills
 README.md
-LICENSE           # CC BY 4.0
+LICENSE           # CC BY 4.0, for this repo's own files
 ```
 
 ## How it works
@@ -65,7 +73,7 @@ Bar becomes Uncharted 4's traversal: frames and numbers pulled from official foo
 
 ## Plan first with Wayfinder
 
-The loop optimizes whatever it is pointed at. On a vague goal it polishes the pieces it guessed. So for anything bigger than one session, plan first with [Matt Pocock's Wayfinder](https://github.com/mattpocock/skills), then let the gauntlet loop build the plan:
+The loop optimizes whatever it is pointed at. On a vague goal it polishes the pieces it guessed. So for anything bigger than one session, plan first with [Matt Pocock's Wayfinder](https://github.com/mattpocock/skills) - bundled here with `to-spec` and the skills Wayfinder calls - then let the gauntlet loop build the plan. Run `/setup-matt-pocock-skills` once per repo first:
 
 ```
 /wayfinder a vertical slice of my Unreal 5 action game
@@ -101,6 +109,18 @@ Bar becomes a named writer's actual published posts, judged on which one a non-e
 /gauntlet-loop a CLI that formats JSON logs
 ```
 Bar becomes a named tool's implementation plus its benchmark, so taste and a number both have to win.
+
+## Run it as a Claude Code workflow
+
+In Claude Code the loop also runs as a workflow instead of a pasted prompt. The workflow does in code what the prompt asks for in words:
+
+- the bar is captured before the first round;
+- the A/B key stays inside the script, and the critic is a read-only subagent that cannot run or capture anything, so blind means blind;
+- pieces start when their dependencies have won, a gap that repeats changes the approach, and a piece still stuck is handed to you;
+- a win only counts when the regression check passes, and the whole thing faces the bar at the end;
+- every round is written to `gauntlet/PROGRESS.md`.
+
+Ask for it after the skill writes the prompt ("run it as the gauntlet-loop workflow"), or end a pasted prompt with "Run this with the gauntlet-loop workflow, passing this whole prompt as the brief." It runs many agents, so it spends real tokens. A token target for the turn (for example "+2m") becomes its budget.
 
 ## Works with any agent
 

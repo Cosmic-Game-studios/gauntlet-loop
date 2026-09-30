@@ -16,7 +16,7 @@ The planner this file is written for is Matt Pocock's Wayfinder (`/wayfinder`, M
 
 Planning and building stay in separate sessions. The loop does not write into the map; the map records decisions, and the loop's record is its progress page.
 
-If the user does not have Wayfinder: `npx skills@latest add mattpocock/skills` and pick `wayfinder`, `to-spec` and `setup-matt-pocock-skills`, or install the `mattpocock-skills` Claude Code plugin. Then run `/setup-matt-pocock-skills` once in the repo so the skills know the issue tracker.
+This repo bundles `wayfinder`, `to-spec` and the skills Wayfinder calls (`grilling`, `domain-modeling`, `research`, `prototype`, `setup-matt-pocock-skills`), unmodified and MIT licensed - see `THIRD_PARTY.md`. Before the first map, run `/setup-matt-pocock-skills` once in the repo so they know the issue tracker. Grilling rounds can run long; Wayfinder's own docs suggest a lower effort for those sessions or a plain-language line about brevity in the project's `CLAUDE.md`.
 
 ## Let the planner pick the bars
 
@@ -49,14 +49,14 @@ Keep the template and its last line. Change these, in plain sentences:
 
 This is illustrative. Match its shape, not its wording.
 
-User: "/gauntlet-loop the vertical slice from our wayfinder map" - with a cleared map and a spec made by `/to-spec`. The plan names four pieces (third-person traversal, melee combat, one enemy archetype, one arena), the bars for traversal (Uncharted 4) and melee (God of War, 2018), 60 fps on the team's dev machine, and multiplayer as out of scope. The arena has no bar yet, so the skill offers three first and the user picks one; it is written as [ARENA BAR] below.
+User: "/gauntlet-loop the vertical slice from our wayfinder map" - with a cleared map and a spec made by `/to-spec`. The plan names four pieces (third-person traversal, melee combat, one enemy archetype, one arena), the bars for traversal (Uncharted 4) and melee (God of War, 2018), 60 fps on the team's dev machine, and multiplayer as out of scope. The arena has no bar yet, so the skill offers three first and the user picks Doom Eternal's Super Gore Nest.
 
 ```
 Build the vertical slice described in the spec at [SPEC LINK], in our Unreal Engine 5 project. It is the level we show publishers: ten minutes that have to feel like a finished game from the first input.
 
 The plan is that spec and the Wayfinder map it came from, [MAP LINK]. Read the spec and the map's Destination, Decisions so far and Out of scope before anything else. The decisions in the plan are settled; do not reopen them. If the work shows one is wrong, stop that piece and put the conflict on the progress page for me instead of designing around it.
 
-Take the pieces, their order and each piece's bar from the plan: traversal against Uncharted 4, melee against God of War (2018), the arena against [ARENA BAR]. Before the first round, capture every bar in the same views, sizes and conditions we will capture ours in, and build a debug hook that steps the game a fixed number of frames with given inputs, for every capture and test. Compare against those captures, never against a description of the bar. The slice also has to hold 60 fps on this machine, measured with stat unit.
+Take the pieces, their order and each piece's bar from the plan: traversal against Uncharted 4, melee against God of War (2018), the arena against Doom Eternal's Super Gore Nest. Before the first round, capture every bar in the same views, sizes and conditions we will capture ours in, and build a debug hook that steps the game a fixed number of frames with given inputs, for every capture and test. Compare against those captures, never against a description of the bar. The slice also has to hold 60 fps on this machine, measured with stat unit.
 
 A piece starts when the pieces it depends on have won, and each builder gets its own files. For each piece, fan out a builder and a separate critic with fresh context. You capture both sides the same way, shuffle them into an unlabeled A and B, and keep the key. The critic sees only the pair, the numbers, and the gaps already named for that piece. It picks A or B, points to the frames or numbers that decided it, and names the single biggest remaining gap. Feel and timing are judged on measurements against the bar.
 

@@ -15,9 +15,9 @@ If the user brings a plan - a Wayfinder map, a spec, or tickets - read `plan.md`
 
 1. **Set the bar.** If the user supplied a reference, use it. If not, offer **2 or 3 candidate bars**, one line each, and stop. Wait for their pick. Do not write the prompt yet. For a game, or anything built in a game engine, read `game-dev.md` in this folder first.
 2. **Write the prompt.** One block, paste-ready, with no preamble and no headings inside it. The only thing after it is the offer in step 3.
-3. **Offer to run it.** One flat line under the prompt: "I can run this here." Not a question.
+3. **Offer to run it.** One flat line under the prompt: "I can run this here." Not a question. In Claude Code with the `gauntlet-loop` workflow installed, make it "I can run this here as the gauntlet-loop workflow."
 
-If they say run it, you become the lead agent and follow the prompt you just wrote.
+If they say run it, run it the way the next section describes. Otherwise you become the lead agent and follow the prompt you just wrote.
 
 ## The bar is the whole trick
 
@@ -96,6 +96,14 @@ Short - a few plain paragraphs, the length of the examples below. If the prompt 
 
 Plain sentences. No bullet lists inside the prompt. It should read like someone telling an agent what perfect looks like and refusing to accept less.
 
+## In Claude Code: run it as a workflow
+
+This repo ships the loop as a Claude Code workflow, `.claude/workflows/gauntlet-loop.js`, with a read-only critic subagent, `.claude/agents/gauntlet-critic.md`. The workflow does in code what the prompt asks for in words: it captures the bar before the first round, keeps the A/B key in the script where no agent can see it, gives the critic only Read and Glob so it cannot run or capture anything, starts each piece when its dependencies have won, changes approach when a gap repeats and hands a piece that stays stuck through two changes back to the user, holds the regression gate, and ends with the whole-thing comparison. Every round lands on the progress page.
+
+When the user asks to run the loop and the workflow is installed, call the Workflow tool with the name `gauntlet-loop` and `args` set to `{"brief": "<the prompt you wrote>"}`, adding `"plan": "<link or path>"` when there is a plan. Running it spends real tokens across many agents, so run it only when the user asked for it. A token target the user sets for the turn ("+2m") becomes the run's budget: the workflow stops starting rounds when it runs low and says where it stopped.
+
+For a prompt the user will paste into a Claude Code session that has the workflow, replace the last line with: "Run this with the gauntlet-loop workflow, passing this whole prompt as the brief."
+
 ## Portability
 
 `/loop` and `ultracode` are Claude Code features. `/loop` reruns the prompt on an interval or lets the model pace itself. `ultracode` opts the turn into multi-agent orchestration.
@@ -157,6 +165,6 @@ Fan out subagents and ultracode.
 - **The builder judging its own work.** The critic must be a separate agent with fresh context. It should not know how hard the builder tried.
 - **Blindness nobody engineered.** If the critic captures ours itself, it knows which is ours. The lead captures and shuffles.
 - **A soft critic.** Say "harsh" in the prompt and give it a binary job: which one is better, A or B. Scores out of 10 drift upward every round.
-- **Named exit after N rounds.** The exit is winning the comparison, or the user stopping the run, or a limit the user set. Never a round count.
+- **Named exit after N rounds.** The exit is winning the comparison, or the user stopping the run, or a limit the user set. Never a round count. A piece that stays stuck through changes of approach goes to the user; that is a hand-off, not an exit.
 - **Wins that break things.** A prettier piece that broke a feature or the frame budget moved the work backwards.
 - **Over-specifying.** Every extra instruction is one fewer decision the agent makes with its own judgment. Minimal wins.
