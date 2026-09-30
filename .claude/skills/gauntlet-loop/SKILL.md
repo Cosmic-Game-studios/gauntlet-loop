@@ -1,6 +1,6 @@
 ---
 name: gauntlet-loop
-description: Turns any goal into one short, paste-ready "gauntlet loop" prompt - a prompt that makes an agent set a concrete quality bar, split the work into small judgeable pieces, run a builder and a separate harsh critic on each, compare blind against the bar, and loop until it wins. Works for builds, writing, code, research, design, and game development (Unreal Engine, Unity, Godot, web games). Triggers on "/gauntlet-loop", "gauntlet loop", "gauntlet this", "make a gauntlet prompt", "loop until it beats X".
+description: Turns any goal into one short, paste-ready "gauntlet loop" prompt - a prompt that makes an agent set a concrete quality bar, split the work into small judgeable pieces, run a builder and a separate harsh critic on each, compare blind against the bar, and loop until it wins. Works for builds, writing, code, research, design, and game development (Unreal Engine, Unity, Godot, web games). Pairs with Wayfinder: turns a cleared Wayfinder map or spec into the loop that builds it. Triggers on "/gauntlet-loop", "gauntlet loop", "gauntlet this", "make a gauntlet prompt", "loop until it beats X", "gauntlet the plan", "build this wayfinder map".
 ---
 
 # Gauntlet Loop
@@ -10,6 +10,8 @@ The user gives a goal. You give back ONE short prompt they can paste into a fres
 You are not doing the work. You are writing the prompt that makes another agent grind on the work until it beats a real reference.
 
 ## Flow
+
+If the user brings a plan - a Wayfinder map, a spec, or tickets - read `plan.md` in this folder first; it decides which steps below are already done. If the goal is too big for one session and there is no plan, say so in one line and suggest `/wayfinder` first. If they want to go ahead anyway, carry on.
 
 1. **Set the bar.** If the user supplied a reference, use it. If not, offer **2 or 3 candidate bars**, one line each, and stop. Wait for their pick. Do not write the prompt yet. For a game, or anything built in a game engine, read `game-dev.md` in this folder first.
 2. **Write the prompt.** One block, paste-ready, with no preamble and no headings inside it. The only thing after it is the offer in step 3.
@@ -70,7 +72,7 @@ Rules for what you fill in:
 - Give the context sentence real content - audience, purpose, the feeling it has to land. The agent fills missing context with safe, generic defaults, and generic is what the loop is trying to beat.
 - Add a time, budget or cost line **only if the user named one**, and phrase it as the exit it is: "Stop at [LIMIT] and leave the best version, with the open gaps listed on the progress page." No default cap.
 - Add tool names only if the goal needs them (image or video generation, a browser, an engine, a deploy target).
-- Everything else stays out. No architecture, no file layout, no decomposition, no round count, no stack choice unless the user demanded it. The agent decides those, and it decides better than a spec written before the work started.
+- Everything else stays out. No architecture, no file layout, no decomposition, no round count, no stack choice unless the user demanded it or their plan settled it - and then link the plan instead of restating it. The agent decides the rest, and it decides better than a spec written before the work started.
 
 ## Why the template reads the way it does
 
@@ -151,6 +153,7 @@ Fan out subagents and ultracode.
 ## What breaks a gauntlet loop
 
 - **A vague bar.** The critic invents a comparison and approves everything. Most common failure by far.
+- **A foggy goal.** The loop optimizes what it is pointed at, so open questions get answered by whichever piece wins a round. On anything bigger than one session, clear the plan first.
 - **The builder judging its own work.** The critic must be a separate agent with fresh context. It should not know how hard the builder tried.
 - **Blindness nobody engineered.** If the critic captures ours itself, it knows which is ours. The lead captures and shuffles.
 - **A soft critic.** Say "harsh" in the prompt and give it a binary job: which one is better, A or B. Scores out of 10 drift upward every round.

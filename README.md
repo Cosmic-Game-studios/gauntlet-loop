@@ -35,7 +35,8 @@ It offers you 2 or 3 quality bars to aim at, you pick one, and it hands back a s
 ```
 .claude/skills/gauntlet-loop/
 ├── SKILL.md      # the skill
-└── game-dev.md   # bars, captures and engine notes for games (read only for game goals)
+├── game-dev.md   # bars, captures and engine notes for games (read only for game goals)
+└── plan.md       # running the loop from a Wayfinder map or spec (read only when there is a plan)
 README.md
 LICENSE           # CC BY 4.0
 ```
@@ -61,6 +62,18 @@ For games, and anything built in Unreal Engine, Unity, Godot or a web engine, th
 /gauntlet-loop third-person movement for my Unreal 5 game, as good as Uncharted
 ```
 Bar becomes Uncharted 4's traversal: frames and numbers pulled from official footage, compared against the same moves captured from your test map, at 60 fps.
+
+## Plan first with Wayfinder
+
+The loop optimizes whatever it is pointed at. On a vague goal it polishes the pieces it guessed. So for anything bigger than one session, plan first with [Matt Pocock's Wayfinder](https://github.com/mattpocock/skills), then let the gauntlet loop build the plan:
+
+```
+/wayfinder a vertical slice of my Unreal 5 action game
+/to-spec
+/gauntlet-loop <spec link>
+```
+
+Wayfinder plans and never builds; a cleared map hands off to execution, which is where this skill starts. The plan's decisions stay settled, its pieces and bars drive the loop, its out-of-scope list stays out, and the spec's user stories become the regression gate. If the plan still has open questions, the skill sends you back to Wayfinder instead of looping on guesses. Details in `plan.md`.
 
 ## Why a bar and not a rubric
 
