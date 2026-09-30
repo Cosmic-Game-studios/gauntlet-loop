@@ -72,7 +72,7 @@ The agent builds **breadth first**: a rough, working version of every checklist 
 **Done** means:
 - every checklist item passes with evidence the agent saw by running it;
 - nothing is a placeholder, stub or TODO;
-- a fresh agent that never saw the work has checked your description line by line against the result and found nothing missing.
+- a fresh agent that never saw the work has run it, checked your description line by line against what it saw, and found nothing missing.
 
 The run ends with `DONE.md`: the checklist with evidence, what beat the bar, what is still open, and how to run it.
 
@@ -100,11 +100,12 @@ The heavier studio structure that run also tried - departments, leads per discip
 
 Rounds are bounded so the loop moves fast and ends:
 
-- **Each piece gets up to 6 rounds, and up to 10 while rounds still pay off.** After round 6, a piece only goes on if the last round brought a visible or measurable gain.
-- **The same gap twice running changes the approach.**
-- **A round that made things worse is undone**, so every piece keeps its best version.
+- **Each piece gets up to 6 rounds, and up to 10 while rounds still gain.** A round gains when a number moved toward the bar or last round's biggest gap is no longer named, with nothing broken. After round 6, a piece only goes on if its last round gained.
+- **The same biggest gap two rounds in a row changes the approach.**
+- **A round that made things worse is undone and still uses its round.** When it is unclear, a fresh critic picks blind between this round and the last. Every piece keeps its best version.
+- **A win is confirmed with the sides swapped.** A second critic sees the same pair with A and B swapped and must pick ours too, so one lucky pick cannot end a piece.
 - **A win only counts if every checklist item that passed before still passes.**
-- **The whole thing then faces the bar for up to 3 rounds**, each sending its biggest gap back to its piece.
+- **The whole thing then faces the bar for up to 3 rounds**, each sending every gap it names back to its piece for one more round.
 
 Name your own round budget, time limit or cost limit and the prompt uses yours.
 
@@ -147,7 +148,7 @@ Describe your game concept, the engine, and how it should look. The skill asks o
 
 Agents cannot watch video, hear sound or play in real time, so the prompt gives every piece a way to be judged:
 - stills from fixed cameras;
-- frame strips of the same scripted input on both sides;
+- frame strips of the same moves as the bar's footage, driven on your side by the same scripted input every round;
 - measured numbers for feel (dash length, time to top speed, hit-stop);
 - a stepping hook that makes captures reliable;
 - a frame budget as the measurable half.

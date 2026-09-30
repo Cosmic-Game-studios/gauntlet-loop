@@ -11,7 +11,7 @@ The planner this repo bundles is Matt Pocock's Wayfinder (`/wayfinder`, MIT lice
 ## The pipeline
 
 1. **`/wayfinder <idea>`** charts the map, then works it ticket by ticket until no tickets are open and **Not yet specified** is empty.
-2. **`/to-spec`** collapses the cleared map into one spec: problem, solution, user stories, implementation decisions, testing decisions. Recommended - the loop gets one readable document, and its user stories become the checklist.
+2. **`/to-spec`**, run in the session that cleared the map or after reading the map into context (it works from the conversation), collapses the decisions into one spec: problem, solution, user stories, implementation decisions, testing decisions. Recommended - the loop gets one readable document, and its user stories become the checklist.
 3. **`/gauntlet-loop <spec or map link>`** writes the loop prompt that builds it.
 
 Planning and building stay in separate sessions. The loop does not write into the map; the map records decisions, and the loop's record is GOAL.md and STATUS.md.
@@ -46,7 +46,7 @@ Keep the template, its round budget and its last line. Change these paragraphs:
 - **Pieces, order and bars come from the plan.** "Take the pieces, their order and each piece's bar from the plan. A piece starts when the pieces it depends on have won or spent their rounds." The own-files rule stays.
 - **Out of scope stays out.** "Nothing the plan puts out of scope gets built."
 - **The testing decisions become the evidence.** "A checklist item passes when it passes at the seams the spec names."
-- **The whole-thing comparison is against the Destination.**
+- **The whole thing is compared against the pieces' bars together, in one full run; the fresh agent checks it against the Destination.** A Destination is a line of text, and the loop never compares against a description.
 
 `SKILL.md` keeps architecture, decomposition and stack choices out of the prompt unless the user demanded them. A plan the user worked through is that demand - but the prompt links it rather than restating it.
 
@@ -54,9 +54,9 @@ Keep the template, its round budget and its last line. Change these paragraphs:
 
 This is illustrative. Match its shape, not its wording.
 
-User: "/gauntlet-loop the vertical slice from our wayfinder map", with a cleared map and a spec made by `/to-spec`. The plan names four pieces (third-person traversal, melee combat, one enemy archetype, one arena) and the bars for traversal (Uncharted 4) and melee (God of War, 2018). It sets 60 fps on the team's dev machine and puts multiplayer out of scope. The arena has no bar yet, so the skill offers three first and the user picks Doom Eternal's Super Gore Nest.
+User: "/gauntlet-loop the vertical slice from our wayfinder map", with a cleared map and a spec made by `/to-spec`. The plan names four pieces (third-person traversal, melee combat, one enemy archetype, one arena) and the bars for traversal (Uncharted 4), melee (God of War, 2018) and the enemy (God of War's draugr). It names God of War (2018) as the bar for the overall look, sets 60 fps on the team's dev machine and puts multiplayer out of scope. The arena has no bar yet, so the skill offers three first and the user picks Doom Eternal's Super Gore Nest.
 
-Only the paragraphs that differ from the template are shown; the rest - the director and its files, the critic budget, the round budget, done, the last line - stays as the template has it.
+Only the paragraphs that differ from the template are shown; the rest - the director and its files, the critic budget, the round budget, done, the last line - stays as the template has it, and the whole-thing comparison is a full run of ours against the four bars together.
 
 ```
 Build the vertical slice described in the spec at [SPEC LINK], in our Unreal Engine 5 project. It is the level we show publishers: ten minutes that have to feel like a finished game from the first input.
@@ -69,9 +69,9 @@ The plan is that spec and the Wayfinder map it came from, [MAP LINK]. Read both 
 
 The decisions in the plan are settled; do not reopen them. If the work shows one is wrong, stop that piece and put the conflict in STATUS.md for me instead of designing around it. Nothing the plan puts out of scope gets built.
 
-Before building, turn the user stories and every decision that names something the slice must have into CHECKLIST.md, each with how you will show it works; an item passes when it passes at the seams the spec names. Take the pieces, their order and each piece's bar from the plan: traversal against Uncharted 4, melee against God of War (2018), the arena against Doom Eternal's Super Gore Nest. A piece starts when the pieces it depends on have won or spent their rounds. Have a builder make a debug hook first that steps the game a fixed number of frames with given inputs, and use it for every capture, test and playthrough.
+Before building, turn the user stories and every decision that names something the slice must have into CHECKLIST.md, each with how you will show it works - an item passes when it passes at the seams the spec names - and every interpretation you made marked as yours. Nothing is left off, merged away or quietly reinterpreted. Take the pieces, their order and each piece's bar from the plan: traversal against Uncharted 4, melee against God of War (2018), the enemy against God of War's draugr, the arena against Doom Eternal's Super Gore Nest. A piece starts when the pieces it depends on have won or spent their rounds. Have a builder make a debug hook first that steps the game a fixed number of frames with given inputs, and use it for every capture, test and playthrough.
 
-Capture every bar in the same views, sizes and conditions we will capture ours in, and compare against those captures, never against a description of the bar. The slice also has to hold 60 fps on this machine, measured with stat unit. Write STYLE.md from those captures and hold every builder to it.
+Capture every bar in the same views, sizes and conditions we will capture ours in, and compare against those captures, never against a description of the bar. The slice also has to hold 60 fps on this machine, measured with stat unit. Write STYLE.md from the captures of God of War (2018), the plan's bar for the look, and hold every builder to it.
 
 Then have the builders make a rough, working version of every checklist item, end to end, before any piece gets polished. The round budget below limits polish, never completeness.
 ```
