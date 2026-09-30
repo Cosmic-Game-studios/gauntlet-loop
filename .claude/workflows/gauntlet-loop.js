@@ -1,11 +1,13 @@
 export const meta = {
   name: 'gauntlet-loop',
-  description: 'Run a gauntlet loop: capture the bar first, then builder, blind capture and read-only critic per piece until ours wins, with a regression gate and a final whole-thing comparison',
+  description: 'Run a gauntlet loop: checklist from the brief, everything built rough first, then builder, blind capture and read-only critic per piece in bounded rounds, a whole-thing comparison, and a fresh completeness check',
   whenToUse: 'When the user asks to run a gauntlet loop prompt or the gauntlet-loop workflow. Pass {brief: "<the gauntlet loop prompt>"}, optionally plan (link or path to a Wayfinder map or spec) and dir (working folder, default "gauntlet").',
   phases: [
-    { title: 'Prepare', detail: 'read the brief and plan, split into pieces, build the capture and regression tools, capture the bar' },
-    { title: 'Gauntlet', detail: 'per piece: builder, blind capture, read-only critic, until ours wins' },
-    { title: 'Whole', detail: 'the whole thing against the bar' },
+    { title: 'Prepare', detail: 'checklist and style from the brief, pieces, capture and regression tools, bar captures' },
+    { title: 'Skeleton', detail: 'a rough, working version of every checklist item, end to end' },
+    { title: 'Gauntlet', detail: 'per piece: builder, blind capture, read-only critic, up to 6-10 rounds' },
+    { title: 'Whole', detail: 'the whole thing against the bar, up to 3 rounds' },
+    { title: 'Complete', detail: 'a fresh check of the description against the result, fixes, DONE.md' },
   ],
 }
 
@@ -16,9 +18,12 @@ if (!input.brief) {
   throw new Error('gauntlet-loop needs args.brief: the gauntlet loop prompt, or the goal and the bar in plain words')
 }
 const DIR = input.dir || 'gauntlet'
-const STUCK_ROUNDS = 3        // the same gap this many rounds running -> change approach
-const APPROACH_CHANGES = 2    // still stuck after this many changes -> hand the piece to the user
-const FAIL_LIMIT = 2          // this many failed steps in a row (capture, critic, builder) -> hand to the user
+const ROUND_NORM = 6          // rounds every piece may use
+const ROUND_MAX = 10          // rounds a piece may use while the last round still brought a gain
+const WHOLE_MAX = 3           // whole-thing comparison rounds
+const COMPLETE_PASSES = 2     // completeness check and fix passes
+const STUCK_ROUNDS = 2        // the same gap this many rounds running -> change approach
+const FAIL_LIMIT = 2          // this many failed steps in a row (builder, capture, critic) -> hand to the user
 const BUDGET_RESERVE = 150000 // per running piece, with a token budget set
 
 const PLAN_LINE = input.plan
@@ -118,7 +123,7 @@ const PREP_SCHEMA = {
     goal: { type: 'string', description: 'the goal in one or two sentences, with audience and purpose' },
     bar: { type: 'string', description: 'the bar as a concrete, fetchable thing' },
     captureHowTo: { type: 'string', description: 'exact commands or steps that capture OUR output - for a named piece, or for the whole thing - into a given folder, the same way the bar was captured' },
-    regressionHowTo: { type: 'string', description: 'exact command(s) that check everything that already worked still works, including any budget such as frame time; "none" if nothing exists' },
+    regressionHowTo: { type: 'string', description: 'exact command(s) that re-check every checklist item that already passed, plus any budget such as frame time; "none" if nothing can be checked yet' },
     wholeBarCaptures: { type: 'string', description: 'folder with captures of the bar as a whole, for the final comparison' },
     pieces: {
       type: 'array',
@@ -126,10 +131,10 @@ const PREP_SCHEMA = {
         type: 'object',
         properties: {
           name: { type: 'string' },
-          what: { type: 'string', description: 'for the builder: what this piece is and what winning it means' },
+          what: { type: 'string', description: 'for the builder: what this piece is, which checklist items it covers, and what winning it means' },
           criterion: { type: 'string', description: 'for the blind critic: what is compared, in neutral words that describe neither side' },
           files: { type: 'array', items: { type: 'string' }, description: 'files or folders this piece owns; no two pieces share one' },
-          dependsOn: { type: 'array', items: { type: 'string' }, description: 'names of pieces that must win first' },
+          dependsOn: { type: 'array', items: { type: 'string' }, description: 'names of pieces that must finish first' },
           barCaptures: { type: 'string', description: 'folder holding the bar captures for this piece' },
           judgedBy: { type: 'string', enum: ['captures', 'measurements', 'human'] },
           measurement: { type: 'string', description: 'what is measured on both sides, the same way; empty if nothing' },
@@ -158,20 +163,40 @@ function captureSchema(pieceNames) {
   return { type: 'object', properties: props, required }
 }
 
+// Every critic gets the same budget and returns the same shape.
 function verdictSchema(pieceNames) {
   const props = {
     comparable: { type: 'boolean', description: 'false if either side could not be opened or the two cannot be compared' },
     pick: { type: 'string', enum: ['A', 'B'] },
-    evidence: { type: 'string', description: 'what in the captures or numbers decided it, specifically; or what was missing' },
-    gap: { type: 'string', description: 'the single biggest thing the losing side must change to beat the winner, stated neutrally' },
-    sameAsLastGap: { type: 'boolean', description: 'true if this gap is essentially the most recent gap named' },
+    evidence: { type: 'string', description: 'one or two sentences: what in the captures or numbers decided it; or what was missing' },
+    gaps: { type: 'array', items: { type: 'string' }, maxItems: 3, description: 'at most three things the losing side must change to beat the winner, biggest first, one sentence each, stated neutrally' },
+    sameAsLastGap: { type: 'boolean', description: 'true if the biggest gap is essentially the most recent gap named' },
   }
-  const required = ['comparable', 'pick', 'evidence', 'gap', 'sameAsLastGap']
+  const required = ['comparable', 'pick', 'evidence', 'gaps', 'sameAsLastGap']
   if (pieceNames) {
-    props.piece = { type: 'string', enum: pieceNames, description: 'the part the gap belongs to' }
+    props.piece = { type: 'string', enum: pieceNames, description: 'the part the biggest gap belongs to' }
     required.push('piece')
   }
   return { type: 'object', properties: props, required }
+}
+
+const MISSING_SCHEMA = {
+  type: 'object',
+  properties: {
+    missing: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          item: { type: 'string', description: 'what the description asks for that the result does not have or that does not work' },
+          evidence: { type: 'string', description: 'what you saw when you ran or read the result' },
+          piece: { type: 'string', description: 'the piece it belongs to, or "none"' },
+        },
+        required: ['item', 'evidence', 'piece'],
+      },
+    },
+  },
+  required: ['missing'],
 }
 
 // ---------- prepare ----------
@@ -188,11 +213,13 @@ ${input.brief}
 ${PLAN_LINE}
 
 Deliver these, in ${DIR}/:
-1. The pieces: the smallest parts of the work that can be improved and judged on their own. If there is a plan, take the pieces, their order and each piece's bar from it. Give every piece its own files so parallel builders never edit the same thing. For each piece write "what" for the builder and a neutral "criterion" for a blind critic that describes neither side.
-2. The capture tooling: one way to capture any piece of OUR output, or the whole thing, into a folder, and the bar the same way - same views, sizes, cameras, seeds and conditions. What a capture cannot show (feel, timing, sound, logic) gets measurements taken the same way on both sides. For a real-time game, first build a debug hook that steps the game a fixed number of frames with given inputs, and use it for every capture.
-3. The bar, captured now: for every piece into ${DIR}/bars/<piece-slug>/, and for the whole thing into ${DIR}/bars/_whole/. Captures only - never a description of the bar.
-4. The regression check: the command(s) that prove everything that already works still works, including any budget the brief names. Say "none" if nothing can be checked yet.
-5. ${DIR}/PROGRESS.md for a person watching the run: the goal, the bar, each piece with its bar, and a link to ${DIR}/progress/<piece-slug>.md where that piece's rounds will be logged.
+1. CHECKLIST.md: one numbered line for every single thing the brief's description asks for, each with how it will be shown to work - a capture, a test, a measurement or a scripted playthrough. Nothing is left off, merged away or reinterpreted. Things a finished result obviously needs but the description did not list may follow, marked as additions.
+2. The pieces: the smallest parts of the work that can be improved and judged on their own, together covering every checklist item. If there is a plan, take the pieces, their order and each piece's bar from it. Give every piece its own files so parallel builders never edit the same thing. For each piece write "what" for the builder and a neutral "criterion" for a blind critic that describes neither side.
+3. The capture tooling: one way to capture any piece of OUR output, or the whole thing, into a folder, and the bar the same way - same views, sizes, cameras, seeds and conditions. What a capture cannot show (feel, timing, sound, logic) gets measurements taken the same way on both sides. For a real-time game, first build a debug hook that steps the game a fixed number of frames with given inputs, and use it for every capture, test and playthrough.
+4. The bar, captured now: for every piece into ${DIR}/bars/<piece-slug>/, and for the whole thing into ${DIR}/bars/_whole/. Captures only - never a description of the bar.
+5. STYLE.md, when the result is looked at: palette, light, type, shape and motion taken from the bar captures, plus the default looks to stay away from.
+6. The regression check: the command(s) that re-check every checklist item that has passed, plus any budget the brief names. Say "none" if nothing can be checked yet.
+7. ${DIR}/PROGRESS.md for a person watching the run: the goal, the bar, the checklist status, each piece with its bar, and a link to ${DIR}/progress/<piece-slug>.md where that piece's rounds will be logged.
 
 If the bar cannot be obtained, say so in the goal field and return an empty pieces list rather than inventing captures. Mark a piece judgedBy "human" only when neither captures nor measurements can judge it.`,
   { label: 'prepare', phase: 'Prepare', schema: PREP_SCHEMA },
@@ -234,16 +261,33 @@ const regressionStep = HAS_REGRESSION
   : 'There is no regression check yet: report regressionsPass true and regressionNotes "none set up".'
 
 log(`${pieces.length} pieces: ${pieceNames.join(', ')}`)
-if (!budget.total) log('no token budget set: the run ends when it wins, hands a piece to you, or reaches the workflow agent cap')
+
+// ---------- skeleton: everything rough before anything polished ----------
+
+phase('Skeleton')
+
+const skeleton = await gated('build', () => run(
+  `Build breadth first for a gauntlet loop.
+
+Goal: ${prep.goal}
+${PLAN_LINE}
+The checklist is ${DIR}/CHECKLIST.md and the style guide, if there is one, is ${DIR}/STYLE.md.
+
+Build a rough, working version of every checklist item, end to end, so the whole thing runs and every item can be shown to work, however plainly. Do not polish any single part; later rounds do that, piece by piece, against the bar. Respect the file ownership of the pieces: ${pieces.map(p => `${p.name} owns ${p.files.join(', ')}`).join('; ')}. Run it yourself and mark each checklist item in ${DIR}/CHECKLIST.md as passing or not, with what you saw. Commit the result. Reply with the items that do not pass yet and why.`,
+  { label: 'skeleton', phase: 'Skeleton' },
+))
+if (!skeleton && halted) {
+  return { status: 'halted', reason: halted, progress: `${DIR}/PROGRESS.md` }
+}
 
 // ---------- one piece ----------
 
 const roundsDone = new Map()
 
-function builderPrompt(p, gaps, changeApproach, progressLine) {
-  const history = gaps.length
-    ? `Gaps a blind critic has named so far, oldest first. Each names what the losing side - ours - must change:\n${list(gaps)}\n\nClose the most recent one: ${gaps[gaps.length - 1]}`
-    : 'This is the first round: build the piece so it can beat the bar.'
+function builderPrompt(p, gaps, latest, changeApproach, progressLine) {
+  const history = latest.length
+    ? `Gaps a blind critic has named so far for this piece, oldest first. Each names what the losing side - ours - must change:\n${list(gaps)}\n\nThis round, close the biggest first, then the others where you can without risk:\n${list(latest)}`
+    : 'The skeleton already has a rough version of this piece. Make it good enough to beat the bar.'
   const approach = changeApproach
     ? `\n\nThe same gap has come back ${STUCK_ROUNDS} rounds running. Change the approach for this piece instead of polishing the current one.`
     : ''
@@ -258,11 +302,11 @@ ${PLAN_LINE}
 
 Your piece: ${p.name} - ${p.what}
 Files you own: ${p.files.join(', ')}. Edit only these; other builders own the rest.
-The bar's captures for this piece are in ${p.barCaptures}. Study them.
+The bar's captures for this piece are in ${p.barCaptures}. Study them. Follow ${DIR}/STYLE.md if it exists.
 
 ${history}${approach}${progress}
 
-Do not capture, compare or judge your own work - a separate critic does that blind. Keep everything that already works working. Reply with a short summary of what you changed.`
+Every checklist item in ${DIR}/CHECKLIST.md that passes must still pass. If the newest gaps show that your previous change made the piece worse, undo that change first. Commit your work when you are done. Do not capture, compare or judge your own work - a separate critic does that blind. Reply with a short summary of what you changed.`
 }
 
 async function flush(p, line, phaseName) {
@@ -272,55 +316,53 @@ async function flush(p, line, phaseName) {
   )
 }
 
-async function runPiece(p, startGap, phaseName) {
+async function runPiece(p, startGaps, phaseName, roundCap) {
   active++
   try {
-    return await pieceLoop(p, startGap, phaseName)
+    return await pieceLoop(p, startGaps, phaseName, roundCap)
   } finally {
     active--
   }
 }
 
-async function pieceLoop(p, startGap, phaseName) {
-  const gaps = startGap ? [startGap] : []
+async function pieceLoop(p, startGaps, phaseName, roundCap) {
+  const gaps = startGaps.slice()
+  let latest = startGaps.slice()
   let streak = 0
-  let changes = 0
   let failures = 0
+  let gainedLast = true
   let lastWasRegression = false
   let pending = ''
+  let used = 0
   const end = async (status, line) => {
     await flush(p, [pending, `- ${line}`].filter(Boolean).join('\n'), phaseName)
     return { piece: p.name, status, rounds: roundsDone.get(p.id) || 0, gaps }
   }
 
   if (p.judgedBy === 'human') {
-    await gated('build', () => run(builderPrompt(p, gaps, false, ''), { label: `build:${p.name}`, phase: phaseName }))
+    await gated('build', () => run(builderPrompt(p, gaps, latest, false, ''), { label: `build:${p.name}`, phase: phaseName }))
     return end('needs-human', `**${p.name}**: built; the loop cannot judge it, so it is yours to review.`)
   }
 
   for (;;) {
     if (halted) return end('halted', `**${p.name}**: ${halted}`)
-    if (lowBudget()) return end('stopped-budget', `**${p.name}**: stopped at the token budget. Open gap: ${gaps[gaps.length - 1] || 'none yet'}`)
+    if (lowBudget()) return end('stopped-budget', `**${p.name}**: stopped at the token budget; best version kept. Open: ${latest.join(' / ') || 'none yet'}`)
     if (failures >= FAIL_LIMIT) return end('failed-needs-human', `**${p.name}**: ${FAIL_LIMIT} steps in a row failed (builder, capture or critic; see the rounds above). Needs you.`)
+    if (used >= roundCap.max) return end('rounds-spent', `**${p.name}**: all ${roundCap.max} rounds spent; best version kept. Open: ${latest.join(' / ') || 'none'}`)
+    if (used >= roundCap.norm && !gainedLast) return end('plateau', `**${p.name}**: the last round brought no gain after ${used} rounds; best version kept. Open: ${latest.join(' / ') || 'none'}`)
 
-    let changeApproach = false
-    if (streak >= STUCK_ROUNDS) {
-      changes++
-      streak = 0
-      if (changes > APPROACH_CHANGES) {
-        return end('stuck-needs-human', `**${p.name}**: still stuck after ${APPROACH_CHANGES} changes of approach. Needs you. Gap: ${gaps[gaps.length - 1]}`)
-      }
-      changeApproach = true
-    }
+    const changeApproach = streak >= STUCK_ROUNDS
+    if (changeApproach) streak = 0
 
+    used++
     const round = (roundsDone.get(p.id) || 0) + 1
     roundsDone.set(p.id, round)
 
-    const built = await gated('build', () => run(builderPrompt(p, gaps, changeApproach, pending), {
+    const built = await gated('build', () => run(builderPrompt(p, gaps, latest, changeApproach, pending), {
       label: `build:${p.name}#${round}`, phase: phaseName,
     }))
     pending = ''
-    if (!built) { if (halted) continue; failures++; pending = `- **${p.name}** round ${round}: the builder failed.`; continue }
+    if (!built) { if (halted) continue; failures++; gainedLast = false; pending = `- **${p.name}** round ${round}: the builder failed.`; continue }
 
     const pair = pairFor(`${p.id}:${round}`)
     const bar = pair.ours === 'A' ? 'B' : 'A'
@@ -344,12 +386,13 @@ Return the file paths for A and B, the numbers for each side (empty if none), an
     if (problem) {
       if (halted) continue
       failures++
+      gainedLast = false
       log(`${p.name} round ${round}: capture unusable - ${problem}`)
       pending = `- **${p.name}** round ${round}: capture unusable (${problem}).`
       continue
     }
 
-    const lastGap = !lastWasRegression && gaps.length ? gaps[gaps.length - 1] : ''
+    const lastGap = !lastWasRegression && latest.length ? latest[0] : ''
     const verdict = await run(
       `Judge one blind pair.
 
@@ -360,12 +403,13 @@ What is compared: ${p.criterion}${p.measurement ? ` Measured as: ${p.measurement
 
 Gaps named in earlier rounds:
 ${list(gaps.filter(g => !g.startsWith('Regression:')))}
-Most recent gap, for sameAsLastGap: ${lastGap || '(none)'}`,
+Most recent biggest gap, for sameAsLastGap: ${lastGap || '(none)'}`,
       { label: `critic:${p.name}#${round}`, phase: phaseName, schema: verdictSchema(), agentType: 'gauntlet-critic', effort: 'high' },
     )
     if (!verdict || !verdict.comparable) {
       if (halted) continue
       failures++
+      gainedLast = false
       pending = `- **${p.name}** round ${round}: the critic could not judge the pair (${verdict ? verdict.evidence : 'no verdict'}).`
       continue
     }
@@ -374,16 +418,20 @@ Most recent gap, for sameAsLastGap: ${lastGap || '(none)'}`,
     const oursWon = verdict.pick === pair.ours
     const regressed = !cap.regressionsPass
     if (oursWon && !regressed) {
-      pending = `- **${p.name}** round ${round}: ours picked blind, regressions pass. Won. Evidence: ${verdict.evidence}`
+      pending = `- **${p.name}** round ${round}: ours picked blind, checklist holds. Won. Evidence: ${verdict.evidence}`
       return end('won', `**${p.name}**: won in round ${round}.`)
     }
 
-    const gap = regressed ? `Regression: ${cap.regressionNotes}` : verdict.gap
+    latest = regressed
+      ? [`Regression: ${cap.regressionNotes}`]
+      : (verdict.gaps || []).filter(Boolean).slice(0, 3)
+    if (!latest.length) latest = ['The critic picked the bar without naming a gap; compare the two captures again and close the most visible difference.']
     const same = regressed ? lastWasRegression : (verdict.sameAsLastGap && !lastWasRegression)
     streak = same ? streak + 1 : 1
+    gainedLast = !same
     lastWasRegression = regressed
-    gaps.push(gap)
-    pending = `- **${p.name}** round ${round}: ${oursWon ? 'ours picked, but a regression failed' : 'bar picked'}. Gap: ${gap} Changed: ${String(built).replace(/\s+/g, ' ').slice(0, 300)}`
+    gaps.push(...latest)
+    pending = `- **${p.name}** round ${round}: ${oursWon ? 'ours picked, but a checklist item regressed' : 'bar picked'}. Gaps: ${latest.join(' / ')} Changed: ${String(built).replace(/\s+/g, ' ').slice(0, 300)}`
   }
 }
 
@@ -391,7 +439,8 @@ Most recent gap, for sameAsLastGap: ${lastGap || '(none)'}`,
 
 phase('Gauntlet')
 
-const DONE = new Set(['won', 'needs-human'])
+const DONE = new Set(['won', 'needs-human', 'rounds-spent', 'plateau'])
+const PIECE_ROUNDS = { norm: ROUND_NORM, max: ROUND_MAX }
 const running = new Map()
 function start(p) {
   if (running.has(p.name)) return running.get(p.name)
@@ -401,7 +450,7 @@ function start(p) {
     if (bad >= 0) {
       return { piece: p.name, status: 'blocked', by: p.dependsOn[bad], rounds: 0, gaps: [] }
     }
-    return runPiece(p, '', 'Gauntlet')
+    return runPiece(p, [], 'Gauntlet', PIECE_ROUNDS)
   })()
   running.set(p.name, job)
   return job
@@ -411,36 +460,34 @@ const state = new Map()
 const results = await Promise.all(pieces.map(p => start(p)))
 results.forEach((r, i) => state.set(pieces[i].name, r || { piece: pieces[i].name, status: 'failed' }))
 
-const open = [...state.values()].filter(r => !DONE.has(r.status))
-if (open.length) {
-  log(`not every piece is done: ${open.map(r => `${r.piece} (${r.status})`).join(', ')}`)
-  return { status: halted ? 'halted' : 'pieces-open', reason: halted || undefined, progress: `${DIR}/PROGRESS.md`, pieces: [...state.values()] }
+function summary(status, extra) {
+  return Object.assign({ status, reason: halted || undefined, progress: `${DIR}/PROGRESS.md`, pieces: [...state.values()] }, extra || {})
 }
 
-// ---------- the whole thing ----------
+const open = [...state.values()].filter(r => !DONE.has(r.status))
+if (open.length) {
+  log(`not every piece finished: ${open.map(r => `${r.piece} (${r.status})`).join(', ')}`)
+  return summary(halted ? 'halted' : 'pieces-open')
+}
+
+// ---------- the whole thing, up to WHOLE_MAX rounds ----------
 
 phase('Whole')
 
 const WHOLE = { id: '_whole', name: 'Whole' }
 const wholeGaps = []
 const measured = pieces.filter(p => p.measurement).map(p => `${p.name}: ${p.measurement}`)
-let wholeStreak = 0
+let wholeResult = 'rounds-spent'
 let wholeFailures = 0
-let wholeRound = 0
+let wholeStreak = 0
 let lastWasRegression = false
 
-for (;;) {
-  const stop = halted ? 'halted'
-    : lowBudget() ? 'stopped-budget'
-    : wholeFailures >= FAIL_LIMIT ? 'failed-needs-human'
-    : wholeStreak >= STUCK_ROUNDS ? 'whole-stuck-needs-human'
-    : ''
-  if (stop) {
-    await flush(WHOLE, `- **Whole**: ${stop}${wholeGaps.length ? `. Last gap: ${wholeGaps[wholeGaps.length - 1]}` : ''}`, 'Whole')
-    return { status: stop, reason: halted || undefined, progress: `${DIR}/PROGRESS.md`, pieces: [...state.values()], wholeGaps }
-  }
+for (let wholeRound = 1; wholeRound <= WHOLE_MAX; wholeRound++) {
+  if (halted) return summary('halted', { wholeGaps })
+  if (lowBudget()) return summary('stopped-budget', { stage: 'whole', wholeGaps })
+  if (wholeFailures >= FAIL_LIMIT) { wholeResult = 'failed'; break }
+  if (wholeStreak >= STUCK_ROUNDS) { wholeResult = 'stuck'; break }
 
-  wholeRound++
   const pair = pairFor(`_whole:${wholeRound}`)
   const bar = pair.ours === 'A' ? 'B' : 'A'
 
@@ -474,7 +521,7 @@ What is compared, part by part: ${pieces.map(p => `${p.name}: ${p.criterion}`).j
 
 Gaps named in earlier rounds:
 ${list(wholeGaps.filter(g => !g.startsWith('Regression:')))}
-Most recent gap, for sameAsLastGap: ${lastGap || '(none)'}`,
+Most recent biggest gap, for sameAsLastGap: ${lastGap || '(none)'}`,
     { label: `critic:whole#${wholeRound}`, phase: 'Whole', schema: verdictSchema(pieceNames), agentType: 'gauntlet-critic', effort: 'high' },
   )
   if (!verdict || !verdict.comparable) {
@@ -486,24 +533,80 @@ Most recent gap, for sameAsLastGap: ${lastGap || '(none)'}`,
   const oursWon = verdict.pick === pair.ours
   const regressed = !cap.regressionsPass
   if (oursWon && !regressed) {
-    await flush(WHOLE, `- **Whole** round ${wholeRound}: ours picked blind, regressions pass. Done. Evidence: ${verdict.evidence}`, 'Whole')
-    return { status: 'won', progress: `${DIR}/PROGRESS.md`, pieces: [...state.values()], wholeRounds: wholeRound }
+    await flush(WHOLE, `- **Whole** round ${wholeRound}: ours picked blind, checklist holds. Evidence: ${verdict.evidence}`, 'Whole')
+    wholeResult = 'won'
+    break
   }
 
-  const gap = regressed ? `Regression: ${cap.regressionNotes}` : verdict.gap
+  const topGaps = regressed ? [`Regression: ${cap.regressionNotes}`] : (verdict.gaps || []).filter(Boolean).slice(0, 3)
   const targetName = regressed
     ? (byName.has(cap.regressionPiece) ? cap.regressionPiece : verdict.piece)
     : verdict.piece
   const same = regressed ? lastWasRegression : (verdict.sameAsLastGap && !lastWasRegression)
   wholeStreak = same ? wholeStreak + 1 : 1
   lastWasRegression = regressed
-  wholeGaps.push(gap)
-  await flush(WHOLE, `- **Whole** round ${wholeRound}: ${oursWon ? 'ours picked, but a regression failed' : 'bar picked'}. Gap in ${targetName}: ${gap}`, 'Whole')
+  wholeGaps.push(topGaps[0] || 'unnamed gap')
+  await flush(WHOLE, `- **Whole** round ${wholeRound}: ${oursWon ? 'ours picked, but a checklist item regressed' : 'bar picked'}. Gaps in ${targetName}: ${topGaps.join(' / ')}`, 'Whole')
 
+  // One focused round on the piece the gap belongs to, then compare again.
   const target = byName.get(targetName) || pieces[0]
-  const again = await runPiece(target, `Found in the whole-thing comparison: ${gap}`, 'Whole')
+  const again = await runPiece(target, topGaps.map(g => `From the whole-thing comparison: ${g}`), 'Whole', { norm: 1, max: 1 })
   if (again) state.set(again.piece, again)
-  if (!again || !DONE.has(again.status)) {
-    return { status: halted ? 'halted' : 'pieces-open', stage: 'whole', reason: halted || undefined, progress: `${DIR}/PROGRESS.md`, pieces: [...state.values()], wholeGaps }
-  }
+  if (halted) return summary('halted', { wholeGaps })
 }
+
+// ---------- complete: a fresh reader against the description ----------
+
+phase('Complete')
+
+let missing = []
+for (let pass = 1; pass <= COMPLETE_PASSES; pass++) {
+  const check = await run(
+    `You check a finished gauntlet loop run for completeness. You have not seen the work before.
+
+The brief, with the user's description word for word:
+<brief>
+${input.brief}
+</brief>
+${PLAN_LINE}
+
+Read the description line by line. For each thing it asks for, find it in the result and see it work yourself: run it, play it through, open it - not by reading the code or trusting ${DIR}/CHECKLIST.md. For a game, play from launch to the end and back to the start through the stepping hook with scripted input. Also flag anything in the result that is a placeholder, stub or TODO.
+
+The pieces, for naming where a problem belongs: ${pieceNames.join(', ')}.
+Return every missing, broken or placeholder item, with what you saw. Return an empty list only if you found nothing.`,
+    { label: `complete#${pass}`, phase: 'Complete', schema: MISSING_SCHEMA },
+  )
+  if (!check) break
+  missing = check.missing || []
+  if (!missing.length) break
+  if (pass === COMPLETE_PASSES) break
+
+  const byPiece = new Map()
+  for (const m of missing) {
+    const key = byName.has(m.piece) ? m.piece : '_none'
+    if (!byPiece.has(key)) byPiece.set(key, [])
+    byPiece.get(key).push(m)
+  }
+  await Promise.all([...byPiece.entries()].map(([key, items]) => gated('build', () => run(
+    `Finish what a completeness check found missing in a gauntlet loop run.
+
+Goal: ${prep.goal}
+${key === '_none' ? 'These items belong to no single piece; touch as little of the pieces\' files as you can.' : `Piece: ${key}. Files you own: ${byName.get(key).files.join(', ')}.`}
+Follow ${DIR}/STYLE.md if it exists; every checklist item that passes must still pass.
+
+Missing or broken:
+${list(items.map(m => `${m.item} (seen: ${m.evidence})`))}
+
+Make each one exist and work, run it to see that it does, update ${DIR}/CHECKLIST.md, and commit. Reply with what you fixed and anything you could not, with the reason.`,
+    { label: `finish:${key}#${pass}`, phase: 'Complete' },
+  ))))
+}
+
+await run(
+  `Write ${DIR}/DONE.md for the person who asked for this work, from ${DIR}/CHECKLIST.md, ${DIR}/PROGRESS.md and ${DIR}/progress/.
+
+Include: the checklist with the evidence for each item; which pieces beat the bar blind and which kept their best version with open gaps; the whole-thing result (${wholeResult}); what is still missing or open${missing.length ? `, including these from the last completeness check: ${missing.map(m => m.item).join('; ')}` : ''}; and how to build and run it. Plain and short enough to verify in a few minutes.`,
+  { label: 'done-report', phase: 'Complete', effort: 'low' },
+)
+
+return summary(missing.length ? 'done-with-open-items' : 'done', { whole: wholeResult, missing, done: `${DIR}/DONE.md` })
