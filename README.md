@@ -4,7 +4,7 @@
 
 # Gauntlet Loop
 
-A skill that turns any goal into one paste-ready prompt. That prompt makes your agent build **everything you described**, then improve it piece by piece against a real quality bar - a builder and a separate harsh critic on each piece, compared blind, in bounded rounds - until the work is complete and beats the bar.
+A skill that turns any goal into one paste-ready prompt. That prompt makes your agent direct a long build. It builds **everything you described** first, then improves it piece by piece against a real quality bar - a builder and a separate harsh critic on each piece, compared blind, in bounded rounds - until the work is complete and beats the bar. Its memory lives in files, so a long run does not lose the plot when its context is compacted.
 
 Most agent output stops at "good enough", or ships half of what was asked, because nothing holds it to a standard or counts what is missing. This does both.
 
@@ -54,13 +54,14 @@ LICENSE           # CC BY 4.0, for this repo's own files
 1. **You describe what you want.** Anything: a game with its engine and look, a site, an essay, a CLI tool, a research brief. Describe as much as you like.
 2. **It offers 2 or 3 bars.** Each one is a specific, real thing your agent can actually fetch and compare against. Not "award-winning design", but a named page, a named game, a named repo.
 3. **You pick one.** It writes one prompt, with your description carried over word for word, and stops.
-4. **You paste it into a fresh session** (or, in Claude Code, run it as a workflow). The agent then:
+4. **You paste it into a fresh session** (or, in Claude Code, run it as a workflow). The agent becomes the director and:
+   - writes the goal to a file it re-reads every round;
    - turns your description into a checklist;
    - builds a rough version of all of it first;
    - improves it piece by piece against the bar;
    - does not stop until everything you described exists and works.
 
-The critic is the part that makes it better. It is a separate agent with fresh context. The lead captures your work and the bar the same way, shuffles them into an unlabeled A and B and keeps the key, so the critic really is blind. Every critic gets the same short budget: a pick, one or two sentences of evidence, and at most three gaps, biggest first. Not a score out of 10, which drifts upward every round. A pick.
+The critic is the part that makes it better. It is a separate agent with fresh context. The director captures your work and the bar the same way, shuffles them into an unlabeled A and B and keeps the key, so the critic really is blind. Every critic gets the same short budget: a pick, one or two sentences of evidence, and at most three gaps, biggest first. Not a score out of 10, which drifts upward every round. A pick.
 
 ## Complete first, then better
 
@@ -74,6 +75,26 @@ The agent builds **breadth first**: a rough, working version of every checklist 
 - a fresh agent that never saw the work has checked your description line by line against the result and found nothing missing.
 
 The run ends with `DONE.md`: the checklist with evidence, what beat the bar, what is still open, and how to run it.
+
+## Long runs: a director with files for memory
+
+Every compaction of the context loses details - often the ones that mattered. So the lead agent is a **director**: it plans, briefs builders and critics as subagents, and keeps the record, but never builds or judges itself. Its memory is in files:
+
+- **`GOAL.md`** holds your description word for word, the bar and the loop's rules. It is written once and never rewritten; only your own decisions get appended.
+- **`STATUS.md`** is the one page you and the director both read. It has a score row per round (checklist items passing, pieces won, key numbers), then each piece with its status, gaps and the agent working on it. It is rewritten every round, not appended. The last three rounds stay in detail, anything older folds into one line per piece, and it stays under 80 lines.
+- **Re-read every round.** The director re-reads both files at the start of every round and on every resume, and briefs every subagent from the files, not from memory. Builders reply in five lines or fewer.
+
+This is measured. In two 30-minute benchmark runs on the same browser game, a lead with its state in files and short returns was compared with the original loop's single lead context:
+
+| | Original loop, one lead context | Director with state files |
+|---|---|---|
+| Tokens processed (run 1 / run 2) | 12.2 M / 14.8 M | **6.4 M / 10.0 M** |
+| Cost at list price | $7.89 / $9.11 | **$5.88 / $8.34** |
+| Functional checks, run 2 (two resolutions) | 14/15, 13/15 | **15/15, 14/15** |
+| Survives a restart | no | **yes** |
+| Playability (blind judges) | 5 | 5 |
+
+The heavier studio structure that run also tried - departments, leads per discipline - added cost without a measured gain, so it is not part of this loop.
 
 ## The round budget
 
@@ -100,8 +121,25 @@ The [original prompt](https://github.com/mshumer/Claude-of-Duty/blob/main/prompt
 | "Don't stop until utterly wowed" - no end, and effort sprawls | Equal critic budget, 6–10 rounds by gain, 3 whole-thing rounds |
 | Improvements can break features that worked | A round only counts if the checklist still passes; worse rounds are undone |
 | Parallel builders edit the same files | Each builder owns its files |
-| Done when the agent says so | Done by evidence, a fresh reader, and `DONE.md` |
+| Done when the agent says so | Done by evidence, a fresh reader, and `DONE.md` with the score from first rough version to last round |
+| One lead context that fills up and compacts; a restart loses the run | A director that keeps `GOAL.md` and a bounded `STATUS.md`, re-reads them every round, and briefs from files - measured: 32-48% fewer tokens, more checks passed |
+| Everything must be specified up front | Your description is the minimum; open points are filled creatively in its spirit and marked on the checklist so you can change them |
 | "Visually beautiful" as a wish | `STYLE.md` from the bar, named default looks to avoid, no default engine look in the final build |
+
+## What is measured, and what is not yet
+
+**Measured** in the benchmark runs above:
+- the original loop's failures (vague bar, honour-system blindness, oscillating critics, broken features after polish, no end);
+- the director-with-files pattern against the original's single lead context.
+
+**Not yet measured:** this version head to head against the original prompt and the previous version on the same brief. Every rule here answers a failure the benchmark logs recorded, but that is not the same as a measured win.
+
+**What the head-to-head should report** - the numbers the loop already writes to `STATUS.md` and `DONE.md`:
+- checklist items passing at the end;
+- playthrough blockers;
+- pieces won blind;
+- a blind judge's pick between the finished results;
+- tokens and cost.
 
 ## Games
 
@@ -168,6 +206,7 @@ For any other agent, the skill swaps those two lines for plain instructions: kee
 - **A soft or rambling critic.** Give it a binary job and the same short budget every round.
 - **Wins that break things.** A prettier piece that broke a feature or the frame budget is a step back.
 - **Done by assertion.** "Implemented" is not "works".
+- **Memory in the context.** A long run compacts and forgets the goal. The files carry it instead, and they stay short enough to re-read every round.
 
 ## Credit
 

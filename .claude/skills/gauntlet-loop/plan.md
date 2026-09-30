@@ -14,7 +14,7 @@ The planner this repo bundles is Matt Pocock's Wayfinder (`/wayfinder`, MIT lice
 2. **`/to-spec`** collapses the cleared map into one spec: problem, solution, user stories, implementation decisions, testing decisions. Recommended - the loop gets one readable document, and its user stories become the checklist.
 3. **`/gauntlet-loop <spec or map link>`** writes the loop prompt that builds it.
 
-Planning and building stay in separate sessions. The loop does not write into the map; the map records decisions, and the loop's record is its progress page.
+Planning and building stay in separate sessions. The loop does not write into the map; the map records decisions, and the loop's record is GOAL.md and STATUS.md.
 
 This repo bundles `wayfinder`, `to-spec` and the skills Wayfinder calls (`grilling`, `domain-modeling`, `research`, `prototype`, `setup-matt-pocock-skills`), unmodified - see `THIRD_PARTY.md`. Before the first map, run `/setup-matt-pocock-skills` once in the repo so they know the issue tracker.
 
@@ -42,7 +42,7 @@ Keep the template, its round budget and its last line. Change these paragraphs:
 
 - **The description block holds the plan, not a paraphrase.** Put the spec's user stories and the map's Destination in the block word for word, and link the rest: "The plan is [LINK]. Read it before anything else."
 - **The checklist comes from the plan.** One line per user story, plus every decision that names something the result must have.
-- **The decisions are settled.** Add: "The decisions in the plan are settled; do not reopen them. If the work shows one is wrong, stop that piece and put the conflict on the progress page for me instead of designing around it." Agents tend to work around a bad decision rather than challenge it; this sends the conflict back to the user, who takes it back to the map.
+- **The decisions are settled.** Add: "The decisions in the plan are settled; do not reopen them. If the work shows one is wrong, stop that piece and put the conflict in STATUS.md for me instead of designing around it." Agents tend to work around a bad decision rather than challenge it; this sends the conflict back to the user, who takes it back to the map.
 - **Pieces, order and bars come from the plan.** "Take the pieces, their order and each piece's bar from the plan. A piece starts when the pieces it depends on have won or spent their rounds." The own-files rule stays.
 - **Out of scope stays out.** "Nothing the plan puts out of scope gets built."
 - **The testing decisions become the evidence.** "A checklist item passes when it passes at the seams the spec names."
@@ -56,20 +56,22 @@ This is illustrative. Match its shape, not its wording.
 
 User: "/gauntlet-loop the vertical slice from our wayfinder map", with a cleared map and a spec made by `/to-spec`. The plan names four pieces (third-person traversal, melee combat, one enemy archetype, one arena) and the bars for traversal (Uncharted 4) and melee (God of War, 2018). It sets 60 fps on the team's dev machine and puts multiplayer out of scope. The arena has no bar yet, so the skill offers three first and the user picks Doom Eternal's Super Gore Nest.
 
-Only the paragraphs that differ from the template are shown; the rest - the critic budget, the round budget, done, the progress page, the last line - stays as the template has it.
+Only the paragraphs that differ from the template are shown; the rest - the director and its files, the critic budget, the round budget, done, the last line - stays as the template has it.
 
 ```
 Build the vertical slice described in the spec at [SPEC LINK], in our Unreal Engine 5 project. It is the level we show publishers: ten minutes that have to feel like a finished game from the first input.
 
-The plan is that spec and the Wayfinder map it came from, [MAP LINK]. Read both before anything else. Here are the map's Destination and the spec's user stories, word for word. All of it is in scope and it is the minimum; add more wherever it makes the result better, never at the expense of something on this list.
+The plan is that spec and the Wayfinder map it came from, [MAP LINK]. Read both before anything else, and link both at the top of GOAL.md. Here are the map's Destination and the spec's user stories, word for word. All of it is in scope and it is the minimum; add more wherever it makes the result better, never at the expense of something on this list.
 
 """
 [THE MAP'S DESTINATION AND THE SPEC'S USER STORIES, VERBATIM]
 """
 
-The decisions in the plan are settled; do not reopen them. If the work shows one is wrong, stop that piece and put the conflict on the progress page for me instead of designing around it. Nothing the plan puts out of scope gets built.
+The decisions in the plan are settled; do not reopen them. If the work shows one is wrong, stop that piece and put the conflict in STATUS.md for me instead of designing around it. Nothing the plan puts out of scope gets built.
 
-Before building, turn the user stories and every decision that names something the slice must have into CHECKLIST.md, each with how you will show it works; an item passes when it passes at the seams the spec names. Build a debug hook that steps the game a fixed number of frames with given inputs, and use it for every capture, test and playthrough. Then build breadth first: a rough, working version of every checklist item, end to end, before any piece gets polished.
+Before building, turn the user stories and every decision that names something the slice must have into CHECKLIST.md, each with how you will show it works; an item passes when it passes at the seams the spec names. Take the pieces, their order and each piece's bar from the plan: traversal against Uncharted 4, melee against God of War (2018), the arena against Doom Eternal's Super Gore Nest. A piece starts when the pieces it depends on have won or spent their rounds. Have a builder make a debug hook first that steps the game a fixed number of frames with given inputs, and use it for every capture, test and playthrough.
 
-Take the pieces, their order and each piece's bar from the plan: traversal against Uncharted 4, melee against God of War (2018), the arena against Doom Eternal's Super Gore Nest. A piece starts when the pieces it depends on have won or spent their rounds. Before the first round, capture every bar in the same views, sizes and conditions we will capture ours in, and compare against those captures, never against a description of the bar. The slice also has to hold 60 fps on this machine, measured with stat unit. Write STYLE.md from the bars first and hold every builder to it.
+Capture every bar in the same views, sizes and conditions we will capture ours in, and compare against those captures, never against a description of the bar. The slice also has to hold 60 fps on this machine, measured with stat unit. Write STYLE.md from those captures and hold every builder to it.
+
+Then have the builders make a rough, working version of every checklist item, end to end, before any piece gets polished. The round budget below limits polish, never completeness.
 ```
